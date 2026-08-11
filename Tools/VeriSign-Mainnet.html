@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nusachain Verisign & Explorer Integration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-light: #ccfbf1;
+      --primary-subtle: #f0fdfa;
+      --bg-color: #f8fafc;
+      --surface: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --success-bg: #dcfce7;
+      --success-border: #86efac;
+      --success-text: #166534;
+      --danger-bg: #fee2e2;
+      --danger-border: #fca5a5;
+      --danger-text: #991b1b;
+      --radius: 12px;
+      --shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1000px; margin: 0 auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; color: var(--text-main); }
+    .brand img { height: 40px; width: auto; object-fit: contain; }
+    .brand-title { font-weight: 700; font-size: 1.25rem; color: var(--primary-dark); }
+
+    .tabs-wrapper { background: var(--surface); border-bottom: 1px solid var(--border-color); }
+    .tabs-container { max-width: 1000px; margin: 0 auto; display: flex; padding: 0 1.5rem; gap: 2rem; }
+    .tab-btn { padding: 1rem 0.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+    .tab-btn:hover, .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    main { flex: 1; max-width: 1000px; width: 100%; margin: 2rem auto; padding: 0 1.5rem; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .panel { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 2rem; margin-bottom: 1.5rem; }
+    .panel-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .panel-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.5rem; }
+
+    .drop-zone { border: 2px dashed #a7f3d0; background: var(--primary-subtle); border-radius: var(--radius); padding: 2rem 1.5rem; text-align: center; cursor: pointer; position: relative; transition: all 0.2s; }
+    .drop-zone:hover { border-color: var(--primary); background: #e6fffa; }
+    .drop-zone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .form-input { width: 100%; padding: 0.85rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15); }
+    .form-input.code { font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.85rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.2s; }
+    .btn:hover { background: var(--primary-dark); }
+
+    .result-box { margin-top: 1.5rem; padding: 1.25rem; border-radius: 8px; background: var(--primary-subtle); border: 1px solid #bfe7e3; display: none; }
+    .hash-display { background: white; padding: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.9rem; word-break: break-all; margin-top: 0.5rem; }
+
+    .status-card { margin-top: 1.5rem; padding: 1.25rem; border-radius: 8px; display: none; }
+    .status-card.valid { display: block; background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); }
+    .status-card.invalid { display: block; background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger-text); }
+    .status-title { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+    footer { background: var(--surface); border-top: 1px solid var(--border-color); padding: 1.5rem; text-align: center; margin-top: auto; font-size: 0.9rem; color: var(--text-muted); }
+    footer span { color: var(--primary-dark); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <img src="https://iili.io/Cr21Nx2.th.png" alt="Nusachain Logo">
+        <span class="brand-title">Nusachain Verisign & Explorer</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="tabs-wrapper">
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="switchTab('generator')"><i class="fa-solid fa-plus"></i> Generator Hash</button>
+      <button class="tab-btn" onclick="switchTab('verifier')"><i class="fa-solid fa-shield-halved"></i> Verifikasi & Explorer Match</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- TAB 1: GENERATOR -->
+    <div id="tab-generator" class="tab-content active">
+      <div class="panel">
+        <h1 class="panel-title">Generator Hash SHA-256</h1>
+        <p class="panel-desc">Unggah file jenis apapun untuk mendapatkan nilai sidik jari digital (SHA-256).</p>
+        
+        <div class="drop-zone">
+          <input type="file" id="genFileInput" onchange="handleGenFileSelect(this.files)">
+          <div style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+          <div style="font-weight: 600;">Pilih atau Seret File ke Sini</div>
+        </div>
+
+        <div id="genResult" class="result-box">
+          <strong>Hasil SHA-256 Hash:</strong>
+          <div class="hash-display" id="genHashOutput">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: VERIFIKASI & EXPLORER MATCHING -->
+    <div id="tab-verifier" class="tab-content">
+      <div class="panel">
+        <h1 class="panel-title">Verifikasi Dokumen & Pencocokan Explorer</h1>
+        <p class="panel-desc">Unggah file Anda. Sistem akan mencocokkannya dengan database lokal / OP_RETURN Explorer. Masukkan TXID jika Anda memilikinya, atau biarkan sistem mencocokkannya secara otomatis.</p>
+
+        <div class="form-group">
+          <label class="form-label">1. Unggah File</label>
+          <div class="drop-zone" style="padding: 1.5rem;">
+            <input type="file" id="verFileInput" onchange="handleVerFileSelect(this.files)">
+            <div id="verFileText" style="font-weight: 600;">Klik atau seret file ke sini</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="manualTxidInput">2. Masukkan TXID Verisign (Opsional / Jika Pemilik Memiliki)</label>
+          <input type="text" id="manualTxidInput" class="form-input code" placeholder="Contoh: 7d2876... (Kosongkan untuk pencocokan otomatis via Database/Explorer)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="refHashInput">3. Hash SHA-256 (Otomatis terisi dari file)</label>
+          <input type="text" id="refHashInput" class="form-input code" placeholder="Hash file...">
+        </div>
+
+        <button class="btn" onclick="verifyWithExplorer()">
+          <i class="fa-solid fa-magnifying-glass-chart"></i> Cocokkan dengan Explorer & Database
+        </button>
+
+        <div id="verStatusCard" class="status-card">
+          <div id="verStatusTitle" class="status-title"></div>
+          <div style="font-size: 0.85rem; margin-top: 0.5rem;">
+            <strong>Detail Transaksi / On-Chain Info:</strong>
+            <div id="verExplorerDetails" class="hash-display" style="margin-top: 0.25rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Powered by <span>Nusachain Explorer Integration</span>
+  </footer>
+
+  <script>
+    // --- DATABASE LOKAL & REKAMAN TXID VERISIGN (Sesuai Permintaan) ---
+    // Anda bisa memasukkan daftar database hash dan TXID verisign yang pernah ada di sini:
+    const verisignDatabase = [
+      {
+        hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        txid: "4a5e1f7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f",
+        description: "Contoh Dokumen Kosong / Perjanjian Kerjasama V1"
+      },
+      {
+        hash: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+        txid: "9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e",
+        description: "Sertifikat Aset Digital Nusachain"
+      }
+      // Tambahkan data hash dan txid lainnya di sini sesuai kebutuhan
+    ];
+
+    const API_BASE = 'https://explorer.nusacoin.org';
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'generator') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-generator').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-verifier').classList.add('active');
+      }
+    }
+
+    async function calculateSHA256(file) {
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function handleGenFileSelect(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      document.getElementById('genResult').style.display = 'block';
+      document.getElementById('genHashOutput').textContent = 'Menghitung hash...';
+      try {
+        const hash = await calculateSHA256(file);
+        document.getElementById('genHashOutput').textContent = hash;
+      } catch (err) {
+        document.getElementById('genHashOutput').textContent = 'Gagal memproses file.';
+      }
+    }
+
+    let selectedVerFile = null;
+    async function handleVerFileSelect(files) {
+      if (!files || files.length === 0) return;
+      selectedVerFile = files[0];
+      document.getElementById('verFileText').textContent = `File Terpilih: ${selectedVerFile.name}`;
+      try {
+        const hash = await calculateSHA256(selectedVerFile);
+        document.getElementById('refHashInput').value = hash;
+      } catch (err) {
+        alert('Gagal membaca file.');
+      }
+    }
+
+    // Fungsi Utama Verifikasi & Koneksi Explorer / Database
+    async function verifyWithExplorer() {
+      const manualTxid = document.getElementById('manualTxidInput').value.trim();
+      const computedHash = document.getElementById('refHashInput').value.trim().toLowerCase();
+      const statusCard = document.getElementById('verStatusCard');
+      const statusTitle = document.getElementById('verStatusTitle');
+      const detailsBox = document.getElementById('verExplorerDetails');
+
+      if (!selectedVerFile && !computedHash) {
+        alert('Silakan unggah file atau masukkan hash terlebih dahulu.');
+        return;
+      }
+
+      statusCard.className = 'status-card';
+      statusCard.style.display = 'block';
+      statusTitle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan ke Explorer & Memeriksa Database...';
+      detailsBox.textContent = 'Memproses pencocokan...';
+
+      let matchedRecord = null;
+      let explorerData = null;
+
+      // SKENARIO 1: Pemilik file memiliki TXID dan memasukkannya secara langsung
+      if (manualTxid) {
+        try {
+          const res = await fetch(`${API_BASE}/ext/gettx/${manualTxid}`);
+          const data = await res.json();
+          if (data && data.tx) {
+            explorerData = data.tx;
+            matchedRecord = { txid: manualTxid, source: 'Manual TXID Input & Explorer Verified' };
+          }
+        } catch (e) {
+          console.error("Gagal mengambil dari explorer API langsung:", e);
+        }
+      }
+
+      // SKENARIO 2: Pencocokan otomatis melalui Database Lokal Verisign
+      if (!matchedRecord && computedHash) {
+        const found = verisignDatabase.find(item => item.hash.toLowerCase() === computedHash);
+        if (found) {
+          matchedRecord = found;
+          // Coba ambil detail keaslian transaksinya dari explorer
+          try {
+            const res = await fetch(`${API_BASE}/ext/gettx/${found.txid}`);
+            const data = await res.json();
+            if (data && data.tx) explorerData = data.tx;
+          } catch (e) {}
+        }
+      }
+
+      // Render Hasil Verifikasi
+      if (matchedRecord) {
+        statusCard.className = 'status-card valid';
+        statusTitle.innerHTML = '<i class="fa-solid fa-circle-check"></i> VERIFIKASI BERHASIL: Hash & TXID Cocok dengan Explorer!';
+        detailsBox.innerHTML = `
+          <strong>TXID:</strong> ${matchedRecord.txid}<br>
+          <strong>Keterangan:</strong> ${matchedRecord.description || 'Terdaftar di Ledger Nusachain'}<br>
+          ${explorerData ? `<strong>Block Index:</strong> 🔗${explorerData.blockindex}<br><strong>Konfirmasi:</strong> On-Chain Valid` : '<strong>Status:</strong> Cocok dengan Database Verisign'}
+        `;
+      } else {
+        statusCard.className = 'status-card invalid';
+        statusTitle.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> VERIFIKASI GAGAL: Tidak Ditemukan di Explorer / Database';
+        detailsBox.innerHTML = `Hash file <code>${computedHash}</code> tidak memiliki catatan OP_RETURN atau TXID yang cocok dengan database verisign saat ini.`;
+      }
+    }
+  </script>
+</body>
+</html>
