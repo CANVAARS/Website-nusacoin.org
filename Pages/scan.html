@@ -128,10 +128,9 @@
     <button onclick="showDashboard()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold">Beranda</button>
     <button onclick="showHoldersPage()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-trophy text-amber-400"></i> Top Holders</button>
     <button onclick="showQutradeMarket()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-chart-line"></i> Nodes</button>
+    <button onclick="showQRCodePage()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold text-purple-400 flex items-center gap-1.5"><i class="fa-solid fa-qrcode"></i> QR Code</button>
+    <button onclick="showMediaPage()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold text-cyan-400 flex items-center gap-1.5"><i class="fa-solid fa-photo-film"></i> Media Gallery</button>
 
-        <button onclick="showMediaPage()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold text-cyan-400 flex items-center gap-1.5">
-      <i class="fa-solid fa-photo-film"></i> Media Gallery
-    </button>
     <button onclick="showPoolPage()" class="hover:text-emerald-400 transition tracking-wide uppercase text-xs font-bold text-amber-400 flex items-center gap-1.5">
       <i class="fa-solid fa-server"></i> Pool
     </button>
@@ -148,8 +147,7 @@
     <div class="bg-cardBg rounded-2xl p-4 flex items-center gap-3 glow-box transition-all">
       <div class="bg-emerald-500/10 text-emerald-400 p-3 rounded-xl"><i class="fa-solid fa-dollar-sign text-lg"></i></div>
       <div><p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Harga NUX</p>
-      <span id="stat-price" class="text-slate-900 dark:text-white text-base font-semibold font-mono">$-.--</span>
-      <span id="stat-price-idr" class="text-slate-500 dark:text-slate-400 text-[11px] font-medium font-mono block">Rp -</span></div>
+      <span id="stat-price" class="text-slate-900 dark:text-white text-base font-semibold font-mono">$-.--</span></div>
     </div>
     <div class="bg-cardBg rounded-2xl p-4 flex items-center gap-3 glow-box transition-all">
       <div class="bg-cyan-500/10 text-cyan-400 p-3 rounded-xl"><i class="fa-solid fa-cube text-lg"></i></div>
@@ -299,7 +297,6 @@
     </div>
   </div>
 </div>
-
 
 <!-- PAGE: MEDIA GALLERY (INJECTED BLOCKCHAIN MEDIA) -->
 <div id="page-media" class="hidden-page max-w-7xl mx-auto space-y-6 fade-in">
@@ -471,7 +468,7 @@
         <span id="tx-time-val" class="text-slate-300 font-medium"></span>
       </div>
     </div>
-    
+
     <!-- CONTAINER OP_RETURN & INJECTED MEDIA -->
     <div id="tx-media-container" class="space-y-4"></div>
 
@@ -493,6 +490,32 @@
           </tr></thead>
           <tbody id="tx-recipients-list"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: QR CODE GENERATOR -->
+<div id="page-qrcode" class="hidden-page max-w-4xl mx-auto space-y-4 fade-in">
+  <button onclick="showDashboard()" class="text-xs font-semibold text-slate-400 hover:text-emerald-400 flex items-center gap-2 transition bg-slate-200 dark:bg-[#0b0f19] px-3 py-1.5 rounded-xl border border-slate-300 dark:border-emerald-500/20">
+    <i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda
+  </button>
+  
+  <div class="bg-cardBg rounded-2xl p-6 glow-box space-y-6">
+    <div class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-purple-400 border-b border-slate-800 pb-3">
+      <i class="fa-solid fa-qrcode"></i> Nusa Address QR Code Generator
+    </div>
+    
+    <div class="flex flex-col md:flex-row gap-4">
+      <div class="flex-1 space-y-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Masukkan Nusa Address untuk menghasilkan gambar QR Code yang memuat alamat tersebut. Fitur ini mengambil data langsung dari node public Taobot.</p>
+        <div class="flex gap-2">
+          <input type="text" id="qr-input-hash" placeholder="Contoh: NPFTm17Wm19uazEKiy7br4Q3d7DXWPj5HX" class="flex-1 bg-slate-100 dark:bg-[#030712] border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition">
+          <button onclick="generateQRCode()" class="bg-purple-500 hover:bg-purple-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg shadow-purple-500/20">Generate</button>
+        </div>
+      </div>
+      <div id="qr-result-container" class="w-full md:w-64 min-h-[16rem] bg-slate-100 dark:bg-[#030712] border border-slate-300 dark:border-slate-800 rounded-xl flex items-center justify-center p-4">
+        <span class="text-xs text-slate-400 text-center">QR Code akan muncul di sini</span>
       </div>
     </div>
   </div>
@@ -800,7 +823,7 @@ cpuminer -a x11 -o stratum+tcp://pooljava.nusacoin.org:3257 -u ALAMAT_WALLET_AND
         <div class="footer-links space-y-2">
             <h3 class="text-xs font-bold uppercase tracking-widest text-emerald-400">Quick Links</h3>
             <ul class="space-y-1.5 text-xs">
-                <li><a href="https://explorer.nusacoin.org" target="_blank" class="text-slate-600 dark:text-slate-400 hover:text-emerald-400 transition">Explorer</a></li>
+                <li><a href="https://book.taobot.org" target="_blank" class="text-slate-600 dark:text-slate-400 hover:text-emerald-400 transition">Explorer</a></li>
                 <li><a href="https://dompet.nusacoin.org" target="_blank" class="text-slate-600 dark:text-slate-400 hover:text-emerald-400 transition">Nusacoin Dompet Web</a></li>
                 <li><a href="https://www.nusacoin.org/p/nusacoin-developer-portal-reset-dasar.html" target="_blank" class="text-slate-600 dark:text-slate-400 hover:text-emerald-400 transition">Nusacoin Core</a></li>
                 <li><a href="https://green.nusacoin.org" target="_blank" class="text-slate-600 dark:text-slate-400 hover:text-emerald-400 transition">Nusacoin Green Wallet</a></li>
@@ -826,8 +849,7 @@ cpuminer -a x11 -o stratum+tcp://pooljava.nusacoin.org:3257 -u ALAMAT_WALLET_AND
 </footer>
 
 <script>
-const API_BASE = 'https://explorer.nusacoin.org';
-const USD_TO_IDR_RATE = 18000; // Kurs perkiraan USD -> IDR, sesuaikan bila perlu
+const API_BASE = 'https://book.taobot.org';
 let lastKnownHeight = null;
 let currentBlock = null;
 let mapInitialized = false;
@@ -886,7 +908,7 @@ const countryCoords = {
 
 // ---------- ROUTER ----------
 function hideAllPages() {
-  ['page-dashboard','page-block','page-address','page-tx','page-qutrade','page-holders','page-pool','page-media'].forEach(id => {
+  ['page-dashboard','page-block','page-address','page-tx','page-qutrade','page-holders', 'page-qrcode', 'page-pool', 'page-media'].forEach(id => {
     document.getElementById(id).classList.add('hidden-page');
   });
 }
@@ -914,10 +936,20 @@ function showHoldersPage() {
   loadTopHolders();
 }
 
+function showQRCodePage() {
+  showPage('page-qrcode');
+  location.hash = '/qrcode';
+}
+
 function showPoolPage() {
   showPage('page-pool');
   location.hash = '/pool';
   loadPoolStats();
+}
+
+function showMediaPage() {
+  showPage('page-media');
+  location.hash = '/media';
 }
 
 // ---------- POOL TABS (Graph Stats / Tab Stats / Workers Stats) ----------
@@ -1079,6 +1111,31 @@ async function loadPoolStats() {
   }
 }
 
+function generateQRCode() {
+  const hash = document.getElementById('qr-input-hash').value.trim();
+  if (!hash) {
+    toast('Masukkan alamat (address) terlebih dahulu!', 'fa-triangle-exclamation', 'rose');
+    return;
+  }
+  
+  const qrContainer = document.getElementById('qr-result-container');
+  // Menampilkan state loading
+  qrContainer.innerHTML = '<div class="pulse-dot w-8 h-8 rounded-full bg-purple-500/50"></div>';
+  
+  // Memuat gambar dari API
+  const img = new Image();
+  img.onload = () => {
+    qrContainer.innerHTML = '';
+    img.className = 'w-full h-auto rounded-lg shadow-md';
+    qrContainer.appendChild(img);
+  };
+  img.onerror = () => {
+    qrContainer.innerHTML = '<span class="text-xs text-rose-400 text-center">Gagal memuat QR Code. Pastikan address valid.</span>';
+  };
+  // API baru untuk QR
+  img.src = `${API_BASE}/qr/${hash}`;
+}
+
 // ---------- FETCH TOP HOLDERS NUX ----------
 async function loadTopHolders() {
   const tbody = document.getElementById('holders-tbody');
@@ -1197,10 +1254,7 @@ async function fetchNetworkStats() {
     const summary = await summaryRes.json();
     const basic = await basicRes.json();
 
-    const priceUsd = parseFloat(basic.last_price_usd ?? summary.lastUSDPrice ?? 0);
-    setStat('stat-price', `$${priceUsd}`);
-    const priceIdr = priceUsd * USD_TO_IDR_RATE;
-    setStat('stat-price-idr', `Rp ${new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(priceIdr)}`);
+    setStat('stat-price', `$${(basic.last_price_usd ?? summary.lastUSDPrice ?? 0)}`);
     setStat('stat-blocks', formatNumber(summary.blockcount));
     setStat('stat-difficulty', Number(summary.difficulty).toFixed(4));
     const hr = parseFloat(summary.hashrate || 0);
@@ -1564,6 +1618,7 @@ function handleRoute() {
   else if (type === 'block' && query) viewBlockDetail(query);
   else if (type === 'address' && query) viewAddressDetail(query);
   else if (type === 'holders') showHoldersPage();
+  else if (type === 'qrcode') showQRCodePage();
   else if (type === 'pool') showPoolPage();
   else if (type === 'media') showMediaPage();
   else showDashboard(false);
@@ -1581,17 +1636,11 @@ handleRoute();
 // OP_RETURN & INJECTED MEDIA DECODER & VIEWER
 // ==========================================
 
-function showMediaPage() {
-  showPage('page-media');
-  location.hash = '/media';
-}
-
 function hexToUtf8(hex) {
   try {
     let cleanHex = hex.trim();
     if (cleanHex.toLowerCase().startsWith('6a')) {
       cleanHex = cleanHex.substring(2);
-      // Remove pushdata byte length if present
       if (cleanHex.length > 2) {
         const firstByte = parseInt(cleanHex.substring(0, 2), 16);
         if (firstByte <= 75) {
@@ -1622,19 +1671,19 @@ function parseOpReturnPayload(scriptPubKeyHex) {
   const rawHex = scriptPubKeyHex.trim();
   const decodedText = hexToUtf8(rawHex);
 
-  // Check 1: Data URI Image (e.g. data:image/png;base64,...)
+  // Check 1: Data URI Image
   const dataUriMatch = decodedText.match(/data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+/i);
   if (dataUriMatch) {
     return { type: 'image', src: dataUriMatch[0], text: decodedText };
   }
 
-  # Check 2: Pure Base64 Image string
+  // Check 2: Pure Base64 Image string
   if (/^[A-Za-z0-9+/=\s]+$/.test(decodedText.trim()) && decodedText.trim().length > 100) {
     const cleanB64 = decodedText.trim().replace(/\s+/g, '');
     return { type: 'image', src: `data:image/png;base64,${cleanB64}`, text: decodedText };
   }
 
-  # Check 3: Plain Text Message or JSON Payload
+  // Check 3: Plain Text Message or JSON Payload
   if (decodedText.length > 0) {
     return { type: 'text', text: decodedText };
   }
@@ -1659,7 +1708,6 @@ function decodeRawHexInput() {
   
   let parsed = parseOpReturnPayload(input);
   if (!parsed || (!parsed.text && !parsed.src)) {
-    // If not script hex, try plain UTF8
     const txt = hexToUtf8(input) || input;
     parsed = { type: 'text', text: txt };
   }
@@ -1747,7 +1795,6 @@ async function scanRecentMedia() {
     grid.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-xs">Gagal memindai data transaksi terbaru.</div>`;
   }
 }
-
 </script>
 </body>
 </html>
