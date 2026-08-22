@@ -50,10 +50,10 @@
     color: var(--text-secondary);
     transition: background-color .3s, color .3s;
   }
-  
+
   table { border-collapse: collapse; border-spacing: 0; border: none !important; }
   td, th { border: none !important; outline: none !important; }
-  
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.6); }
@@ -70,7 +70,7 @@
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
     border-color: rgba(16, 185, 129, 0.35);
   }
-  
+
   .pulse-dot { animation: pulseDot 1.8s infinite; }
   @keyframes pulseDot { 0%{box-shadow:0 0 0 0 rgba(16,185,129,.6);} 70%{box-shadow:0 0 0 8px rgba(16,185,129,0);} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0);} }
 
@@ -312,8 +312,8 @@
       <div class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-cyan-400">
         <i class="fa-solid fa-photo-film"></i> Galeri Media & Data OP_RETURN Injected
       </div>
-      <button onclick="scanRecentMedia()" class="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-        <i class="fa-solid fa-arrows-rotate"></i> Pindai Transaksi Terbaru
+      <button id="scanMediaBtn" onclick="startSequentialBlockchainScan()" class="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+        <i class="fa-solid fa-arrows-rotate"></i> Pindai Seluruh Blockchain Media
       </button>
     </div>
 
@@ -323,7 +323,7 @@
         <i class="fa-solid fa-terminal text-amber-400"></i> Tool Dekoder OP_RETURN / Hex
       </h3>
       <p class="text-xs text-slate-500 dark:text-slate-400">Tempelkan ScriptPubKey Hex atau Data Payload dari OP_RETURN untuk men-dekode teks, UTF-8, atau merender media gambar secara instan.</p>
-      
+
       <div class="space-y-3">
         <textarea id="rawHexInput" rows="3" placeholder="Contoh: 6a284e757361436861696e... atau data:image/png;base64,iVBORw0KGgo..." class="w-full bg-slate-200 dark:bg-[#0b0f19] border border-slate-300 dark:border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"></textarea>
         <div class="flex items-center gap-2 flex-wrap">
@@ -355,12 +355,15 @@
 
     <!-- Live Scanned Injected Media List -->
     <div class="space-y-4">
-      <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-        <i class="fa-solid fa-images text-emerald-400"></i> Hasil Pemindaian Media & OP_RETURN Transaksi Terbaru
-      </h3>
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-images text-emerald-400"></i> Hasil Pemindaian Media & OP_RETURN Transaksi Terbaru
+        </h3>
+        <div id="scanStatusText" class="text-xs font-mono text-slate-400"></div>
+      </div>
       <div id="scanned-media-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="col-span-full text-center py-8 text-slate-500 font-mono text-xs">
-          Klik "Pindai Transaksi Terbaru" atau buka detail transaksi untuk melihat payload media yang di-inject.
+          Klik "Pindai Seluruh Blockchain Media" atau buka detail transaksi untuk melihat payload media yang di-inject.
         </div>
       </div>
     </div>
@@ -500,12 +503,12 @@
   <button onclick="showDashboard()" class="text-xs font-semibold text-slate-400 hover:text-emerald-400 flex items-center gap-2 transition bg-slate-200 dark:bg-[#0b0f19] px-3 py-1.5 rounded-xl border border-slate-300 dark:border-emerald-500/20">
     <i class="fa-solid fa-arrow-left"></i> Kembali ke Beranda
   </button>
-  
+
   <div class="bg-cardBg rounded-2xl p-6 glow-box space-y-6">
     <div class="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-purple-400 border-b border-slate-800 pb-3">
       <i class="fa-solid fa-qrcode"></i> Nusa Address QR Code Generator
     </div>
-    
+
     <div class="flex flex-col md:flex-row gap-4">
       <div class="flex-1 space-y-4">
         <p class="text-xs text-slate-500 dark:text-slate-400">Masukkan Nusa Address untuk menghasilkan gambar QR Code yang memuat alamat tersebut. Fitur ini mengambil data langsung dari node public Taobot.</p>
@@ -855,6 +858,7 @@ let currentBlock = null;
 let mapInitialized = false;
 let nodeMap = null;
 let peerMarkers = [];
+let isScanningMedia = false;
 
 // ---------- THEME ----------
 const themeToggleBtn = document.getElementById('themeToggle');
@@ -973,7 +977,6 @@ function formatHashrateStr(h) {
 
 async function loadPoolStats() {
   try {
-    // 1. Memuat data statis langsung dari file API POOL
     const data = {
       "time": 1785080258,
       "global": {
@@ -1012,14 +1015,12 @@ async function loadPoolStats() {
     };
 
     lastPoolData = data;
-    
-    // 2. Pemetaan struktur JSON 
+
     const pool = (data.pools && data.pools.nusacoin) || {};
     const stats = pool.poolStats || {};
     const blocks = pool.blocks || {};
     const algoX11 = (data.algos && data.algos.x11) || {};
 
-    // --- Summary cards ---
     document.getElementById('pool-hashrate').innerText = pool.hashrateString || formatHashrateStr(pool.hashrate || data.global?.hashrate);
     document.getElementById('pool-workers').innerText = formatNumber(pool.workerCount ?? data.global?.workers ?? 0);
     document.getElementById('pool-validblocks').innerText = formatNumber(stats.validBlocks || 0);
@@ -1030,13 +1031,12 @@ async function loadPoolStats() {
     document.getElementById('pool-orphaned').innerText = `${formatNumber(blocks.orphaned || 0)} / ${formatNumber(blocks.pending || 0)}`;
     document.getElementById('pool-updated').innerText = data.time ? `Update: ${new Date(data.time*1000).toLocaleTimeString('id-ID')}` : '';
 
-    // --- GRAPH STATS TAB ---
     const validShares = parseFloat(stats.validShares || 0);
     const invalidShares = parseFloat(stats.invalidShares || 0);
     const totalShares = validShares + invalidShares;
     const validPct = totalShares > 0 ? (validShares / totalShares) * 100 : 0;
     const invalidPct = totalShares > 0 ? 100 - validPct : 0;
-    
+
     document.getElementById('graph-bar-valid').style.width = `${validPct}%`;
     document.getElementById('graph-bar-invalid').style.width = `${invalidPct}%`;
     document.getElementById('graph-shares-label').innerText = `${formatNumber(validShares)} valid / ${formatNumber(invalidShares)} invalid`;
@@ -1044,7 +1044,7 @@ async function loadPoolStats() {
 
     const confirmedN = blocks.confirmed || 0, orphanedN = blocks.orphaned || 0, pendingN = blocks.pending || 0;
     const totalBlocks = confirmedN + orphanedN + pendingN;
-    
+
     document.getElementById('graph-bar-confirmed').style.width = totalBlocks > 0 ? `${(confirmedN/totalBlocks)*100}%` : '0%';
     document.getElementById('graph-bar-orphaned').style.width = totalBlocks > 0 ? `${(orphanedN/totalBlocks)*100}%` : '0%';
     document.getElementById('graph-bar-pending').style.width = totalBlocks > 0 ? `${(pendingN/totalBlocks)*100}%` : '0%';
@@ -1054,7 +1054,6 @@ async function loadPoolStats() {
     document.getElementById('graph-global-workers').innerText = formatNumber(algoX11.workers ?? data.global?.workers ?? 0);
     document.getElementById('graph-algo').innerText = (pool.algorithm || 'x11').toUpperCase();
 
-    // --- TAB STATS (raw field/value table) ---
     const rows = {
       'Waktu (Unix Time)': data.time ? `${data.time} — ${new Date(data.time*1000).toLocaleString('id-ID')}` : '-',
       'Global Workers': data.global?.workers ?? 0,
@@ -1074,21 +1073,20 @@ async function loadPoolStats() {
       'Worker Count': formatNumber(pool.workerCount ?? 0),
       'Pool Hashrate': pool.hashrateString || formatHashrateStr(pool.hashrate || 0)
     };
-    
+
     document.getElementById('pool-tabstats-body').innerHTML = Object.entries(rows).map(([k,v]) => `
       <tr class="hover:bg-slate-100 dark:hover:bg-slate-900/40 transition border-none">
         <td class="p-3 font-semibold text-slate-500 w-1/2 uppercase tracking-wider text-[11px]">${k}</td>
         <td class="p-3 text-slate-900 dark:text-slate-200 font-medium break-all">${v}</td>
       </tr>`).join('');
 
-    // --- WORKERS STATS TAB ---
     document.getElementById('workers-count').innerText = formatNumber(pool.workerCount ?? data.global?.workers ?? 0);
     document.getElementById('workers-hashrate').innerText = pool.hashrateString || formatHashrateStr(pool.hashrate || 0);
 
     const workersObj = pool.workers || {};
     const workerEntries = Object.entries(workersObj);
     const workersBody = document.getElementById('pool-workers-body');
-    
+
     if (workerEntries.length) {
       workersBody.innerHTML = workerEntries.map(([name, w]) => `
         <tr class="hover:bg-slate-100 dark:hover:bg-slate-900/40 transition border-none">
@@ -1117,12 +1115,10 @@ function generateQRCode() {
     toast('Masukkan alamat (address) terlebih dahulu!', 'fa-triangle-exclamation', 'rose');
     return;
   }
-  
+
   const qrContainer = document.getElementById('qr-result-container');
-  // Menampilkan state loading
   qrContainer.innerHTML = '<div class="pulse-dot w-8 h-8 rounded-full bg-purple-500/50"></div>';
-  
-  // Memuat gambar dari API
+
   const img = new Image();
   img.onload = () => {
     qrContainer.innerHTML = '';
@@ -1132,7 +1128,6 @@ function generateQRCode() {
   img.onerror = () => {
     qrContainer.innerHTML = '<span class="text-xs text-rose-400 text-center">Gagal memuat QR Code. Pastikan address valid.</span>';
   };
-  // API baru untuk QR
   img.src = `${API_BASE}/qr/${hash}`;
 }
 
@@ -1480,7 +1475,6 @@ async function viewTxDetail(txid) {
 
     document.getElementById('tx-time-val').innerText = data.timestamp ? new Date(data.timestamp * 1000).toUTCString() : '-';
 
-    // OP_RETURN & Media Injected Extractor
     const mediaContainer = document.getElementById('tx-media-container');
     let opReturnData = [];
     let mediaList = [];
@@ -1505,7 +1499,7 @@ async function viewTxDetail(txid) {
     if (mediaContainer) {
       if (opReturnData.length > 0 || mediaList.length > 0) {
         let mediaHtml = '<div class="space-y-4">';
-        
+
         if (opReturnData.length > 0) {
           mediaHtml += `
             <div class="bg-[#030712] p-5 rounded-2xl border border-slate-800 space-y-2 glow-box">
@@ -1652,7 +1646,7 @@ function hexToUtf8(hex) {
         }
       }
     }
-    
+
     let str = '';
     for (let i = 0; i < cleanHex.length; i += 2) {
       const code = parseInt(cleanHex.substr(i, 2), 16);
@@ -1671,24 +1665,43 @@ function parseOpReturnPayload(scriptPubKeyHex) {
   const rawHex = scriptPubKeyHex.trim();
   const decodedText = hexToUtf8(rawHex);
 
-  // Check 1: Data URI Image
+  // Check 1: Magic bytes detection langsung dari Hex
+  if (rawHex.includes('89504e47')) {
+    const idx = rawHex.indexOf('89504e47');
+    const imageHex = rawHex.substring(idx);
+    const base64Str = hexToBase64(imageHex);
+    return { type: 'image', src: `data:image/png;base64,${base64Str}`, text: '[Magic Bytes PNG Detected]' };
+  } else if (rawHex.includes('ffd8ffe0') || rawHex.includes('ffd8ffe1')) {
+    const idx = rawHex.includes('ffd8ffe0') ? rawHex.indexOf('ffd8ffe0') : rawHex.indexOf('ffd8ffe1');
+    const imageHex = rawHex.substring(idx);
+    const base64Str = hexToBase64(imageHex);
+    return { type: 'image', src: `data:image/jpeg;base64,${base64Str}`, text: '[Magic Bytes JPEG Detected]' };
+  }
+
+  // Check 2: Data URI Image
   const dataUriMatch = decodedText.match(/data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=]+/i);
   if (dataUriMatch) {
     return { type: 'image', src: dataUriMatch[0], text: decodedText };
   }
 
-  // Check 2: Pure Base64 Image string
+  // Check 3: Pure Base64 Image string
   if (/^[A-Za-z0-9+/=\s]+$/.test(decodedText.trim()) && decodedText.trim().length > 100) {
     const cleanB64 = decodedText.trim().replace(/\s+/g, '');
     return { type: 'image', src: `data:image/png;base64,${cleanB64}`, text: decodedText };
   }
 
-  // Check 3: Plain Text Message or JSON Payload
+  // Check 4: Plain Text Message or JSON Payload
   if (decodedText.length > 0) {
     return { type: 'text', text: decodedText };
   }
 
   return null;
+}
+
+function hexToBase64(hexstring) {
+  return btoa(hexstring.match(/\w{2}/g).map(function(a) {
+    return String.fromCharCode(parseInt(a, 16));
+  }).join(""));
 }
 
 function decodeRawHexInput() {
@@ -1705,7 +1718,7 @@ function decodeRawHexInput() {
   }
 
   outputWrap.classList.remove('hidden-page');
-  
+
   let parsed = parseOpReturnPayload(input);
   if (!parsed || (!parsed.text && !parsed.src)) {
     const txt = hexToUtf8(input) || input;
@@ -1725,75 +1738,114 @@ function decodeRawHexInput() {
   toast('Berhasil men-dekode data OP_RETURN!', 'fa-code', 'emerald');
 }
 
-async function scanRecentMedia() {
+// SECONDS SEQUENTIAL BLOCKCHAIN SCRAPER FOR MEDIA & OP_RETURN
+async function startSequentialBlockchainScan() {
+  if (isScanningMedia) return;
+  isScanningMedia = true;
+
+  const btn = document.getElementById('scanMediaBtn');
+  const statusText = document.getElementById('scanStatusText');
   const grid = document.getElementById('scanned-media-grid');
-  grid.innerHTML = `<div class="col-span-full text-center py-8"><div class="skel h-8 w-64 mx-auto mb-2"></div><p class="text-xs text-slate-400">Memindai transaksi terbaru untuk mencari data OP_RETURN & media...</p></div>`;
+
+  btn.disabled = true;
+  btn.classList.add('opacity-50');
+  grid.innerHTML = '';
 
   try {
-    const res = await fetch(`${API_BASE}/ext/getlasttxs/0/0/20`);
-    const txs = await res.json();
-    let foundMedia = [];
+    const summaryRes = await fetch(`${API_BASE}/ext/getsummary`);
+    const summary = await summaryRes.json();
+    const latestHeight = summary.blockcount || 0;
+    
+    // Pindai 50 blok terakhir secara sekuensial
+    const scanDepth = 50;
+    const startHeight = Math.max(0, latestHeight - scanDepth);
+    let totalMediaFound = 0;
 
-    for (const tx of (txs || [])) {
+    for (let h = latestHeight; h >= startHeight; h--) {
+      statusText.innerText = `Memindai Blok #${h}...`;
+      
       try {
-        const txRes = await fetch(`${API_BASE}/ext/gettx/${tx.txid}`);
-        const txData = await txRes.json();
-        if (txData && txData.tx && txData.tx.vout) {
-          txData.tx.vout.forEach(vout => {
-            if (vout.scriptPubKey && vout.scriptPubKey.hex) {
-              const hex = vout.scriptPubKey.hex;
-              if (hex.startsWith('6a')) {
-                const parsed = parseOpReturnPayload(hex);
-                if (parsed) {
-                  foundMedia.push({
-                    txid: tx.txid,
-                    amount: tx.amount,
-                    parsed: parsed
-                  });
+        const hashRes = await fetch(`${API_BASE}/api/getblockhash?index=${h}`);
+        const hash = (await hashRes.text()).trim();
+        const blockRes = await fetch(`${API_BASE}/api/getblock?hash=${hash}`);
+        const block = await blockRes.json();
+
+        if (block && block.tx) {
+          for (const txid of block.tx) {
+            const txRes = await fetch(`${API_BASE}/ext/gettx/${txid}`);
+            const txPayload = await txRes.json();
+            const tx = txPayload.tx;
+
+            if (tx && tx.vout) {
+              tx.vout.forEach(vout => {
+                let hex = '';
+                if (typeof vout.scriptPubKey === 'string') hex = vout.scriptPubKey;
+                else if (vout.scriptPubKey?.hex) hex = vout.scriptPubKey.hex;
+
+                if (hex && (hex.startsWith('6a') || hex.includes('89504e47') || hex.includes('ffd8ffe0'))) {
+                  const parsed = parseOpReturnPayload(hex);
+                  if (parsed) {
+                    totalMediaFound++;
+                    renderMediaCard({
+                      txid: tx.txid,
+                      blockIndex: h,
+                      amount: tx.total ? tx.total / 1e8 : 0,
+                      parsed: parsed
+                    });
+                  }
                 }
-              }
+              });
             }
-          });
+          }
         }
-      } catch (e) {}
+      } catch (err) {
+        console.error(`Error scanning block ${h}:`, err);
+      }
     }
 
-    if (!foundMedia.length) {
+    if (totalMediaFound === 0) {
       grid.innerHTML = `
         <div class="col-span-full text-center py-8 bg-slate-100 dark:bg-[#030712] rounded-2xl border border-slate-200 dark:border-slate-800">
           <i class="fa-solid fa-circle-info text-2xl text-amber-400 mb-2"></i>
-          <p class="text-xs text-slate-300 font-semibold">Tidak ditemukan payload OP_RETURN / media pada 20 transaksi terbaru.</p>
-          <p class="text-[11px] text-slate-500 mt-1">Anda juga dapat menguji Tool Dekoder di atas dengan menempelkan Hex ScriptPubKey secara manual.</p>
+          <p class="text-xs text-slate-300 font-semibold">Tidak ditemukan payload OP_RETURN / media pada ${scanDepth} blok terakhir.</p>
         </div>`;
-      return;
     }
-
-    grid.innerHTML = foundMedia.map(item => `
-      <div class="bg-slate-100 dark:bg-[#030712] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
-        <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
-          <span class="text-emerald-400 font-mono font-bold cursor-pointer hover:underline" onclick="viewTxDetail('${item.txid}')">${truncHash(item.txid, 8, 6)}</span>
-          <span class="text-[10px] text-slate-400 font-mono">${item.amount} NUX</span>
-        </div>
-
-        ${item.parsed.type === 'image' ? `
-          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex flex-col items-center">
-            <img src="${item.parsed.src}" class="max-h-48 object-contain rounded" alt="Injected Image">
-            <a href="${item.parsed.src}" download="injected-image-${item.txid.slice(0,8)}.png" class="mt-2 text-[10px] text-emerald-400 hover:underline flex items-center gap-1">
-              <i class="fa-solid fa-download"></i> Unduh Gambar
-            </a>
-          </div>
-        ` : ''}
-
-        <div class="space-y-1">
-          <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block">OP_RETURN Message</span>
-          <pre class="text-[11px] font-mono text-slate-300 bg-slate-900/60 p-2 rounded-lg border border-slate-800/80 whitespace-pre-wrap break-all max-h-28 overflow-y-auto">${item.parsed.text || '-'}</pre>
-        </div>
-      </div>
-    `).join('');
-
-  } catch (err) {
-    grid.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-xs">Gagal memindai data transaksi terbaru.</div>`;
+    statusText.innerText = `Pemindaian selesai. (${totalMediaFound} item ditemukan)`;
+  } catch (e) {
+    statusText.innerText = 'Gagal melakukan pemindaian.';
+  } finally {
+    isScanningMedia = false;
+    btn.disabled = false;
+    btn.classList.remove('opacity-50');
   }
+}
+
+function renderMediaCard(item) {
+  const grid = document.getElementById('scanned-media-grid');
+  const card = document.createElement('div');
+  card.className = 'bg-slate-100 dark:bg-[#030712] rounded-2xl p-4 border border-slate-200 dark:border-slate-800 space-y-3 fade-in';
+  
+  card.innerHTML = `
+    <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+      <span class="text-emerald-400 font-mono font-bold cursor-pointer hover:underline" onclick="viewTxDetail('${item.txid}')">${truncHash(item.txid, 8, 6)}</span>
+      <span class="text-[10px] text-slate-400 font-mono">Blok #${item.blockIndex}</span>
+    </div>
+
+    ${item.parsed.type === 'image' ? `
+      <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex flex-col items-center">
+        <img src="${item.parsed.src}" class="max-h-48 object-contain rounded" alt="Injected Image">
+        <a href="${item.parsed.src}" download="injected-image-${item.txid.slice(0,8)}.png" class="mt-2 text-[10px] text-emerald-400 hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-download"></i> Unduh Gambar
+        </a>
+      </div>
+    ` : ''}
+
+    <div class="space-y-1">
+      <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block">OP_RETURN Message</span>
+      <pre class="text-[11px] font-mono text-slate-300 bg-slate-900/60 p-2 rounded-lg border border-slate-800/80 whitespace-pre-wrap break-all max-h-28 overflow-y-auto">${item.parsed.text || '-'}</pre>
+    </div>
+  `;
+  grid.appendChild(card);
 }
 </script>
 </body>
