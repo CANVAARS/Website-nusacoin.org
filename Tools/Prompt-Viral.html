@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Prompt Kustom - Nusacoin Theme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-sub: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --bg-light: #f8fafc;
+            --border: #e2e8f0;
+            --title-green: #1e8449;
+            --link-green: #27ae60;
+        }
+
+        body.dark-mode {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-sub: #0f172a;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --bg-light: #1e293b;
+            --border: #334155;
+            --title-green: #4ade80;
+            --link-green: #4ade80;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            max-width: 700px;
+            width: 100%;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h2 {
+            margin: 0;
+            color: var(--title-green);
+            font-size: 22px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-toggle {
+            background-color: var(--bg-card-sub);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-toggle:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-lang.active {
+            background-color: var(--primary-dark);
+            color: #ffffff;
+            border-color: var(--primary-dark);
+        }
+
+        .preview-container {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .preview-container label {
+            margin-bottom: 8px;
+            color: var(--text-sub);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: var(--bg-card-sub);
+            color: var(--text-main);
+            transition: border-color 0.2s, background-color 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-submit {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .output-box {
+            margin-top: 25px;
+            background-color: var(--bg-card-sub);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        textarea {
+            width: 100%;
+            height: 350px;
+            font-family: 'Courier New', Courier, monospace;
+            background: var(--bg-body);
+            color: var(--text-main);
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 13px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .btn-copy {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-copy:hover {
+            background-color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-bar">
+        <h2 id="fMainTitle"><i class="fa-solid fa-pen-nib"></i> Travel Notes Generator</h2>
+        <div class="controls">
+            <button class="btn-toggle" onclick="toggleTheme()"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
+            <button class="btn-toggle btn-lang active" id="btnIN" onclick="switchLanguage('id')">IN</button>
+            <button class="btn-toggle btn-lang" id="btnEN" onclick="switchLanguage('en')">EN</button>
+        </div>
+    </div>
+    
+    <div class="preview-container">
+        <label id="lblPreview">Contoh Hasil Visual Poster:</label>
+        <img src="https://i.ibb.co.com/fVTnSPYr/Prompt-Viral.jpg" alt="Preview Poster" class="preview-image">
+    </div>
+
+    <div class="form-group">
+        <label id="lblTanggal" for="tanggal">Tanggal:</label>
+        <input type="text" id="tanggal" placeholder="Contoh: 20 Agustus 2026">
+    </div>
+
+    <div class="form-group">
+        <label id="lblLokasi" for="lokasi">Lokasi / Judul:</label>
+        <input type="text" id="lokasi" placeholder="Contoh: Banda Aceh">
+    </div>
+
+    <div class="form-group">
+        <label id="lblKeywords" for="keywords">Tiga Kata Kunci (Bahasa Inggris):</label>
+        <input type="text" id="keywords" placeholder="Contoh: MODERN, SERENE, HOME">
+    </div>
+
+    <div class="form-group">
+        <label id="lblPromptLang" for="promptLang">Bahasa Hasil Prompt:</label>
+        <select id="promptLang">
+            <option value="id">Bahasa Indonesia</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
+    <button class="btn-submit" id="btnGenerate" onclick="generatePrompt()">Buat Prompt Lengkap</button>
+
+    <div class="output-box" id="resultBox" style="display: none;">
+        <h3 id="fResultTitle"><i class="fa-solid fa-code"></i> Hasil Prompt:</h3>
+        <textarea id="outputText" readonly></textarea>
+        <button class="btn-copy" id="btnCopy" onclick="copyToClipboard()">Salin Teks</button>
+    </div>
+</div>
+
+<script>
+    const translations = {
+        id: {
+            fMainTitle: '<i class="fa-solid fa-pen-nib"></i> Travel Notes Generator',
+            lblPreview: 'Contoh Hasil Visual Poster:',
+            lblTanggal: 'Tanggal:',
+            lblLokasi: 'Lokasi / Judul:',
+            lblKeywords: 'Tiga Kata Kunci (Bahasa Inggris):',
+            lblPromptLang: 'Bahasa Hasil Prompt:',
+            btnGenerate: 'Buat Prompt Lengkap',
+            fResultTitle: '<i class="fa-solid fa-code"></i> Hasil Prompt:',
+            btnCopy: 'Salin Teks',
+            phTanggal: 'Contoh: 20 Agustus 2026',
+            phLokasi: 'Contoh: Banda Aceh',
+            phKeywords: 'Contoh: MODERN, SERENE, HOME'
+        },
+        en: {
+            fMainTitle: '<i class="fa-solid fa-pen-nib"></i> Travel Notes Generator',
+            lblPreview: 'Visual Poster Preview Example:',
+            lblTanggal: 'Date:',
+            lblLokasi: 'Location / Title:',
+            lblKeywords: 'Three Keywords (English):',
+            lblPromptLang: 'Output Prompt Language:',
+            btnGenerate: 'Generate Full Prompt',
+            fResultTitle: '<i class="fa-solid fa-code"></i> Prompt Result:',
+            btnCopy: 'Copy Text',
+            phTanggal: 'e.g. August 20, 2026',
+            phLokasi: 'e.g. Banda Aceh',
+            phKeywords: 'e.g. MODERN, SERENE, HOME'
+        }
+    };
+
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('themeIcon');
+        
+        body.classList.toggle('dark-mode');
+        
+        if (body.classList.contains('dark-mode')) {
+            icon.className = 'fa-solid fa-sun';
+        } else {
+            icon.className = 'fa-solid fa-moon';
+        }
+    }
+
+    function switchLanguage(lang) {
+        document.getElementById('btnIN').classList.toggle('active', lang === 'id');
+        document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+
+        const t = translations[lang];
+        for (let id in t) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (id.startsWith('f') && id.endsWith('Title')) {
+                    el.innerHTML = t[id];
+                } else if (id.startsWith('ph')) {
+                    // Handled separately for placeholders
+                } else {
+                    el.textContent = t[id];
+                }
+            }
+        }
+        
+        document.getElementById('tanggal').placeholder = t.phTanggal;
+        document.getElementById('lokasi').placeholder = t.phLokasi;
+        document.getElementById('keywords').placeholder = t.phKeywords;
+    }
+
+    function generatePrompt() {
+        const tanggal = document.getElementById('tanggal').value || '{Tanggal}';
+        const lokasi = document.getElementById('lokasi').value || '{Lokasi}';
+        const keywords = document.getElementById('keywords').value || '{Keywords}';
+        const pLang = document.getElementById('promptLang').value;
+
+        let masterInstruction = '';
+
+        if (pLang === 'id') {
+            masterInstruction = `Silakan buat "Rubber Stamp Travel Field Notes Poster" (Poster Catatan Perjalanan Cap Stempel Karet) yang terpisah untuk setiap foto yang saya unggah, dengan menghasilkan setiap foto secara individual tanpa kolase atau kombinasi multi-gambar.
+
+Secara keseluruhan, gunakan komposisi lanskap 4:3, yang membagi bingkai menjadi wilayah kiri dan kanan, tetapi tanpa menggambar garis pembagi yang jelas.
+
+Sisi kiri mengambil sekitar 58% dari bingkai, dengan mempertahankan foto aslinya secara setia. Pertahankan identitas subjek utama, medan, arsitektur, tumbuhan, orang, hubungan spasial, pencahayaan dan bayangan alami, tekstur autentik, serta atmosfer warna asli secara akurat; terapkan hanya perataan warna (color grading) foto setingkat publikasi seni yang terkendali, dan tambahkan derau film (film noise) berbutir halus yang sangat samar.
+
+Sisi kanan mengambil sekitar 42% dari bingkai, menggunakan kertas kuno berwarna putih gading (off-white) yang hangat sebagai latar belakang. Kertas ini menampilkan serat-serat halus, butiran alami, bekas penggunaan ringan, dan tekstur matte.
+
+Analisis foto asli dan ekstrak garis luar subjek, struktur arsitektur, kontur medan, atau bentuk paling khas dari lokasi tersebut, lalu kompres menjadi gambar stempel karet multi-warna yang kecil.
+
+Tentukan pengaturan stempel berdasarkan compositional foto asli dan ekstrak 2–4 warna tinta cetak (spot inks) dari foto asli.
+
+Hasilkan teks berdasarkan lokasi, tema, dan citra visual foto dengan format berikut di lembaran kertas kanan:
+${lokasi}
+No. [Otomatis diisikan urutan gambar oleh AI]
+${keywords}
+${tanggal}
+
+Tempatkan teks di bawah atau di samping stempel di ruang kosong, menggunakan font mesin tik yang kecil. Tanggal harus menampilkan tanggal yang saya masukkan secara persis: ${tanggal}`;
+        } else {
+            masterInstruction = `Please create an individual "Rubber Stamp Travel Field Notes Poster" for each uploaded photo, outputting each photo separately without any collage or multi-image combination.
+
+Overall, use a 4:3 landscape composition, split into left and right regions without drawing a distinct dividing line.
+
+The left side occupies approximately 58% of the frame, faithfully maintaining the original photograph. Preserve the core subject identity, terrain, architecture, vegetation, lighting, natural shadows, authentic textures, and original color tone; apply only subtle fine-art publication color grading and very light film noise.
+
+The right side occupies roughly 42% of the frame, featuring warm off-white vintage paper as the background with fine fibers, subtle wear, and a matte texture.
+
+Analyze the original photo to extract key architectural outlines, terrain contours, or signature features, compressing them into a small multi-color rubber stamp illustration.
+
+Extract 2–4 spot ink colors from the original photo. Render the stamp with authentic carved rubber textures, minor misregistrations, and uneven ink pressure.
+
+Generate the text in the following format on the right paper panel:
+${lokasi}
+No. [Auto-numbered by AI]
+${keywords}
+${tanggal}
+
+Position the text next to or below the stamp using a small, mechanical typewriter font. The date must display exactly as provided: ${tanggal}`;
+        }
+
+        document.getElementById('outputText').value = masterInstruction;
+        document.getElementById('resultBox').style.display = 'block';
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("outputText");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            const btnCopy = document.getElementById("btnCopy");
+            const currentLang = document.getElementById('btnIN').classList.contains('active') ? 'id' : 'en';
+            btnCopy.innerText = currentLang === 'id' ? "Berhasil Disalin!" : "Copied Successfully!";
+            setTimeout(() => {
+                btnCopy.innerText = translations[currentLang].btnCopy;
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
