@@ -70,22 +70,23 @@
             border: 1px solid #e2e8f0;
             padding: 15px;
             border-radius: 6px;
-            position: relative;
         }
         .output-box h3 {
             margin-top: 0;
             font-size: 16px;
             color: #4a5568;
         }
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
+        textarea {
+            width: 100%;
+            height: 100px;
             font-family: 'Courier New', Courier, monospace;
             background: #edf2f7;
             padding: 12px;
+            border: 1px solid #cbd5e0;
             border-radius: 4px;
             font-size: 14px;
-            margin-bottom: 0;
+            resize: none;
+            box-sizing: border-box;
         }
         .btn-copy {
             background-color: #48bb78;
@@ -112,7 +113,7 @@
     </div>
 
     <div class="form-group">
-        <label for="keywords">Tiga Kata Kunci (Pisahkan dengan koma):</label>
+        <label for="keywords">Tiga Kata Kunci:</label>
         <input type="text" id="keywords" placeholder="Contoh: MODERN, SERENE, HOME">
     </div>
 
@@ -120,30 +121,39 @@
 
     <div class="output-box" id="resultBox" style="display: none;">
         <h3>Hasil Prompt:</h3>
-        <pre id="outputText"></pre>
+        <textarea id="outputText" readonly></textarea>
         <button class="btn-copy" onclick="copyToClipboard()">Salin Teks</button>
     </div>
 </div>
 
 <script>
     function generatePrompt() {
-        const tanggal = document.getElementById('tanggal').value || '{Tanggal Kosong}';
-        const lokasi = document.getElementById('lokasi').value || '{Lokasi Kosong}';
-        const keywords = document.getElementById('keywords').value || '{Kata Kunci Kosong}';
+        const tanggal = document.getElementById('tanggal').value || '';
+        const lokasi = document.getElementById('lokasi').value || '';
+        const keywords = document.getElementById('keywords').value || '';
 
-        // Format prompt yang akan dihasilkan
-        const promptTemplate = `${tanggal}\n${lokasi}\n${keywords}`;
+        // Menggabungkan teks dengan baris baru yang aman
+        const promptTemplate = tanggal + "\n" + lokasi + "\n" + keywords;
 
-        document.getElementById('outputText').innerText = promptTemplate;
+        // Memasukkan teks ke dalam textarea dan memunculkan kotak hasil
+        document.getElementById('outputText').value = promptTemplate;
         document.getElementById('resultBox').style.display = 'block';
-    </div>
+    }
 
     function copyToClipboard() {
-        const text = document.getElementById('outputText').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Prompt berhasil disalin ke clipboard!');
+        const copyText = document.getElementById('outputText');
+        
+        // Memilih teks di dalam textarea
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // Untuk perangkat mobile
+
+        // Menyalin ke clipboard
+        navigator.clipboard.writeText(copyText.value).then(() => {
+            alert('Prompt berhasil disalin!');
         }).catch(err => {
-            alert('Gagal menyalin teks: ', err);
+            // Metode cadangan jika navigator diblokir browser
+            document.execCommand("copy");
+            alert('Prompt berhasil disalin!');
         });
     }
 </script>
