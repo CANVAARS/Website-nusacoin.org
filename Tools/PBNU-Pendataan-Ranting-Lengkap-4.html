@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBNU - Pendataan Ranting & Nusachain Ledger</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Crypto-JS, Elliptic.js, QRCode CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-card-sub: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body.dark-mode {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-sub: #0f172a;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .theme-card {
+            background-color: var(--bg-card);
+            border-color: var(--border);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .theme-subcard {
+            background-color: var(--bg-card-sub);
+            border-color: var(--border);
+        }
+
+        /* Kontrol form (ikut mode gelap/terang lewat CSS variable) */
+        .fld { width: 100%; padding: .625rem 1rem; border-radius: .75rem; border: 1px solid #cbd5e1; background: var(--bg-card); color: var(--text-main); font-size: .75rem; }
+        .fld:focus { outline: 2px solid var(--primary); outline-offset: 0; border-color: transparent; }
+        body.dark-mode .fld { border-color: #475569; }
+        .lbl { display: block; font-size: .75rem; font-weight: 600; color: var(--text-sub); margin-bottom: .25rem; }
+        .lnk { display: flex; align-items: center; justify-content: space-between; gap: .75rem; width: 100%; text-align: left; padding: .75rem 1rem; border-radius: .75rem; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: .75rem; font-weight: 600; transition: border-color .2s, color .2s; }
+        .lnk small { display: block; font-weight: 400; color: var(--text-sub); margin-top: .125rem; }
+        .lnk:hover { border-color: var(--primary); color: var(--primary); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- Header / Navbar -->
+    <header class="bg-[var(--primary-dark)] text-white shadow-lg sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-[var(--primary-dark)] p-2.5 rounded-xl font-bold text-xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div>
+                    <h1 id="navTitle" class="text-lg font-bold tracking-tight">PBNU - Pendataan Ranting Nusachain</h1>
+                    <p id="navSubtitle" class="text-xs text-emerald-200">Sistem Ledger Pengurus Ranting & Live Wallet</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Status Wallet Badge di Navbar -->
+                <div id="navWalletStatus" class="hidden items-center gap-2 bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-500/30 text-xs font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="navWalletAddrShort" class="text-emerald-100">nu1q...</span>
+                </div>
+                <!-- Toggle Bahasa IN/EN -->
+                <div class="flex bg-black/20 p-1 rounded-xl border border-white/10">
+                    <button id="btnIN" onclick="switchLanguage('id')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-[var(--primary-dark)] text-white transition">IN</button>
+                    <button id="btnEN" onclick="switchLanguage('en')" class="px-2.5 py-1 text-xs font-bold rounded-lg text-emerald-200 transition">EN</button>
+                </div>
+                <!-- Tombol Toggle Mode Gelap / Terang -->
+                <button onclick="toggleTheme()" class="bg-black/20 hover:bg-black/30 text-white p-2.5 rounded-xl transition border border-white/10 flex items-center justify-center" title="Ubah Tema">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs / Menu Bar -->
+    <nav class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-[73px] z-40 overflow-x-auto">
+        <div class="max-w-7xl mx-auto px-4 flex gap-1 py-2.5 whitespace-nowrap">
+            <button onclick="switchTab('wallet')" id="tabBtn-wallet" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-[var(--primary)] text-white flex items-center gap-2">
+                <i class="fa-solid fa-wallet"></i> 1. Koneksi Wallet & Saldo
+            </button>
+            <button onclick="switchTab('ranting')" id="tabBtn-ranting" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-building-columns"></i> 2. Ranting & Monografi
+            </button>
+            <button onclick="switchTab('sk')" id="tabBtn-sk" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-file-contract"></i> 3. SK Ranting
+            </button>
+            <button onclick="switchTab('anggota')" id="tabBtn-anggota" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-users"></i> 4. Buku Induk Anggota
+            </button>
+            <button onclick="switchTab('tanah')" id="tabBtn-tanah" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot"></i> 5. Aset Tanah
+            </button>
+            <button onclick="switchTab('bangunan')" id="tabBtn-bangunan" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-house-chimney"></i> 6. Aset Bangunan
+            </button>
+            <button onclick="switchTab('kendaraan')" id="tabBtn-kendaraan" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-car"></i> 7. Aset Kendaraan
+            </button>
+            <button onclick="switchTab('peralatan')" id="tabBtn-peralatan" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked"></i> 8. Aset Peralatan
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- TAB 1: KONEKSI WALLET -->
+        <div id="content-wallet" class="tab-content space-y-6">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-[var(--primary)] uppercase">Koneksi Live Wallet Nusachain</h2>
+                    <p class="text-sm text-[var(--text-sub)] mt-1">Impor Private Key WIF Anda untuk mengaktifkan injeksi data dari file Excel langsung ke blockchain.</p>
+                </div>
+
+                <div class="bg-emerald-50 dark:bg-slate-800 border border-emerald-300 dark:border-emerald-600/40 p-6 rounded-2xl shadow-sm">
+                    <div id="walletImportSection">
+                        <h3 class="font-bold text-emerald-900 dark:text-emerald-400 text-base mb-3"><i class="fa-solid fa-wallet mr-2 text-[var(--primary)]"></i> Buka Live Wallet Nusacoin</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">Private Key WIF (0x57...) / ENC / Alamat</label>
+                                <input type="password" id="walletPkeyInput" placeholder="Masukkan WIF, ENC, atau Alamat..." class="w-full px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">PIN (Jika Terenkripsi)</label>
+                                <input type="password" id="walletPinInput" placeholder="PIN opsional..." class="w-full px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">Format Jaringan Alamat</label>
+                                <select id="selectWalletAddrType" class="w-full px-3 py-2.5 rounded-xl border border-emerald-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                                    <option value="bech32" selected>Bech32 Native SegWit (nu1q...)</option>
+                                    <option value="p2pkh">Legacy P2PKH (N...)</option>
+                                    <option value="p2sh">P2SH Script (X...)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">URL Node Blockchain Asli (Explorer API)</label>
+                                <input type="text" id="nodeApiUrl" value="https://explorer.nusacoin.org" class="w-full px-4 py-2.5 rounded-xl border border-emerald-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-[var(--primary)] focus:outline-none">
+                            </div>
+                        </div>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">URL UTXO ({node}, {addr})</label>
+                                <input type="text" id="utxoUrl" value="{node}/api/v2/utxo/{addr}" class="fld font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">URL Broadcast ({node}, {hex})</label>
+                                <input type="text" id="broadcastUrl" value="{node}/api/v2/sendtx/{hex}" class="fld font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">Satuan nilai UTXO dari API</label>
+                                <select id="utxoUnit" class="fld"><option value="sat" selected>Satoshi (bilangan bulat)</option><option value="coin">NUX (desimal)</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">Fee per transaksi (NUX)</label>
+                                <input type="number" id="feeNux" value="0.001" step="0.0001" min="0" class="fld">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-emerald-900 dark:text-emerald-300 uppercase mb-1">URL Riwayat Transaksi ({node}, {addr}) - opsional</label>
+                                <input type="text" id="historyUrl" value="{node}/api/v2/address/{addr}?details=txs&pageSize=25" class="fld font-mono">
+                            </div>
+                        </div>
+                        <button type="button" onclick="importLiveWallet()" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3 rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> Buka Wallet & Muat Saldo Blockchain Asli
+                        </button>
+                    </div>
+
+                    <!-- OPSI RAW TX / FALLBACK BROADCAST -->
+                    <div class="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-slate-800 dark:border-amber-700 space-y-3">
+                        <label class="flex items-start gap-2 text-xs font-bold text-amber-900 dark:text-amber-300">
+                            <input type="checkbox" id="rawOnly" class="mt-0.5">
+                            <span>Mode raw saja: tandatangani transaksi TANPA broadcast, lalu unduh file raw TX untuk disiarkan di tempat lain.<br><span class="font-normal">Jika tidak dicentang, aplikasi tetap mencoba broadcast; bila gagal, file raw TX otomatis disediakan.</span></span>
+                        </label>
+                        <div>
+                            <label class="block text-xs font-bold text-amber-900 dark:text-amber-300 uppercase mb-1">UTXO manual (opsional, jika node/explorer tidak bisa diakses dari browser)</label>
+                            <textarea id="manualUtxo" rows="3" placeholder="txid,vout,nilai_satoshi  (satu baris per UTXO)" class="fld font-mono"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE WALLET VIEW -->
+                    <div id="walletActiveSection" style="display:none;">
+                        <div class="bg-gradient-to-r from-emerald-800 to-emerald-950 text-white p-5 rounded-xl text-center mb-4 shadow">
+                            <div class="text-xs tracking-wider opacity-80 uppercase font-semibold">Total Saldo Real NUX (Blockchain Asli)</div>
+                            <div class="text-3xl font-extrabold my-1" id="walletBalance">0.0000 NUX</div>
+                            <div class="text-xs font-mono opacity-90 truncate bg-emerald-900/60 py-1.5 px-3 rounded-lg mt-2" id="liveWalletAddress">-</div>
+                        </div>
+
+                        <div class="flex gap-2 mb-4">
+                            <button class="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded-lg text-xs" onclick="fetchWalletData()"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh Saldo & Riwayat</button>
+                            <button class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-2 rounded-lg text-xs" onclick="logoutWallet()"><i class="fa-solid fa-power-off mr-1"></i> Keluar / Kunci Wallet</button>
+                        </div>
+
+                        <h4 class="font-bold text-xs uppercase text-slate-700 dark:text-slate-300 mb-2">Riwayat Transaksi Blockchain Asli</h4>
+                        <div id="txHistoryContainer" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-3 max-h-48 overflow-y-auto">
+                            <div style="font-size:12px; color:#64748b; text-align:center;">Belum ada riwayat transaksi.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Input Data Ranting & Monografi -->
+        <div id="content-ranting" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-building-columns mr-2"></i> Input Data Ranting & Monografi</h2>
+                <form id="formRanting" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">1 - 3. Identitas Ranting</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="namaRanting">1. NAMA RANTING</label><input type="text" id="namaRanting" class="fld" required ></div><div ><label class="lbl" for="mwc">2. MWC</label><input type="text" id="mwc" class="fld" required ></div><div ><label class="lbl" for="pcnu">3. PCNU</label><input type="text" id="pcnu" class="fld" required ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Wilayah Ranting</legend><div data-wilayah="ranting"></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">6 - 11. Monografi Kelurahan / Desa</legend><p class="text-xs text-[var(--text-sub)] mt-2">Sumber data: monografi kelurahan/desa.</p><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="pendudukTotal">6. JUMLAH PENDUDUK KELURAHAN/DESA</label><input type="number" id="pendudukTotal" class="fld" min="0"></div><div ><label class="lbl" for="pendudukLaki">7. JUMLAH PENDUDUK KELURAHAN/DESA LAKI-LAKI</label><input type="number" id="pendudukLaki" class="fld" min="0"></div><div ><label class="lbl" for="pendudukPerempuan">8. JUMLAH PENDUDUK KELURAHAN/DESA PEREMPUAN</label><input type="number" id="pendudukPerempuan" class="fld" min="0"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="jumlahKk">9. JUMLAH KK</label><input type="number" id="jumlahKk" class="fld" min="0"></div><div ><label class="lbl" for="pendudukMuslim">10. JUMLAH PENDUDUK MUSLIM</label><input type="number" id="pendudukMuslim" class="fld" min="0"></div><div ><label class="lbl" for="pendudukNonMuslim">11. JUMLAH PENDUDUK NON MUSLIM</label><input type="number" id="pendudukNonMuslim" class="fld" min="0"></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">12. Laporan Keuangan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="laporanKeuangan">12. LAPORAN KEUANGAN TAHUNAN</label><select id="laporanKeuangan" data-ref="laporanKeuangan" class="fld"></select></div></div></fieldset>
+<button type="button" onclick="injectData('Ranting', 'formRanting')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Ranting ke Blockchain Nusachain</button>
+                    <div id="status-formRanting" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Data SK Kepengurusan -->
+        <div id="content-sk" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-file-contract mr-2"></i> Input Data SK Kepengurusan</h2>
+                <form id="formSK" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="skNo">NO</label><input type="number" id="skNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="skPeriode">PERIODE KEPENGURUSAN</label><input type="text" id="skPeriode" class="fld" placeholder="Contoh: 2023 - 2028" ></div><div ><label class="lbl" for="skNomor">NO SK</label><input type="text" id="skNomor" class="fld" placeholder="No. SK Kepengurusan" ></div></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="skTanggal">TGL SK</label><input type="date" id="skTanggal" class="fld" ></div><div ><label class="lbl" for="skBerlaku">TGL BERLAKU</label><input type="date" id="skBerlaku" class="fld" ></div></div>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Wilayah Kepengurusan</legend><div data-wilayah="sk"></div></fieldset>
+<button type="button" onclick="injectData('SK', 'formSK')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data SK ke Blockchain Nusachain</button>
+                    <div id="status-formSK" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Buku Induk Anggota NU -->
+        <div id="content-anggota" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-users mr-2"></i> Input Buku Induk Anggota NU</h2>
+                <form id="formAnggota" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Identitas</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="agtNo">NO</label><input type="number" id="agtNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="agtNama">NAMA</label><input type="text" id="agtNama" class="fld" required ></div><div ><label class="lbl" for="agtNik">NO NIK</label><input type="text" id="agtNik" class="fld" required inputmode="numeric" maxlength="16"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="agtJk">JENIS KELAMIN</label><select id="agtJk" data-ref="jk" class="fld"></select></div><div ><label class="lbl" for="agtTempatLahir">TEMPAT LAHIR</label><input type="text" id="agtTempatLahir" class="fld" ></div><div ><label class="lbl" for="agtTglLahir">TGL LAHIR</label><input type="date" id="agtTglLahir" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Alamat</legend><div class="md:col-span-3"><label class="lbl" for="agtAlamat">ALAMAT</label><textarea id="agtAlamat" rows="2" class="fld"></textarea></div><div data-wilayah="agt" data-upper></div><div ><label class="lbl" for="agtEmail">EMAIL</label><input type="email" id="agtEmail" class="fld" placeholder="nama@email.com" ></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Pendidikan, Keahlian & Pekerjaan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="agtPendidikan">PENDIDIKAN TERAKHIR</label><select id="agtPendidikan" data-ref="pendidikan" class="fld"></select></div><div ><label class="lbl" for="agtKeahlian">BIDANG KEAHLIAN</label><select id="agtKeahlian" data-ref="keahlian" class="fld"></select></div><div ><label class="lbl" for="agtPekerjaan">PEKERJAAN</label><select id="agtPekerjaan" data-ref="pekerjaan" class="fld"></select></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="agtPesantren">PENDIDIKAN TERAKHIR DI PESANTREN</label><select id="agtPesantren" data-ref="pesantren" class="fld"></select></div><div ><label class="lbl" for="agtKaderisasi">KADERISASI YANG PERNAH DIIKUTI</label><select id="agtKaderisasi" data-ref="kaderisasi" class="fld"></select></div></div></fieldset>
+<button type="button" onclick="injectData('Anggota', 'formAnggota')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Anggota ke Blockchain Nusachain</button>
+                    <div id="status-formAnggota" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Inventaris Aset Tanah -->
+        <div id="content-tanah" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-map-location-dot mr-2"></i> Input Inventaris Aset Tanah</h2>
+                <form id="formTanah" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Identitas Aset</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="tanahNo">No</label><input type="number" id="tanahNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="tanahPemilik">Pemilik</label><input type="text" id="tanahPemilik" class="fld" ></div><div ><label class="lbl" for="tanahNama">Nama Aset</label><input type="text" id="tanahNama" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Alas Hak & Perolehan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="tanahAlasHak">Jenis Alas Hak</label><select id="tanahAlasHak" data-ref="alasHak" class="fld"></select></div><div ><label class="lbl" for="tanahNoSertifikat">No Alas Hak (Sertifikat)</label><input type="text" id="tanahNoSertifikat" class="fld" ></div><div ><label class="lbl" for="tanahTglAlasHak">Tgl Alas Hak (Sertifikat)</label><input type="date" id="tanahTglAlasHak" class="fld" ></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="tanahLuas">Luas Tanah (m²)</label><input type="number" id="tanahLuas" class="fld" min="0" step="any"></div><div ><label class="lbl" for="tanahAsalPerolehan">Asal Perolehan</label><select id="tanahAsalPerolehan" data-ref="asal" class="fld"></select></div><div ><label class="lbl" for="tanahNjop">NJOP (Rp)</label><input type="number" id="tanahNjop" class="fld" min="0"></div></div><div class="md:col-span-3"><label class="lbl" for="tanahPeruntukan">Peruntukan</label><input type="text" id="tanahPeruntukan" class="fld" ></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Lokasi</legend><div class="md:col-span-3"><label class="lbl" for="tanahAlamat">Alamat Detail</label><textarea id="tanahAlamat" rows="2" class="fld"></textarea></div><div data-wilayah="tanah"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="tanahLat">Latitude</label><input type="number" id="tanahLat" class="fld" placeholder="-6.200000" step="any"></div><div ><label class="lbl" for="tanahLng">Longitude</label><input type="number" id="tanahLng" class="fld" placeholder="106.816666" step="any"></div></div></fieldset>
+<button type="button" onclick="injectData('Tanah', 'formTanah')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Aset Tanah ke Blockchain Nusachain</button>
+                    <div id="status-formTanah" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Inventaris Aset Bangunan -->
+        <div id="content-bangunan" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-house-chimney mr-2"></i> Input Inventaris Aset Bangunan</h2>
+                <form id="formBangunan" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Identitas Aset</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="bgnNo">No</label><input type="number" id="bgnNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="bgnPemilik">Pemilik</label><input type="text" id="bgnPemilik" class="fld" ></div><div ><label class="lbl" for="bgnNama">Nama Aset Bangunan</label><input type="text" id="bgnNama" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Perizinan & Spesifikasi</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="bgnImb">No IMB</label><input type="text" id="bgnImb" class="fld" ></div><div ><label class="lbl" for="bgnTglImb">Tgl IMB</label><input type="date" id="bgnTglImb" class="fld" ></div><div ><label class="lbl" for="bgnLuas">Luas Bangunan (m²)</label><input type="number" id="bgnLuas" class="fld" min="0" step="any"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="bgnTingkat">Jumlah Tingkat</label><input type="number" id="bgnTingkat" class="fld" min="1"></div><div ><label class="lbl" for="bgnKonstruksi">Jenis Konstruksi</label><select id="bgnKonstruksi" data-ref="konstruksi" class="fld"></select></div><div ><label class="lbl" for="bgnStatus">Status Bangunan</label><select id="bgnStatus" data-ref="alasHak" class="fld"></select></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Perolehan & Peruntukan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="bgnAsal">Asal Perolehan</label><select id="bgnAsal" data-ref="asal" class="fld"></select></div><div ><label class="lbl" for="bgnNilai">Nilai Bangunan (Rp)</label><input type="number" id="bgnNilai" class="fld" min="0"></div><div ><label class="lbl" for="bgnPeruntukan">Peruntukan</label><input type="text" id="bgnPeruntukan" class="fld" ></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="bgnNoTanah">Berdiri di Atas Tanah No Tanah</label><input type="number" id="bgnNoTanah" class="fld" placeholder="Isi No dari form Aset Tanah" min="1"></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Lokasi</legend><div class="md:col-span-3"><label class="lbl" for="bgnAlamat">Alamat Detail</label><textarea id="bgnAlamat" rows="2" class="fld"></textarea></div><div data-wilayah="bgn"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="bgnLat">Latitude</label><input type="number" id="bgnLat" class="fld" placeholder="-6.200000" step="any"></div><div ><label class="lbl" for="bgnLng">Longitude</label><input type="number" id="bgnLng" class="fld" placeholder="106.816666" step="any"></div></div></fieldset>
+<button type="button" onclick="injectData('Bangunan', 'formBangunan')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Aset Bangunan ke Blockchain Nusachain</button>
+                    <div id="status-formBangunan" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Inventaris Aset Kendaraan -->
+        <div id="content-kendaraan" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-car mr-2"></i> Input Inventaris Aset Kendaraan</h2>
+                <form id="formKendaraan" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Identitas Kendaraan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="kendNo">No</label><input type="number" id="kendNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="kendNama">Nama Barang</label><input type="text" id="kendNama" class="fld" placeholder="Contoh: Motor Operasional" ></div><div ><label class="lbl" for="kendTglPembukuan">Tgl Pembukuan</label><input type="date" id="kendTglPembukuan" class="fld" ></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="kendMerk">Merk</label><input type="text" id="kendMerk" class="fld" placeholder="Honda, Yamaha, dll" ></div><div ><label class="lbl" for="kendType">Type</label><input type="text" id="kendType" class="fld" ></div><div ><label class="lbl" for="kendKapasitas">Kapasitas/Ukuran</label><input type="text" id="kendKapasitas" class="fld" placeholder="Contoh: 150 cc" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Nomor Dokumen</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="kendRangka">No Rangka</label><input type="text" id="kendRangka" class="fld" ></div><div ><label class="lbl" for="kendMesin">No Mesin</label><input type="text" id="kendMesin" class="fld" ></div><div ><label class="lbl" for="kendBpkb">No BPKB</label><input type="text" id="kendBpkb" class="fld" ></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="kendBahanBakar">Bahan Bakar</label><input type="text" id="kendBahanBakar" class="fld" placeholder="Bensin / Solar / Listrik" ></div><div ><label class="lbl" for="kendStnk">Tgl Berlaku STNK</label><input type="date" id="kendStnk" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Perolehan & Peruntukan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="kendAsal">Asal Perolehan</label><select id="kendAsal" data-ref="asal" class="fld"></select></div><div ><label class="lbl" for="kendNilai">Nilai Perolehan (Rp)</label><input type="number" id="kendNilai" class="fld" min="0"></div><div ><label class="lbl" for="kendPeruntukan">Peruntukan</label><input type="text" id="kendPeruntukan" class="fld" ></div></div><div class="md:col-span-3"><label class="lbl" for="kendKeterangan">Keterangan</label><textarea id="kendKeterangan" rows="2" class="fld"></textarea></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Wilayah / Lokasi Kendaraan</legend><div data-wilayah="kend"></div></fieldset>
+<button type="button" onclick="injectData('Kendaraan', 'formKendaraan')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Aset Kendaraan ke Blockchain Nusachain</button>
+                    <div id="status-formKendaraan" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB: Input Inventaris Aset Peralatan -->
+        <div id="content-peralatan" class="tab-content space-y-6" style="display:none;">
+            <div class="theme-card p-6 md:p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-xl font-bold text-[var(--primary)] uppercase mb-4"><i class="fa-solid fa-boxes-stacked mr-2"></i> Input Inventaris Aset Peralatan</h2>
+                <form id="formPeralatan" class="space-y-6">
+                    <fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Identitas Peralatan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="peralatanNo">No</label><input type="number" id="peralatanNo" class="fld" min="1" value="1" data-no="1"></div><div ><label class="lbl" for="peralatanNama">Nama Aset Peralatan</label><input type="text" id="peralatanNama" class="fld" placeholder="Contoh: Laptop / Sound System" ></div><div ><label class="lbl" for="peralatanMerk">Merk</label><input type="text" id="peralatanMerk" class="fld" ></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div ><label class="lbl" for="peralatanType">Type</label><input type="text" id="peralatanType" class="fld" ></div><div ><label class="lbl" for="peralatanKapasitas">Kapasitas</label><input type="text" id="peralatanKapasitas" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Perolehan & Peruntukan</legend><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div ><label class="lbl" for="peralatanNilai">Nilai Perolehan (Rp)</label><input type="number" id="peralatanNilai" class="fld" min="0"></div><div ><label class="lbl" for="peralatanAsal">Asal Perolehan</label><select id="peralatanAsal" data-ref="asal" class="fld"></select></div><div ><label class="lbl" for="peralatanPeruntukan">Peruntukan</label><input type="text" id="peralatanPeruntukan" class="fld" ></div></div></fieldset>
+<fieldset class="border theme-subcard rounded-2xl p-5 space-y-4"><legend class="font-bold text-[var(--primary)] px-3 theme-card rounded-lg border text-sm">Wilayah / Lokasi Peralatan</legend><div data-wilayah="peralatan"></div></fieldset>
+<button type="button" onclick="injectData('Peralatan', 'formPeralatan')" class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-3.5 rounded-xl transition shadow text-sm"><i class="fa-solid fa-cube mr-2"></i> Inject Data Aset Peralatan ke Blockchain Nusachain</button>
+                    <div id="status-formPeralatan" class="mt-4 p-4 rounded-xl hidden text-sm leading-relaxed"></div>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[var(--primary-dark)] text-emerald-200 py-6 mt-auto border-t border-emerald-800 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs">
+            &copy; 2026 Pengurus Besar Nahdlatul Ulama (PBNU) &bull; Didukung oleh Nusachain Ledger Infrastructure.
+        </div>
+    </footer>
+
+    <script>
+        // Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 flex items-center gap-2";
+            });
+
+            document.getElementById(`content-${tabId}`).style.display = 'block';
+            document.getElementById(`tabBtn-${tabId}`).className = "px-4 py-2 rounded-xl text-xs font-bold transition bg-[var(--primary)] text-white flex items-center gap-2";
+        }
+
+        // Dark/Light Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+            body.classList.toggle('dark-mode');
+            icon.className = body.classList.contains('dark-mode') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+
+        // Bahasa IN/EN sederhana
+        function switchLanguage(lang) {
+            document.getElementById('btnIN').className = `px-2.5 py-1 text-xs font-bold rounded-lg transition ${lang === 'id' ? 'bg-[var(--primary-dark)] text-white' : 'text-emerald-200'}`;
+            document.getElementById('btnEN').className = `px-2.5 py-1 text-xs font-bold rounded-lg transition ${lang === 'en' ? 'bg-[var(--primary-dark)] text-white' : 'text-emerald-200'}`;
+        }
+
+        let liveWalletData = { pkey: null, address: null, balance: 0 };
+
+        const NUSACOIN_PARAMS = { bech32: 'nu', pubKeyHash: 0x35, scriptHash: 0x4b, wif: 0x57 };
+        const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+        const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+        function polymod(values) {
+            let chk = 1;
+            for (let p = 0; p < values.length; ++p) {
+                let top = chk >> 25;
+                chk = ((chk & 0x1ffffff) << 5) ^ values[p];
+                if ((top >> 0) & 1) chk ^= 0x3b6a57b2;
+                if ((top >> 1) & 1) chk ^= 0x26508e6d;
+                if ((top >> 2) & 1) chk ^= 0x1ea119fa;
+                if ((top >> 3) & 1) chk ^= 0x3d4233dd;
+                if ((top >> 4) & 1) chk ^= 0x2a1462b3;
+            }
+            return chk;
+        }
+
+        function hrpExpand(hrp) {
+            let ret = [];
+            for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) >> 5);
+            ret.push(0);
+            for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) & 31);
+            return ret;
+        }
+
+        function convertBits(data, frombits, tobits, pad = true) {
+            let acc = 0, bits = 0, ret = [], maxv = (1 << tobits) - 1;
+            for (let i = 0; i < data.length; ++i) {
+                let value = data[i];
+                if (value < 0 || value >> frombits !== 0) return null;
+                acc = (acc << frombits) | value;
+                bits += frombits;
+                while (bits >= tobits) {
+                    bits -= tobits;
+                    ret.push((acc >> bits) & maxv);
+                }
+            }
+            if (pad && bits > 0) ret.push((acc << (tobits - bits)) & maxv);
+            return ret;
+        }
+
+        function toBech32(hrp, version, program) {
+            let data = [version].concat(convertBits(program, 8, 5, true));
+            let checksumData = hrpExpand(hrp).concat(data).concat([0, 0, 0, 0, 0, 0]);
+            let mod = polymod(checksumData) ^ 1;
+            let ret = hrp + '1';
+            for (let p = 0; p < data.length; ++p) ret += BECH32_CHARSET.charAt(data[p]);
+            for (let p = 0; p < 6; ++p) ret += BECH32_CHARSET.charAt((mod >> (5 * (5 - p))) & 31);
+            return ret;
+        }
+
+        function fromBase58(string) {
+            let bytes = [0];
+            for (let i = 0; i < string.length; i++) {
+                let value = ALPHABET.indexOf(string[i]);
+                if (value === -1) throw new Error("Karakter Base58 tidak valid");
+                for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
+                bytes[0] += value;
+                let carry = 0;
+                for (let j = 0; j < bytes.length; ++j) {
+                    bytes[j] += carry;
+                    carry = bytes[j] >> 8;
+                    bytes[j] &= 0xff;
+                }
+                while (carry) { bytes.push(carry & 0xff); carry >>= 8; }
+            }
+            for (let i = 0; string[i] === '1' && i < string.length - 1; i++) bytes.push(0);
+            return new Uint8Array(bytes.reverse());
+        }
+
+        function toBase58(buffer) {
+            let digits = [0];
+            for (let i = 0; i < buffer.length; i++) {
+                for (let j = 0; j < digits.length; j++) digits[j] <<= 8;
+                digits[0] += buffer[i];
+                let carry = 0;
+                for (let j = 0; j < digits.length; ++j) {
+                    digits[j] += carry;
+                    carry = (digits[j] / 58) | 0;
+                    digits[j] %= 58;
+                }
+                while (carry) { digits.push(carry % 58); carry = (carry / 58) | 0; }
+            }
+            for (let i = 0; buffer[i] === 0 && i < buffer.length - 1; i++) digits.push(0);
+            return digits.reverse().map(d => ALPHABET[d]).join('');
+        }
+
+        function toBase58Check(payload) {
+            const sha1 = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(payload));
+            const sha2 = CryptoJS.SHA256(sha1);
+            const checksum = sha2.words.slice(0, 1);
+            const checksumBytes = [(checksum[0] >>> 24) & 0xff, (checksum[0] >>> 16) & 0xff, (checksum[0] >>> 8) & 0xff, checksum[0] & 0xff];
+            const fullPayload = new Uint8Array(payload.length + 4);
+            fullPayload.set(payload);
+            fullPayload.set(checksumBytes, payload.length);
+            return toBase58(fullPayload);
+        }
+
+        function getAddressFromWif(wif, addrType = "bech32") {
+            try {
+                const decoded = fromBase58(wif);
+                const rawPrivKey = decoded.slice(1, 33);
+                const ec = new elliptic.ec('secp256k1');
+                const keyPair = ec.keyFromPrivate(rawPrivKey);
+                const pubKeyHex = keyPair.getPublic(true, 'hex');
+                const pubKeyWordArray = CryptoJS.enc.Hex.parse(pubKeyHex);
+                const shaHash = CryptoJS.SHA256(pubKeyWordArray);
+                const ripemdHash = CryptoJS.RIPEMD160(shaHash);
+
+                const pubKeyHash = new Uint8Array(20);
+                for (let i = 0; i < 20; i++) pubKeyHash[i] = (ripemdHash.words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+
+                if (addrType === "p2pkh") {
+                    const p2pkhPayload = new Uint8Array(21);
+                    p2pkhPayload[0] = NUSACOIN_PARAMS.pubKeyHash;
+                    p2pkhPayload.set(pubKeyHash, 1);
+                    return toBase58Check(p2pkhPayload);
+                } else if (addrType === "p2sh") {
+                    const p2shPayload = new Uint8Array(21);
+                    p2shPayload[0] = NUSACOIN_PARAMS.scriptHash;
+                    p2shPayload.set(pubKeyHash, 1);
+                    return toBase58Check(p2shPayload);
+                } else {
+                    return toBech32(NUSACOIN_PARAMS.bech32, 0, pubKeyHash);
+                }
+            } catch (err) {
+                return wif;
+            }
+        }
+
+        function importLiveWallet() {
+            let pkey = document.getElementById("walletPkeyInput").value.trim();
+            const addrType = document.getElementById("selectWalletAddrType").value;
+
+            if (!pkey) {
+                alert("Masukkan Private Key WIF atau Alamat Nusacoin!");
+                return;
+            }
+
+            if (pkey.startsWith("N") || pkey.startsWith("X") || pkey.startsWith("nu1")) {
+                liveWalletData.pkey = null;
+                liveWalletData.address = pkey;
+                liveWalletData.addrType = null;
+            } else {
+                liveWalletData.pkey = pkey;
+                liveWalletData.address = getAddressFromWif(pkey, addrType);
+                liveWalletData.addrType = addrType;
+            }
+
+            document.getElementById("walletImportSection").style.display = "none";
+            document.getElementById("walletActiveSection").style.display = "block";
+            document.getElementById("liveWalletAddress").textContent = "Alamat: " + liveWalletData.address;
+
+            // Tampilkan di Navbar
+            document.getElementById("navWalletStatus").classList.remove("hidden");
+            document.getElementById("navWalletStatus").classList.add("flex");
+            document.getElementById("navWalletAddrShort").textContent = liveWalletData.address.substring(0, 8) + '...';
+
+            fetchWalletData();
+            alert("Live Wallet berhasil dibuka!");
+        }
+
+        async function fetchWalletData() {
+            const addr = liveWalletData.address; if (!addr) return;
+            const base = getNodeBase();
+            const balEl = document.getElementById("walletBalance");
+            let bal = null;
+            try {
+                const res = await fetch(`${base}/ext/getbalance/${encodeURIComponent(addr)}`);
+                if (!res.ok) throw new Error();
+                const v = parseFloat((await res.text()).replace(/"/g, ''));
+                if (isNaN(v)) throw new Error();
+                bal = v;
+            } catch (e) {
+                try { const u = await fetchUtxos(addr); bal = Number(u.reduce((x, y) => x + y.value, 0n)) / 1e8; } catch (e2) { }
+            }
+            if (bal === null) balEl.textContent = "0.0000 NUX (Offline Node)";
+            else { liveWalletData.balance = bal; balEl.textContent = `${bal} NUX`; }
+            await fetchHistory(addr);
+        }
+
+        window.lastHistory = { items: [], error: null, loading: false };
+
+        function historyCandidates(base, addr) {
+            const a = encodeURIComponent(addr);
+            const cfg = (document.getElementById('historyUrl') || { value: '' }).value.trim();
+            const list = [];
+            if (cfg) list.push(cfg.replace('{node}', base).replace('{addr}', a));
+            list.push(`${base}/api/v2/address/${a}?details=txs&pageSize=25`);   // Blockbook
+            list.push(`${base}/ext/getaddresstxs/${a}/0/25`);                    // eIquidus (baru)
+            list.push(`${base}/ext/getaddress/${a}`);                            // eIquidus (lama)
+            return [...new Set(list)];
+        }
+
+        function parseHistory(j, addr) {
+            const out = [];
+            const txs = Array.isArray(j) ? j : (j.transactions || j.data || j.txs || j.last_txs || []);
+            for (const t of txs) {
+                if (typeof t === 'string') { out.push({ txid: t }); continue; }
+                const txid = t.txid || t.hash || t.addresses;
+                if (!txid || typeof txid !== 'string') continue;
+                const item = { txid, time: t.blockTime || t.timestamp || t.time || null, conf: t.confirmations };
+                if (Array.isArray(t.vout) && Array.isArray(t.vin)) {
+                    try {
+                        let net = 0n;
+                        t.vout.forEach(o => { if ((o.addresses || []).includes(addr)) net += BigInt(String(o.value || 0)); });
+                        t.vin.forEach(i => { if ((i.addresses || []).includes(addr)) net -= BigInt(String(i.value || 0)); });
+                        item.net = net;
+                    } catch (e) { }
+                }
+                out.push(item);
+            }
+            if (!out.length && Array.isArray(j.txids)) j.txids.forEach(id => out.push({ txid: id }));
+            return out;
+        }
+
+        async function fetchHistory(addr) {
+            const box = document.getElementById("txHistoryContainer");
+            const base = getNodeBase();
+            window.lastHistory = { items: [], error: null, loading: true };
+            box.innerHTML = '<div style="font-size:12px;color:#64748b;text-align:center;">Memuat riwayat transaksi...</div>';
+            let lastErr = null;
+            for (const url of historyCandidates(base, addr)) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) { lastErr = `HTTP ${res.status} dari ${url}`; continue; }
+                    const items = parseHistory(await res.json(), addr);
+                    if (items.length || url === historyCandidates(base, addr)[0]) {
+                        window.lastHistory = { items, error: null, loading: false };
+                        renderHistory(); return;
+                    }
+                } catch (e) { lastErr = `${e.message || e} (${url})`; }
+            }
+            window.lastHistory = { items: [], error: lastErr || 'Tidak ada respons dari node.', loading: false };
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const box = document.getElementById("txHistoryContainer");
+            const addr = liveWalletData.address; const base = getNodeBase();
+            const h = window.lastHistory || { items: [], error: null };
+            const pending = (window.rawQueue || []).filter(q => !h.items.some(i => i.txid === q.txid));
+            const row = (inner) => `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:12px;">${inner}</div>`;
+            let html = '';
+            pending.forEach(q => {
+                html += row(`<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:6px;font-weight:700;">Belum disiarkan #${q.seq}</span> <span style="color:#64748b;">${esc(q.sheet)}</span><br><span style="font-family:monospace;word-break:break-all;">${q.txid}</span>`);
+            });
+            h.items.forEach(i => {
+                const id = esc(i.txid);
+                let t = ''; if (i.time) { const ms = Number(i.time) < 1e12 ? Number(i.time) * 1000 : Number(i.time); t = new Date(ms).toLocaleString('id-ID'); }
+                let amt = '';
+                if (i.net !== undefined) { const v = Number(i.net) / 1e8; amt = `<strong style="color:${v >= 0 ? '#047857' : '#b91c1c'};">${v >= 0 ? '+' : ''}${v} NUX</strong> `; }
+                const conf = i.conf !== undefined ? ` <span style="color:#64748b;">(${i.conf} konfirmasi)</span>` : '';
+                html += row(`${amt}<span style="color:#64748b;">${esc(t)}</span>${conf}<br><a href="${esc(base)}/tx/${id}" target="_blank" style="font-family:monospace;word-break:break-all;text-decoration:underline;">${id}</a>`);
+            });
+            if (h.error) {
+                html += `<div style="font-size:12px;color:#92400e;padding:8px 0;">Riwayat tidak bisa dimuat dari node: ${esc(h.error)}.<br>Kemungkinan diblokir CORS atau endpoint explorer berbeda; atur "URL Riwayat Transaksi" di pengaturan wallet, atau buka <a href="${esc(base)}/address/${encodeURIComponent(addr || '')}" target="_blank" style="text-decoration:underline;">halaman alamat di explorer</a>.</div>`;
+            } else if (!h.items.length && !pending.length) {
+                html += '<div style="font-size:12px;color:#64748b;text-align:center;">Belum ada riwayat transaksi untuk alamat ini.</div>';
+            }
+            box.innerHTML = html;
+        }
+
+        function logoutWallet() {
+            liveWalletData = { pkey: null, address: null, balance: 0 };
+            document.getElementById("walletPkeyInput").value = "";
+            document.getElementById("walletActiveSection").style.display = "none";
+            document.getElementById("walletImportSection").style.display = "block";
+            document.getElementById("navWalletStatus").classList.add("hidden");
+        }
+
+        // FUNGSI INJEKSI DATA DINAMIS BERDASARKAN SHEET EXCEL
+        // ===== OP_RETURN: hanya hash SHA-256 dari data form =====
+const TX = {
+    sha256: (hex) => CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hex)).toString(),
+    dsha: (hex) => TX.sha256(TX.sha256(hex)),
+    rev: (hex) => hex.match(/../g).reverse().join(''),
+    u32: (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255].map(b => b.toString(16).padStart(2, '0')).join(''),
+    u64: (v) => { let out = ''; let x = BigInt(v); for (let i = 0; i < 8; i++) { out += Number(x & 255n).toString(16).padStart(2, '0'); x >>= 8n; } return out; },
+    varint: (n) => n < 0xfd ? n.toString(16).padStart(2, '0') : 'fd' + [n & 255, (n >>> 8) & 255].map(b => b.toString(16).padStart(2, '0')).join(''),
+    push: (hex) => TX.varint(hex.length / 2) + hex,
+    hash160: (pubHex) => CryptoJS.RIPEMD160(CryptoJS.SHA256(CryptoJS.enc.Hex.parse(pubHex))).toString(),
+    sign: (privHex, hashHex) => {
+        const ec = new elliptic.ec('secp256k1');
+        return ec.keyFromPrivate(privHex, 'hex').sign(hashHex, { canonical: true }).toDER('hex') + '01';
+    }
+};
+
+function getNodeBase() {
+    let b = document.getElementById("nodeApiUrl").value.trim();
+    if (b.endsWith('/')) b = b.slice(0, -1);
+    if (b.endsWith('/api')) b = b.replace(/\/api$/, '');
+    return b;
+}
+
+function keyInfoFromWallet() {
+    if (!liveWalletData.pkey) throw new Error("Wallet dibuka dengan alamat saja (tanpa Private Key WIF), sehingga tidak bisa menandatangani transaksi.");
+    const type = liveWalletData.addrType || 'bech32';
+    if (type === 'p2sh') throw new Error("Format P2SH belum didukung untuk penandatanganan. Pilih Bech32 atau Legacy P2PKH.");
+    const d = fromBase58(liveWalletData.pkey);
+    if (d.length !== 38 || d[0] !== NUSACOIN_PARAMS.wif || d[33] !== 1) throw new Error("WIF tidak valid: harus WIF terkompresi Nusacoin (prefix 0x57).");
+    const privHex = Array.from(d.slice(1, 33)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const pubHex = new elliptic.ec('secp256k1').keyFromPrivate(privHex, 'hex').getPublic(true, 'hex');
+    return { type, privHex, pubHex, h160: TX.hash160(pubHex) };
+}
+
+async function fetchUtxos(addr) {
+    const url = document.getElementById("utxoUrl").value.trim().replace('{node}', getNodeBase()).replace('{addr}', encodeURIComponent(addr));
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Gagal mengambil UTXO (HTTP ${res.status}) dari ${url}`);
+    let j = await res.json();
+    if (!Array.isArray(j)) j = j.utxos || j.unspent_outputs || j.unspent || j.result || [];
+    const unit = document.getElementById("utxoUnit").value;
+    return j.map(u => {
+        const txid = u.txid || u.tx_hash || u.hash;
+        const vout = u.vout ?? u.n ?? u.tx_pos ?? u.output_n ?? u.index;
+        const raw = u.value ?? u.satoshis ?? u.amount;
+        if (!txid || vout === undefined || raw === undefined) return null;
+        const value = unit === 'coin' ? BigInt(Math.round(parseFloat(raw) * 1e8)) : BigInt(String(raw));
+        return { txid, vout: Number(vout), value };
+    }).filter(Boolean);
+}
+
+function buildSignedTx(utxos, ki, hashHex, feeSat) {
+    const isSeg = ki.type === 'bech32';
+    const ownScript = isSeg ? '0014' + ki.h160 : '76a914' + ki.h160 + '88ac';
+    const DUST = 546n;
+
+    // Pilih UTXO terbesar dulu sampai cukup menutup fee
+    const sorted = [...utxos].sort((a, b) => (b.value > a.value ? 1 : b.value < a.value ? -1 : 0));
+    const picked = []; let total = 0n;
+    for (const u of sorted) { picked.push(u); total += u.value; if (total >= feeSat + DUST) break; }
+    if (total < feeSat) throw new Error(`Saldo UTXO tidak cukup untuk fee. Tersedia ${Number(total) / 1e8} NUX, fee ${Number(feeSat) / 1e8} NUX.`);
+
+    let fee = feeSat; let change = total - fee;
+    if (change < DUST) { fee = total; change = 0n; }
+
+    const outs = [];
+    outs.push(TX.u64(0n) + TX.varint(34) + '6a20' + hashHex);               // OP_RETURN <32 byte hash>
+    if (change > 0n) outs.push(TX.u64(change) + TX.varint(ownScript.length / 2) + ownScript);
+    const outputsHex = outs.join('');
+    const outCount = TX.varint(outs.length);
+    const ver = TX.u32(2), lock = TX.u32(0), seq = 'ffffffff';
+    const outpoints = picked.map(u => TX.rev(u.txid) + TX.u32(u.vout));
+
+    if (!isSeg) {
+        const scriptSigs = picked.map((u, i) => {
+            const pre = ver + TX.varint(picked.length) +
+                picked.map((_, j) => outpoints[j] + (j === i ? TX.varint(ownScript.length / 2) + ownScript : '00') + seq).join('') +
+                outCount + outputsHex + lock + TX.u32(1);
+            const sig = TX.sign(ki.privHex, TX.dsha(pre));
+            return TX.push(sig) + TX.push(ki.pubHex);
+        });
+        const raw = ver + TX.varint(picked.length) +
+            picked.map((_, j) => outpoints[j] + TX.varint(scriptSigs[j].length / 2) + scriptSigs[j] + seq).join('') +
+            outCount + outputsHex + lock;
+        return { hex: raw, txid: TX.rev(TX.dsha(raw)), fee, picked, change };
+    }
+
+    // P2WPKH (BIP143)
+    const hashPrevouts = TX.dsha(outpoints.join(''));
+    const hashSequence = TX.dsha(picked.map(() => seq).join(''));
+    const hashOutputs = TX.dsha(outputsHex);
+    const scriptCode = '1976a914' + ki.h160 + '88ac';
+    const witnesses = picked.map((u, i) => {
+        const pre = ver + hashPrevouts + hashSequence + outpoints[i] + scriptCode + TX.u64(u.value) + seq + hashOutputs + lock + TX.u32(1);
+        const sig = TX.sign(ki.privHex, TX.dsha(pre));
+        return '02' + TX.push(sig) + TX.push(ki.pubHex);
+    });
+    const inputsNoSig = picked.map((_, j) => outpoints[j] + '00' + seq).join('');
+    const base = ver + TX.varint(picked.length) + inputsNoSig + outCount + outputsHex + lock;
+    const hex = ver + '0001' + TX.varint(picked.length) + inputsNoSig + outCount + outputsHex + witnesses.join('') + lock;
+    return { hex, txid: TX.rev(TX.dsha(base)), fee, picked, change };
+}
+
+async function broadcastHex(hex) {
+    const tpl = document.getElementById("broadcastUrl").value.trim().replace('{node}', getNodeBase());
+    const res = tpl.includes('{hex}')
+        ? await fetch(tpl.replace('{hex}', hex))
+        : await fetch(tpl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: hex });
+    const text = (await res.text()).trim();
+    if (!res.ok) throw new Error(`Node menolak transaksi (HTTP ${res.status}): ${text.slice(0, 200)}`);
+    let id = text;
+    try { const j = JSON.parse(text); id = j.txid || j.result || j.tx || j.hash || ''; if (j.error) throw new Error(typeof j.error === 'string' ? j.error : JSON.stringify(j.error)); } catch (e) { if (e.message && !(e instanceof SyntaxError)) throw e; }
+    id = String(id).replace(/"/g, '').trim();
+    if (!/^[0-9a-fA-F]{64}$/.test(id)) throw new Error("Node tidak mengembalikan Tx ID yang valid: " + text.slice(0, 200));
+    return id.toLowerCase();
+}
+
+window.lastRecords = {};
+window.rawQueue = [];          // antrean raw TX yang belum disiarkan (urut)
+window.pendingSpent = new Set();
+window.pendingUtxos = [];      // change dari raw TX (agar TX berikutnya bisa dirantai)
+
+const esc = (x) => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function saveFile(name, text, mime) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: mime || 'text/plain' }));
+    a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function downloadRecord(formId) { const r = window.lastRecords[formId]; if (r) saveFile(r.name, r.json, 'application/json'); }
+function downloadRaw(formId) { const r = window.lastRecords[formId]; if (r && r.rawHex) saveFile(r.rawName, r.rawHex + '\n', 'text/plain'); }
+function downloadAllRaw() {
+    if (!window.rawQueue.length) return;
+    saveFile('PBNU-rawtx-semua.txt', window.rawQueue.map(q => q.hex).join('\n') + '\n', 'text/plain');
+}
+async function copyRaw(formId) {
+    const r = window.lastRecords[formId]; if (!r || !r.rawHex) return;
+    try { await navigator.clipboard.writeText(r.rawHex); alert('Raw TX hex disalin.'); }
+    catch (e) { prompt('Salin raw TX hex berikut:', r.rawHex); }
+}
+
+function parseManualUtxos() {
+    const el = document.getElementById('manualUtxo'); if (!el) return [];
+    return el.value.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map((l, i) => {
+        const p = l.split(/[\s,:;]+/);
+        if (p.length < 3 || !/^[0-9a-fA-F]{64}$/.test(p[0]) || !/^\d+$/.test(p[1]) || !/^\d+$/.test(p[2]))
+            throw new Error(`Baris UTXO manual ke-${i + 1} tidak valid. Format: txid,vout,nilai_satoshi`);
+        return { txid: p[0].toLowerCase(), vout: Number(p[1]), value: BigInt(p[2]) };
+    });
+}
+
+async function getUtxos(addr) {
+    let list = parseManualUtxos();
+    if (!list.length) {
+        try { list = await fetchUtxos(addr); }
+        catch (e) { throw new Error((e.message || String(e)) + ' - Node tidak terjangkau dari browser (mis. CORS). Isi kolom "UTXO manual" di menu Koneksi Wallet lalu klik Inject lagi untuk membuat raw TX secara offline.'); }
+    }
+    list = list.filter(u => !window.pendingSpent.has(u.txid + ':' + u.vout));
+    for (const p of window.pendingUtxos) if (!list.some(u => u.txid === p.txid && u.vout === p.vout)) list.push(p);
+    return list;
+}
+
+function registerPending(tx) {
+    tx.picked.forEach(u => window.pendingSpent.add(u.txid + ':' + u.vout));
+    window.pendingUtxos = window.pendingUtxos.filter(u => !window.pendingSpent.has(u.txid + ':' + u.vout));
+    if (tx.change > 0n) window.pendingUtxos.push({ txid: tx.txid, vout: 1, value: tx.change }); // output 0 = OP_RETURN, output 1 = change
+}
+
+// INJEKSI PER MENU: hash SHA-256 dari data form menu itu sendiri -> OP_RETURN
+async function injectData(sheetName, formId) {
+    const form = document.getElementById(formId);
+    const statusDiv = document.getElementById("status-" + formId);
+    const show = (cls, html) => { statusDiv.style.display = "block"; statusDiv.className = "mt-4 p-4 rounded-xl text-sm leading-relaxed border " + cls; statusDiv.innerHTML = html; };
+    const err = (msg, hash) => show("bg-red-50 border-red-300 text-red-800",
+        `<strong>GAGAL - hash BELUM tercatat di blockchain.</strong> Menu <strong>${esc(sheetName)}</strong>.<br>${esc(msg)}` +
+        (hash ? `<br><span class="text-xs">Hash data: <span class="font-mono break-all">${hash}</span></span>` : '') +
+        `<br>Isian form dipertahankan; perbaiki lalu klik Inject lagi.`);
+
+    if (!liveWalletData.address) {
+        show("bg-amber-50 border-amber-300 text-amber-800", "Wallet belum dibuka. Buka wallet di menu 'Koneksi Wallet & Saldo' sebagai signer, lalu kembali dan klik Inject lagi. Data form ini tidak hilang.");
+        return;
+    }
+
+    // 1. Kumpulkan data HANYA dari form menu ini, lalu hash SHA-256
+    const data = {};
+    form.querySelectorAll('input, select, textarea').forEach(el => { if (el.id) data[el.id] = el.value; });
+    const recordJson = JSON.stringify({ menu: sheetName, data });
+    const dataHash = CryptoJS.SHA256(recordJson).toString();
+
+    show("bg-emerald-50 border-emerald-300 text-emerald-800", `Menyusun transaksi OP_RETURN untuk menu <strong>${esc(sheetName)}</strong>...<br><span class="text-xs">SHA-256: <span class="font-mono break-all">${dataHash}</span></span>`);
+
+    // 2. Bangun & tandatangani (tidak butuh broadcast)
+    let tx;
+    try {
+        const ki = keyInfoFromWallet();
+        const feeSat = BigInt(Math.round((parseFloat(document.getElementById("feeNux").value) || 0) * 1e8));
+        const utxos = await getUtxos(liveWalletData.address);
+        if (!utxos.length) throw new Error("Tidak ada UTXO (saldo) pada alamat signer.");
+        tx = buildSignedTx(utxos, ki, dataHash, feeSat);
+    } catch (e) {
+        err(e.message || "Terjadi kesalahan tak terduga.", dataHash);
+        return;
+    }
+
+    // 3. Broadcast (kecuali mode raw saja)
+    const rawOnly = document.getElementById("rawOnly").checked;
+    let txid = null, bcErr = null;
+    if (!rawOnly) {
+        try { txid = await broadcastHex(tx.hex); }
+        catch (e) { bcErr = e.message || String(e); }
+    }
+
+    const noEl = form.querySelector('[data-no]');
+    if (noEl) noEl.value = (parseInt(noEl.value, 10) || 0) + 1;
+
+    const shortId = (txid || tx.txid).slice(0, 8);
+    window.lastRecords[formId] = {
+        name: `PBNU-${sheetName}-${shortId}.json`, json: recordJson,
+        rawName: `PBNU-${sheetName}-${shortId}.rawtx.txt`, rawHex: tx.hex
+    };
+
+    const btn = "px-3 py-1.5 rounded-lg text-white text-xs font-bold mr-1 mt-2";
+    const btnRec = `<button type="button" onclick="downloadRecord('${formId}')" class="${btn} bg-[var(--primary)]"><i class="fa-solid fa-download mr-1"></i> Unduh data asli (.json)</button>`;
+    const btnRaw = `<button type="button" onclick="downloadRaw('${formId}')" class="${btn} bg-amber-700"><i class="fa-solid fa-file-code mr-1"></i> Unduh raw TX (.txt)</button>`;
+    const btnCopy = `<button type="button" onclick="copyRaw('${formId}')" class="${btn} bg-slate-600"><i class="fa-solid fa-copy mr-1"></i> Salin hex</button>`;
+
+    if (txid) {
+        const mismatch = txid !== tx.txid ? `<br><span class="text-xs text-amber-700">Catatan: Tx ID dari node berbeda dengan hitungan lokal; cek di explorer.</span>` : '';
+        show("bg-emerald-50 border-emerald-300 text-emerald-800",
+            `<strong>Berhasil disiarkan ke node.</strong> Hash data menu <strong>${esc(sheetName)}</strong> dikirim ke OP_RETURN.<br>` +
+            `<strong>SHA-256:</strong> <span class="font-mono text-xs break-all">${dataHash}</span><br>` +
+            `<strong>Tx ID:</strong> <a href="https://explorer.nusacoin.org/tx/${txid}" target="_blank" class="underline font-bold break-all">${txid}</a>${mismatch}<br>` +
+            btnRec + btnRaw +
+            `<br><span class="text-xs">Simpan file data: SHA-256 isi file harus sama dengan hash di blockchain.</span>`);
+        return;
+    }
+
+    // 4. Fallback: raw TX untuk disiarkan di tempat lain
+    registerPending(tx);
+    const seq = window.rawQueue.length + 1;
+    window.rawQueue.push({ seq, sheet: sheetName, txid: tx.txid, hex: tx.hex });
+    renderHistory();
+    const reason = rawOnly ? 'Mode raw saja aktif - transaksi tidak disiarkan oleh aplikasi.' : `Broadcast ke node gagal: ${esc(bcErr)}`;
+    const nodeBase = esc(getNodeBase());
+    show("bg-amber-50 border-amber-300 text-amber-900",
+        `<strong>Raw TX #${seq} siap disiarkan di tempat lain.</strong> Hash BELUM tercatat di blockchain sebelum raw TX ini disiarkan.<br>` +
+        `<span class="text-xs">${reason}</span><br>` +
+        `<strong>SHA-256:</strong> <span class="font-mono text-xs break-all">${dataHash}</span><br>` +
+        `<strong>Tx ID (hitungan lokal):</strong> <span class="font-mono text-xs break-all">${tx.txid}</span><br>` +
+        `<textarea readonly rows="4" class="fld font-mono mt-2" onclick="this.select()">${tx.hex}</textarea>` +
+        btnRaw + btnCopy + btnRec +
+        (window.rawQueue.length > 1 ? `<button type="button" onclick="downloadAllRaw()" class="${btn} bg-emerald-800"><i class="fa-solid fa-layer-group mr-1"></i> Unduh semua raw TX (${window.rawQueue.length}, urut)</button>` : '') +
+        `<div class="text-xs mt-3 space-y-1">` +
+        `<div><strong>Cara menyiarkan:</strong> (a) console/RPC node Nusacoin: <span class="font-mono">sendrawtransaction &lt;hex&gt;</span>; (b) halaman kirim transaksi di explorer, mis. <span class="font-mono">${nodeBase}/sendtx</span> (jika tersedia); (c) POST hex ke endpoint broadcast dari browser/server yang tidak terkena blokir CORS.</div>` +
+        `<div>File raw TX sudah ditandatangani dan <strong>tidak berisi private key</strong>, jadi aman dibawa ke perangkat lain.</div>` +
+        `<div>Jika membuat lebih dari satu raw TX, <strong>siarkan berurutan (#1, #2, ...)</strong>: TX berikutnya memakai sisa saldo TX sebelumnya. Muat ulang halaman akan mereset antrean ini.</div>` +
+        `<div>Simpan file data asli (.json): SHA-256 isinya harus sama dengan hash di OP_RETURN.</div></div>`);
+}
+    </script>
+
+    <script>
+        // Daftar pilihan dropdown (sheet Referensi pada Excel)
+        const REF = {
+        "jk": [
+                "Laki-laki",
+                "Perempuan"
+        ],
+        "pendidikan": [
+                "S3",
+                "S2",
+                "S1/D4",
+                "D3",
+                "SMU",
+                "MA",
+                "SMK",
+                "SMP",
+                "MTs",
+                "MI",
+                "SD"
+        ],
+        "keahlian": [
+                "Arsitektur",
+                "Dokter",
+                "Akuntan",
+                "Ekonomi",
+                "Hukum",
+                "IT"
+        ],
+        "pesantren": [
+                "Ma'had Ali",
+                "Marhalah Ulya",
+                "Marhalah Wustho",
+                "Marhalah Ula"
+        ],
+        "kaderisasi": [
+                "PMK",
+                "PDPKP/PKP/MK",
+                "Kaderisasi Banom"
+        ],
+        "laporanKeuangan": [
+                "KAP",
+                "Auditor Internal",
+                "Tidak di Audit"
+        ],
+        "alasHak": [
+                "SHM",
+                "HGB (Hak Guna Bangunan)",
+                "HGU (Hak Guna Usaha)",
+                "HP (Hak Pakai)",
+                "HPL (Hak Pengelolaan)",
+                "Hak Tanggungan",
+                "GIRIK/PETHOK D",
+                "Pinjaman",
+                "Tidak Ada"
+        ],
+        "asal": [
+                "Swadaya",
+                "Hibah Pemerintah",
+                "Hibah Swasta",
+                "Hibah Perorangan/Wakaf"
+        ],
+        "konstruksi": [
+                "Beton",
+                "Kayu",
+                "Bambu"
+        ],
+        "pekerjaan": [
+                "Belum/Tidak Bekerja",
+                "ASN",
+                "TNI",
+                "POLRI",
+                "Pejabat Negara",
+                "Pejabat Politik",
+                "Tenaga Pengajar",
+                "Wiraswasta",
+                "Petani",
+                "Buruh Tani",
+                "Peternakan",
+                "Nelayan",
+                "Agama dan Kepercayaan",
+                "Pelajar/Mahasiswa",
+                "Tenaga Kesehatan",
+                "Pensiunan",
+                "Lainnya"
+        ]
+};
+        document.querySelectorAll('select[data-ref]').forEach(sel => {
+            sel.innerHTML = '<option value="">-- Pilih --</option>' + (REF[sel.dataset.ref] || [])
+                .map(v => `<option value="${v.replace(/"/g, '&quot;')}">${v}</option>`).join('');
+        });
+    </script>
+
+    <script>
+        // === Integrasi Wilayah Indonesia (Provinsi > Kab/Kota > Kecamatan > Kel/Desa) ===
+        // Sumber data: API Wilayah Indonesia (emsifa) - data kode Kemendagri, statis & CORS-enabled.
+        const WILAYAH_BASES = [
+            'https://emsifa.github.io/api-wilayah-indonesia/api',
+            'https://www.emsifa.com/api-wilayah-indonesia/api'
+        ];
+        const WIL_LEVELS = [
+            { key: 'Provinsi',  lbl: 'Provinsi',  up: 'PROVINSI',        path: () => 'provinces' },
+            { key: 'KabKota',   lbl: 'Kab/Kota',  up: 'KABUPATEN/KOTA',  path: id => 'regencies/' + id },
+            { key: 'Kecamatan', lbl: 'Kecamatan', up: 'KECAMATAN',       path: id => 'districts/' + id },
+            { key: 'KelDesa',   lbl: 'Kel/Desa',  up: 'KELURAHAN/DESA',  path: id => 'villages/' + id }
+        ];
+        const wilCache = {};
+        const wilEsc = x => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function wilFetch(path) {
+            if (wilCache[path]) return wilCache[path];
+            const p = (async () => {
+                let lastErr;
+                for (const base of WILAYAH_BASES) {
+                    try {
+                        const r = await fetch(base + '/' + path + '.json');
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        const j = await r.json();
+                        if (!Array.isArray(j)) throw new Error('Format data tidak dikenal');
+                        return j;
+                    } catch (e) { lastErr = e; }
+                }
+                throw lastErr || new Error('Gagal memuat data wilayah');
+            })();
+            wilCache[path] = p;
+            p.catch(() => { delete wilCache[path]; }); // izinkan coba lagi
+            return p;
+        }
+
+        function initWilayah(box) {
+            const pfx = box.dataset.wilayah;
+            const upper = box.hasAttribute('data-upper');
+            box.innerHTML =
+                '<div class="grid grid-cols-1 md:grid-cols-4 gap-4">' +
+                WIL_LEVELS.map(l => '<div><label class="lbl" for="' + pfx + l.key + '">' + (upper ? l.up : l.lbl) + '</label>' +
+                    '<select id="' + pfx + l.key + '" class="fld"></select></div>').join('') +
+                '</div><input type="hidden" id="' + pfx + 'KodeWilayah">' +
+                '<div id="' + pfx + 'WilStatus" class="text-xs mt-2" style="display:none;"></div>';
+
+            const sels = WIL_LEVELS.map(l => box.querySelector('#' + pfx + l.key));
+            const code = box.querySelector('#' + pfx + 'KodeWilayah');
+            const stat = box.querySelector('#' + pfx + 'WilStatus');
+
+            const setOpts = (i, items, ph, disabled) => {
+                sels[i].innerHTML = '<option value="">' + wilEsc(ph) + '</option>' +
+                    items.map(x => '<option value="' + wilEsc(x.name) + '" data-id="' + wilEsc(x.id) + '">' + wilEsc(x.name) + '</option>').join('');
+                sels[i].disabled = !!disabled;
+            };
+            const phText = i => '-- Pilih ' + WIL_LEVELS[i].lbl + ' --';
+            const resetFrom = i => { for (let k = i; k < sels.length; k++) setOpts(k, [], phText(k), true); };
+            const updateCode = () => {
+                let c = '';
+                sels.forEach(sel => { const o = sel.selectedOptions && sel.selectedOptions[0]; if (o && o.dataset.id) c = o.dataset.id; });
+                code.value = c;
+            };
+            const showStat = (html) => { stat.style.display = 'block'; stat.innerHTML = html; };
+            const hideStat = () => { stat.style.display = 'none'; stat.innerHTML = ''; };
+
+            function manualMode() {
+                WIL_LEVELS.forEach((l, i) => {
+                    const inp = document.createElement('input');
+                    inp.type = 'text'; inp.id = pfx + l.key; inp.className = 'fld'; inp.placeholder = l.lbl;
+                    sels[i].replaceWith(inp);
+                });
+                code.value = '';
+                showStat('<span class="text-amber-700">Mode ketik manual aktif (kode wilayah tidak tercatat). ' +
+                    '<button type="button" class="underline font-bold" data-act="reload">Muat ulang dropdown</button></span>');
+                stat.querySelector('[data-act="reload"]').onclick = () => initWilayah(box);
+            }
+
+            function fail(err) {
+                showStat('<span class="text-red-700">Gagal memuat data wilayah (' + wilEsc(err && err.message || err) + '). Periksa koneksi internet. ' +
+                    '<button type="button" class="underline font-bold" data-act="retry">Coba lagi</button> &bull; ' +
+                    '<button type="button" class="underline font-bold" data-act="manual">Ketik manual</button></span>');
+                stat.querySelector('[data-act="retry"]').onclick = () => initWilayah(box);
+                stat.querySelector('[data-act="manual"]').onclick = manualMode;
+            }
+
+            async function loadLevel(i, parentId) {
+                setOpts(i, [], 'Memuat...', true);
+                try {
+                    const items = await wilFetch(WIL_LEVELS[i].path(parentId));
+                    setOpts(i, items, phText(i), false);
+                    hideStat();
+                } catch (e) {
+                    setOpts(i, [], phText(i), true);
+                    fail(e);
+                }
+            }
+
+            sels.forEach((sel, i) => {
+                sel.addEventListener('change', () => {
+                    resetFrom(i + 1);
+                    updateCode();
+                    const o = sel.selectedOptions[0];
+                    if (i < sels.length - 1 && o && o.dataset.id) loadLevel(i + 1, o.dataset.id);
+                });
+            });
+
+            resetFrom(1);
+            loadLevel(0);
+        }
+        document.querySelectorAll('[data-wilayah]').forEach(initWilayah);
+    </script>
+</body>
+</html>
