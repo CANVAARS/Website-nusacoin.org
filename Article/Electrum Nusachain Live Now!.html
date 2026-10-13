@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semua Artikel - Nusachain (NUX)</title>
+    <!-- FontAwesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Definisi Variabel Warna CSS (Custom Properties) Nusachain Sesuai Dokumentasi[cite: 1] */
+        :root {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-sub: #f8fafc;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --bg-light: #f8fafc;
+            --border: #e2e8f0;
+            --title-green: #1e8449;
+            --link-green: #27ae60;
+        }
+
+        /* Dark Mode Override[cite: 1] */
+        body.dark-mode {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-sub: #0f172a;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --bg-light: #1e293b;
+            --border: #334155;
+            --title-green: #4ade80;
+            --link-green: #4ade80;
+        }
+
+        /* Transisi Halus Soft-Switching (0.3s ease)[cite: 1] */
+        body, .article-card, footer {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            background-color: var(--primary-dark);
+            color: #ffffff;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .controls button {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .controls button.active {
+            background-color: rgba(255,255,255,0.2);
+            font-weight: bold;
+        }
+
+        /* Container Utama */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            min-height: 50vh;
+        }
+
+        .page-title {
+            color: var(--title-green);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        /* Grid Artikel */
+        .article-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        /* Kartu Artikel (.article-card) */
+        .article-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .article-thumb {
+            height: 160px;
+            background-color: var(--bg-card-sub);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .article-title {
+            font-size: 1.25rem;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .article-title:hover {
+            color: var(--link-green);
+        }
+
+        .article-excerpt {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        .read-more {
+            color: var(--link-green);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        .loading-text {
+            color: var(--text-sub);
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
+        /* Footer Utama Nusachain */
+        footer {
+            background-color: var(--bg-light);
+            border-top: 1px solid var(--border);
+            padding: 40px 20px 20px 20px;
+            color: var(--text-sub);
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-col h3 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .footer-col p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 8px;
+        }
+
+        .footer-col ul li a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--link-green);
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .social-btn {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .social-btn:hover {
+            background-color: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div style="font-weight: bold; letter-spacing: 0.5px;">Nusachain (NUX)</div>
+        <div class="controls">
+            <button id="themeToggleBtn" onclick="toggleTheme()" title="Ganti Mode">
+                <i id="themeIcon" class="fa-solid fa-moon"></i>
+            </button>
+            <button id="btnIN" class="active" onclick="switchLanguage('id')">IN</button>
+            <button id="btnEN" onclick="switchLanguage('en')">EN</button>
+        </div>
+    </div>
+
+    <!-- Konten Utama: Daftar Artikel dari Folder GitHub -->
+    <div class="container">
+        <h1 class="page-title" id="mainTitle">Seluruh Artikel Nusachain</h1>
+        
+        <div id="articleGrid" class="article-grid">
+            <div class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> Memuat artikel dari folder GitHub...</div>
+        </div>
+    </div>
+
+    <!-- Footer Standar Nusachain -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h3 id="footerBrandTitle">Nusachain (NUX)</h3>
+                <p id="footerBrandDesc">Platform ekosistem blockchain masa depan yang aman, cepat, dan terdesentralisasi untuk solusi digital global.</p>
+                <div class="social-icons">
+                    <a href="#" class="social-btn"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" class="social-btn"><i class="fa-brands fa-telegram"></i></a>
+                    <a href="#" class="social-btn"><i class="fa-brands fa-discord"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 id="footerNavTitle">Navigasi Cepat</h3>
+                <ul>
+                    <li><a href="#" id="navHome">Beranda Utama</a></li>
+                    <li><a href="#" id="navArticles">Daftar Artikel</a></li>
+                    <li><a href="#" id="navEcosystem">Ekosistem</a></li>
+                    <li><a href="#" id="navDocs">Dokumentasi</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 id="footerContactTitle">Hubungi Kami</h3>
+                <p id="footerContactText">Pusat Bantuan & Dukungan Pengembang:<br>support@nusachain.io</p>
+            </div>
+        </div>
+        <div class="footer-bottom" id="footerCopyright">
+            &copy; 2026 Nusachain (NUX). Hak Cipta Dilindungi Undang-Undang.
+        </div>
+    </footer>
+
+    <script>
+        // Konfigurasi Repo GitHub Anda
+        const GITHUB_USER = 'CANVAARS';
+        const GITHUB_REPO = 'Website-nusacoin.org';
+        const GITHUB_FOLDER = 'Article'; // Folder tempat artikel disimpan
+
+        // Fungsi Fetch Otomatis dari Folder GitHub
+        async function fetchGitHubArticles() {
+            const gridContainer = document.getElementById('articleGrid');
+            const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FOLDER}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Gagal mengambil data dari GitHub API');
+                
+                const files = await response.json();
+                gridContainer.innerHTML = ''; 
+
+                // Menyaring file berformat .html atau .md di dalam folder Article
+                const articleFiles = files.filter(file => file.type === 'file' && (file.name.endsWith('.html') || file.name.endsWith('.md')));
+
+                if (articleFiles.length === 0) {
+                    gridContainer.innerHTML = '<div class="loading-text">Belum ada artikel ditemukan di dalam folder Article.</div>';
+                    return;
+                }
+
+                // Render kartu artikel secara dinamis
+                articleFiles.forEach(file => {
+                    let titleFormatted = file.name.replace(/\.(html|md)$/, '').replace(/[-_]/g, ' ');
+                    titleFormatted = titleFormatted.charAt(0).toUpperCase() + titleFormatted.slice(1);
+
+                    const card = document.createElement('div');
+                    card.className = 'article-card';
+                    card.innerHTML = `
+                        <div class="article-thumb"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="article-content">
+                            <a href="${file.html_url}" target="_blank" class="article-title">${titleFormatted}</a>
+                            <p class="article-excerpt">Artikel resmi ekosistem Nusachain yang disinkronkan secara otomatis dari folder GitHub repository.</p>
+                            <a href="${file.html_url}" target="_blank" class="read-more">Baca Artikel <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    `;
+                    gridContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+                gridContainer.innerHTML = `<div class="loading-text" style="color: #e74c3c;">Gagal memuat artikel otomatis dari GitHub.</div>`;
+            }
+        }
+
+        // Jalankan fetch saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', fetchGitHubArticles);
+
+        // Logika Toggle Dark / Light Mode[cite: 1]
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+
+            body.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                icon.className = 'fa-solid fa-sun';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        // Kamus Bahasa untuk Internasionalisasi (IN/EN Toggle)[cite: 1]
+        const translations = {
+            id: {
+                mainTitle: "Seluruh Artikel Nusachain",
+                footerBrandTitle: "Nusachain (NUX)",
+                footerBrandDesc: "Platform ekosistem blockchain masa depan yang aman, cepat, dan terdesentralisasi untuk solusi digital global.",
+                footerNavTitle: "Navigasi Cepat",
+                navHome: "Beranda Utama",
+                navArticles: "Daftar Artikel",
+                navEcosystem: "Ekosistem",
+                navDocs: "Dokumentasi",
+                footerContactTitle: "Hubungi Kami",
+                footerContactText: "Pusat Bantuan & Dukungan Pengembang:<br>support@nusachain.io",
+                footerCopyright: "&copy; 2026 Nusachain (NUX). Hak Cipta Dilindungi Undang-Undang."
+            },
+            en: {
+                mainTitle: "All Nusachain Articles",
+                footerBrandTitle: "Nusachain (NUX)",
+                footerBrandDesc: "Next-generation secure, fast, and decentralized blockchain ecosystem platform for global digital solutions.",
+                footerNavTitle: "Quick Navigation",
+                navHome: "Home",
+                navArticles: "Articles List",
+                navEcosystem: "Ecosystem",
+                navDocs: "Documentation",
+                footerContactTitle: "Contact Us",
+                footerContactText: "Support & Developer Help Desk:<br>support@nusachain.io",
+                footerCopyright: "&copy; 2026 Nusachain (NUX). All Rights Reserved."
+            }
+        };
+
+        function switchLanguage(lang) {
+            document.getElementById('btnIN').classList.toggle('active', lang === 'id');
+            document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+
+            const t = translations[lang];
+            for (let id in t) {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id.includes('Text') || id.includes('Copyright')) {
+                        el.innerHTML = t[id];
+                    } else {
+                        el.textContent = t[id];
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
