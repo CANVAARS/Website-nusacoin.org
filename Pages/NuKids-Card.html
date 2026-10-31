@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NuKids: Motion Graphic</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#F2F6FB;--ink:#13213C;--muted:#52627F;--blue:#2B59C3;--teal:#0E9F88;--amber:#F2B134;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1120;--ink:#E8EEF9;--muted:#9DB0CE}}
+:root[data-theme="dark"]{--bg:#0A1120;--ink:#E8EEF9;--muted:#9DB0CE}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+.stage{position:relative;aspect-ratio:16/9;min-height:300px;border-radius:16px;overflow:hidden;background:radial-gradient(120% 120% at 20% 0%,#1B3A7A,#0B1630 70%);color:#fff}
+@media (max-width:600px){.stage{aspect-ratio:3/4}}
+.scene{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:4vw;padding:24px;text-align:center}
+.scene.on{display:flex}
+h2{margin:0;font-size:clamp(1.3rem,4.2vw,2.3rem);line-height:1.2;font-weight:800;max-width:20ch}
+h2 em{font-style:normal;color:var(--amber)}
+.sub{font-size:clamp(.9rem,2.2vw,1.15rem);color:#C7D5F0;max-width:34ch}
+.a{opacity:0}
+.on .a{animation:up .7s ease-out both;animation-delay:var(--d,0s)}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.row{display:flex;align-items:center;justify-content:center;gap:clamp(10px,4vw,48px);position:relative;width:100%}
+.act{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:clamp(.7rem,1.8vw,.95rem);font-weight:600}
+.act i{font-style:normal;width:clamp(54px,11vw,92px);aspect-ratio:1;border-radius:20px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:clamp(1.6rem,5vw,2.8rem)}
+.arrow{font-size:clamp(1.2rem,3vw,2rem);color:var(--amber)}
+.card{width:clamp(150px,34vw,250px);aspect-ratio:1.586;border-radius:14px;background:linear-gradient(135deg,#2B59C3,#0E9F88);position:relative;box-shadow:0 18px 30px rgba(0,0,0,.4);text-align:left;padding:12px;font-weight:800;font-size:clamp(.7rem,1.8vw,1rem)}
+.card:before{content:"";position:absolute;left:12px;top:34%;width:26px;height:20px;border-radius:5px;background:linear-gradient(135deg,#F7D774,#C9962B)}
+.card small{position:absolute;left:12px;bottom:10px;font-weight:600;font-size:.7em;opacity:.9}
+.on .tap{animation:tap 1.2s ease-in-out both;animation-delay:var(--d,1s)}
+@keyframes tap{0%{transform:translateX(0)}50%{transform:translateX(clamp(30px,9vw,90px)) scale(.95)}100%{transform:translateX(clamp(30px,9vw,90px)) scale(.95)}}
+.coin{position:absolute;top:30%;left:14%;width:clamp(28px,5vw,44px);aspect-ratio:1;border-radius:50%;background:var(--amber);color:#13213C;font-weight:800;font-size:clamp(.6rem,1.4vw,.8rem);display:grid;place-items:center;opacity:0}
+.on .coin{animation:fly 1.8s ease-in-out both;animation-delay:var(--d,1s)}
+@keyframes fly{0%{left:14%;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:72%;opacity:0}}
+.bal{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:12px 22px;min-width:clamp(180px,36vw,280px);font-weight:800;font-size:clamp(1.1rem,3.4vw,2rem);position:relative;height:clamp(64px,12vw,92px);display:grid;place-items:center}
+.bal small{position:absolute;top:6px;left:0;right:0;font-size:.4em;font-weight:600;color:#C7D5F0}
+.bal span{grid-area:1/1;padding-top:12px}
+.old{animation:none}
+.on .old{animation:out .4s both;animation-delay:var(--d,2s)}
+.on .new{animation:in .5s both;animation-delay:calc(var(--d,2s) + .3s)}
+.new{opacity:0}
+@keyframes out{to{opacity:0}}
+@keyframes in{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+.on .pop{animation:pop .9s ease-out both;animation-delay:var(--d,2s)}
+.pop{opacity:0;color:#FF9B8A;font-weight:800;font-size:clamp(1rem,2.8vw,1.5rem)}
+@keyframes pop{0%{opacity:0;transform:translateY(10px)}30%{opacity:1}100%{opacity:1;transform:translateY(-14px)}}
+.badge{display:inline-block;background:var(--teal);color:#fff;border-radius:999px;padding:6px 14px;font-weight:800;font-size:clamp(.8rem,2vw,1.05rem)}
+.lock{filter:grayscale(1);position:relative}
+.on .freeze{animation:frz 1s both;animation-delay:var(--d,1s)}
+@keyframes frz{to{filter:grayscale(1) brightness(.7);transform:rotate(-6deg) scale(.92)}}
+.ctl{display:flex;align-items:center;gap:10px;margin-top:12px}
+.ctl button{font:inherit;font-weight:700;border:1px solid var(--muted);background:transparent;color:var(--ink);border-radius:999px;min-height:44px;min-width:44px;padding:0 16px;cursor:pointer}
+.ctl button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.bar{flex:1;height:8px;border-radius:99px;background:rgba(128,150,190,.3);overflow:hidden}
+.bar b{display:block;height:100%;width:0;background:var(--blue)}
+.dots{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.dots button{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--muted);background:transparent;color:var(--muted);border-radius:999px;min-height:36px;padding:0 12px;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.note{font-size:.85rem;color:var(--muted);margin-top:10px}
+@media (prefers-reduced-motion:reduce){.on .a,.on .tap,.on .coin,.on .old,.on .new,.on .pop,.on .freeze{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<main>
+<div class="stage" id="stage">
+
+<div class="scene">
+  <h2 class="a">Satu kartu, <em>tiga fungsi</em></h2>
+  <div class="card a" style="--d:.5s">Nama Siswa<small>Kartu NuKids · NFC/RFID</small></div>
+  <p class="sub a" style="--d:1.2s">Jajan di kantin, bayar SPP, dan absen di gerbang.</p>
+</div>
+
+<div class="scene">
+  <h2 class="a">Kartu hanya <em>identitas</em></h2>
+  <div class="card a" style="--d:.4s">ID Siswa<small>Tanpa saldo di chip</small></div>
+  <p class="sub a" style="--d:1.2s">Saldo Nusan tersimpan aman di sistem NuKids sekolah.</p>
+</div>
+
+<div class="scene">
+  <h2 class="a">Isi saldo <em>lewat admin</em></h2>
+  <div class="row a" style="--d:.4s">
+    <div class="act"><i>👨‍👩‍👧</i>Orang tua</div><span class="arrow">➜</span>
+    <div class="act"><i>🏦</i>Rekening sekolah</div><span class="arrow">➜</span>
+    <div class="act"><i>🖥️</i>Server NuKids</div>
+    <div class="coin" style="--d:1.2s">Rp</div>
+  </div>
+  <div class="a" style="--d:3.2s"><span class="badge">1 Nusan = Rp1</span></div>
+  <p class="sub a" style="--d:3.8s">Rupiah disetor, admin mengisi saldo Nusan siswa.</p>
+</div>
+
+<div class="scene">
+  <h2 class="a">Tap di kantin, <em>saldo langsung terpotong</em></h2>
+  <div class="row a" style="--d:.4s">
+    <div class="card tap" style="--d:1s;width:clamp(110px,24vw,180px)">Ani<small>Kartu NuKids</small></div>
+    <div class="act"><i>📟</i>Reader kasir</div>
+  </div>
+  <div class="bal a" style="--d:.8s"><small>Saldo Nusan</small><span class="old" style="--d:2.8s">50.000</span><span class="new" style="--d:2.8s">35.000</span></div>
+  <div class="pop" style="--d:2.4s">−15.000 Nusan</div>
+  <div class="a" style="--d:4s"><span class="badge">Seketika · tanpa biaya</span></div>
+</div>
+
+<div class="scene">
+  <h2 class="a">Tap di gerbang, <em>orang tua langsung tahu</em></h2>
+  <div class="row a" style="--d:.4s">
+    <div class="act"><i>🚪</i>Gerbang</div><span class="arrow">➜</span>
+    <div class="act"><i>🖥️</i>Server</div><span class="arrow">➜</span>
+    <div class="act"><i>📱</i>Orang tua</div>
+    <div class="coin" style="--d:1.2s">✓</div>
+  </div>
+  <p class="sub a" style="--d:2.8s">Notifikasi kehadiran masuk di aplikasi NuKids, tanpa siswa membawa HP.</p>
+</div>
+
+<div class="scene">
+  <h2 class="a">Kartu hilang? <em>Saldo aman</em></h2>
+  <div class="row a" style="--d:.4s">
+    <div class="card freeze" style="--d:1.2s;width:clamp(110px,24vw,180px)">Kartu lama<small>Dibekukan 🔒</small></div>
+    <span class="arrow">➜</span>
+    <div class="card a" style="--d:2.4s;width:clamp(110px,24vw,180px)">Kartu baru<small>Aktif</small></div>
+  </div>
+  <div class="bal a" style="--d:3.2s"><small>Saldo Nusan tetap</small><span>35.000</span></div>
+</div>
+
+<div class="scene">
+  <h2 class="a">Aman, cepat, <em>dan tertutup di sekolah</em></h2>
+  <p class="sub a" style="--d:.6s">Pengisian hanya lewat admin. Pencairan hanya untuk vendor sekolah.</p>
+  <div class="a" style="--d:1.4s"><span class="badge">NuKids</span></div>
+</div>
+
+</div>
+<div class="ctl">
+  <button id="pp" aria-label="Putar atau jeda">⏸</button>
+  <button id="rp" aria-label="Ulangi dari awal">↻</button>
+  <div class="bar"><b id="pb"></b></div>
+</div>
+<div class="dots" id="dots"></div>
+<p class="note">Animasi otomatis sekitar 45 detik. Bisa dijeda, diulang, atau lompat ke adegan tertentu.</p>
+</main>
+<script>
+(function(){
+var T=[5,6,9,9,7,7,5],names=["Pembuka","Kartu","Isi saldo","Kantin","Absensi","Kartu hilang","Penutup"];
+var sc=document.querySelectorAll(".scene"),pb=document.getElementById("pb"),pp=document.getElementById("pp"),dots=document.getElementById("dots");
+var total=T.reduce(function(a,b){return a+b},0),cur=0,t0=0,playing=true,last=0,el=0;
+function start(i){cur=i;for(var k=0;k<sc.length;k++){sc[k].classList.remove("on")}void sc[i].offsetWidth;sc[i].classList.add("on");el=0;
+Array.prototype.forEach.call(dots.children,function(b,j){b.setAttribute("aria-current",j===i?"true":"false")})}
+names.forEach(function(n,i){var b=document.createElement("button");b.textContent=(i+1)+". "+n;b.onclick=function(){start(i)};dots.appendChild(b)});
+function before(i){var s=0;for(var k=0;k<i;k++)s+=T[k];return s}
+function tick(ts){if(!last)last=ts;var dt=(ts-last)/1000;last=ts;
+if(playing){el+=dt;if(el>=T[cur]){if(cur<sc.length-1)start(cur+1);else{playing=false;pp.textContent="▶";el=T[cur]}}}
+pb.style.width=Math.min(100,(before(cur)+Math.min(el,T[cur]))/total*100)+"%";requestAnimationFrame(tick)}
+pp.onclick=function(){if(!playing&&cur===sc.length-1&&el>=T[cur]){start(0)}playing=!playing;pp.textContent=playing?"⏸":"▶";var s=sc[cur];if(!playing){s.style.animationPlayState="paused"}};
+document.getElementById("rp").onclick=function(){playing=true;pp.textContent="⏸";start(0)};
+start(0);requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
