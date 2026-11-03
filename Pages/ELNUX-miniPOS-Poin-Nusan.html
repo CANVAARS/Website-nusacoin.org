@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ELNUX miniPOS: Bayar Rupiah, Dapat Poin Nusan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+:root{--amber:#F2B134;--teal:#19C3A6;--blue:#4C86FF;--glass:rgba(255,255,255,.09);--line:rgba(255,255,255,.22);--soft:#C7D5F0}
+*{box-sizing:border-box}
+html,body{margin:0;background:#070D1C;color:#fff;font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px}
+#wrap{position:relative;overflow:hidden;border-radius:14px}
+.stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;background:radial-gradient(90% 90% at 15% 0%,#1D3F86,#0B1630 65%,#070D1C)}
+.stage:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(70% 70% at 50% 50%,#000,transparent);mask-image:radial-gradient(70% 70% at 50% 50%,#000,transparent)}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.35}
+.o1{width:420px;height:420px;background:#2B59C3;left:-120px;bottom:-140px}
+.o2{width:360px;height:360px;background:#0E9F88;right:-100px;top:-120px}
+.scene{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:70px 80px 62px;text-align:center}
+.scene.on{display:flex}
+.brand{position:absolute;top:30px;right:40px;font-weight:800;font-size:18px;color:var(--soft);letter-spacing:.04em}
+.tag{position:absolute;top:26px;left:40px;background:var(--glass);border:1px solid var(--line);border-radius:99px;padding:8px 18px;font-weight:700;font-size:17px;color:var(--amber)}
+.pg{position:absolute;bottom:26px;display:flex;gap:10px}
+.pg i{width:34px;height:6px;border-radius:9px;background:rgba(255,255,255,.2)}
+.pg i.d{background:rgba(255,255,255,.55)}.pg i.c{background:var(--amber)}
+h2{margin:0;font-size:50px;line-height:1.15;font-weight:800;max-width:1080px}
+h2 em{font-style:normal;color:var(--amber)}
+h1{margin:0;font-size:80px;line-height:1.08;font-weight:800}
+h1 em{font-style:normal;color:var(--amber)}
+.sub{font-size:26px;color:var(--soft);margin:0;max-width:900px;line-height:1.35}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:22px}
+.badge{display:inline-block;border-radius:99px;padding:10px 28px;font-weight:800;font-size:26px;background:var(--teal);color:#06231d}
+.badge.am{background:var(--amber);color:#2b1c00}
+.row{display:flex;align-items:center;justify-content:center;gap:40px}
+.arrow{font-size:44px;color:var(--amber)}
+.coin{width:110px;height:110px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:44px;background:var(--amber);color:#2b1c00;box-shadow:0 0 44px rgba(242,177,52,.55)}
+.coin.n{background:var(--teal);color:#06231d;box-shadow:0 0 44px rgba(25,195,166,.55)}
+/* animasi */
+@keyframes up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}70%{transform:scale(1.06)}100%{opacity:1;transform:none}}
+@keyframes inl{from{opacity:0;transform:translateX(-70px)}to{opacity:1;transform:none}}
+@keyframes inr{from{opacity:0;transform:translateX(70px)}to{opacity:1;transform:none}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 8px #F2B134)}50%{filter:drop-shadow(0 0 30px #F2B134)}}
+@keyframes fly{0%{left:0;opacity:0;transform:scale(.7)}15%{opacity:1;transform:scale(1)}85%{opacity:1}100%{left:calc(100% - 44px);opacity:0}}
+@keyframes out{to{opacity:0}}
+@keyframes inn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes rise{0%{opacity:0;transform:translateY(14px)}30%{opacity:1}100%{opacity:1;transform:translateY(-16px)}}
+@keyframes print{from{transform:translateY(-102%)}to{transform:none}}
+@keyframes hl{to{background:#FFE08A}}
+.on .a{animation:up .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+.on .p{animation:pop .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+.on .l{animation:inl .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+.on .r{animation:inr .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+.on .bolt{animation:glow 1.6s ease-in-out infinite}
+.on .out{animation:out .4s both;animation-delay:var(--d,0s)}
+.on .inn{animation:inn .5s both;animation-delay:var(--d,0s)}
+.on .rise{animation:rise 1s ease-out both;animation-delay:var(--d,0s)}
+.a,.p,.l,.r,.inn,.rise{opacity:0}
+.on .a,.on .p,.on .l,.on .r,.on .inn,.on .rise{opacity:1}
+/* POS */
+.pos{width:560px;padding:22px 26px;text-align:left}
+.pos .hd{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:22px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.pill{background:var(--teal);color:#06231d;border-radius:99px;padding:4px 14px;font-size:15px;font-weight:800}
+.pos .it{display:flex;justify-content:space-between;font-size:26px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.pos .tt{display:flex;justify-content:space-between;font-size:40px;font-weight:800;color:var(--amber);padding-top:14px}
+/* struk */
+.recw{overflow:hidden;padding-bottom:12px}
+.rec{width:340px;background:#FBFAF4;color:#1b1b1b;font-family:"Liberation Mono","Courier New",monospace;font-size:19px;padding:22px 22px 26px;text-align:left;position:relative}
+.on .rec{animation:print 2.2s ease-out both;animation-delay:var(--d,0s)}
+.rec:after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;background:linear-gradient(135deg,#FBFAF4 5px,transparent 0) 0 0/12px 10px,linear-gradient(225deg,#FBFAF4 5px,transparent 0) 0 0/12px 10px}
+.rec .c{text-align:center;font-weight:700}
+.rec .rw{display:flex;justify-content:space-between;gap:10px;padding:3px 4px;border-radius:4px}
+.rec .g{font-size:15px;color:#666;padding:0 4px 3px}
+.rec hr{border:0;border-top:2px dashed #999;margin:10px 0}
+.on .hl{animation:hl .6s both;animation-delay:var(--d,0s)}
+/* kartu */
+.pay{width:300px;height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:30px;font-weight:800}
+.pay small{font-size:19px;font-weight:600;color:var(--soft)}
+.qr{display:grid;grid-template-columns:repeat(9,13px);gap:2px}
+.qr b{width:13px;height:13px;background:#fff;border-radius:2px}
+.qr b.o{background:transparent}
+.phone{width:230px;height:360px;border-radius:36px;border:4px solid rgba(255,255,255,.3);background:#0E1B38;padding:26px 18px;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative}
+.phone:before{content:"";position:absolute;top:10px;width:70px;height:8px;border-radius:9px;background:rgba(255,255,255,.2)}
+.phone .t{font-weight:700;font-size:19px;color:var(--soft);margin-top:10px}
+.bal{display:grid;place-items:center;height:110px;font-size:80px;font-weight:800;color:var(--teal);position:relative;width:100%}
+.bal span{grid-area:1/1}
+.panel{width:410px;padding:24px 28px;text-align:left;display:flex;flex-direction:column;gap:12px;font-size:25px}
+.panel .big{font-size:56px;font-weight:800;color:var(--amber);line-height:1}
+.mid{position:relative;width:250px;height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.mid:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:3px dashed rgba(255,255,255,.35)}
+.mid .bolt{position:relative;font-size:60px;line-height:1;background:#0B1630;border-radius:50%;padding:4px}
+.mid small{position:relative;font-size:17px;font-weight:700;color:var(--amber);background:#0B1630;padding:0 8px;margin-top:2px}
+.fl{position:absolute;top:calc(50% - 22px);left:0;width:44px;height:44px;border-radius:50%;background:var(--teal);color:#06231d;font-weight:800;display:grid;place-items:center;opacity:0}
+.mid{overflow:visible}
+.on .fl{animation:fly 1.2s ease-in-out both;animation-delay:var(--d,0s)}
+.mid .fl:nth-of-type(n){}
+.feat{width:320px;height:270px;padding:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.feat .e{font-size:68px;line-height:1}
+.feat b{font-size:30px}.feat span{font-size:21px;color:var(--soft);line-height:1.3}
+.big2{display:flex;align-items:center;gap:24px;font-size:56px;font-weight:800}
+.big2 .coin{width:84px;height:84px;font-size:34px}
+.step{width:224px;height:220px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.step .e{font-size:56px;line-height:1}.step b{font-size:25px}
+.step span{font-size:17px;font-weight:800;border-radius:99px;padding:3px 14px;background:rgba(255,255,255,.14)}
+.step.nx{border-color:var(--amber)}.step.nx span{background:var(--amber);color:#2b1c00}
+.step.rp span{background:var(--teal);color:#06231d}
+.ctl{display:flex;align-items:center;gap:10px;margin-top:12px;width:100%;max-width:640px}
+.ctl button{font:inherit;font-weight:700;border:1px solid #52627F;background:transparent;color:#fff;border-radius:99px;min-height:44px;min-width:44px;padding:0 16px;cursor:pointer}
+.ctl button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.bar{flex:1;height:8px;border-radius:99px;background:rgba(128,150,190,.3);overflow:hidden}
+.bar b{display:block;height:100%;width:0;background:var(--amber)}
+.dots{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.dots button{font:inherit;font-size:.8rem;font-weight:600;border:1px solid #52627F;background:transparent;color:#9DB0CE;border-radius:99px;min-height:36px;padding:0 12px;cursor:pointer}
+.dots button[aria-current="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+@media (prefers-reduced-motion:reduce){.on *{animation-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div id="wrap"><div class="stage" id="stage">
+<div class="orb o1"></div><div class="orb o2"></div>
+
+<!-- 1 PEMBUKA -->
+<div class="scene" data-tag="ELNUX miniPOS">
+  <div class="row p" style="--d:.2s"><div class="coin">Rp</div><span class="arrow">➜</span><div class="coin n">N</div></div>
+  <h1 class="a" style="--d:.7s">Bayar <em>rupiah</em>,<br>dapat poin <em>nusan</em></h1>
+  <p class="sub a" style="--d:1.6s">Program loyalitas toko dengan ELNUX miniPOS dan Lightning NUX.</p>
+</div>
+
+<!-- 2 BELANJA -->
+<div class="scene" data-tag="LANGKAH 1 · BELANJA">
+  <h2 class="a" style="--d:.1s">Total belanja <em>selalu dalam rupiah</em></h2>
+  <div class="row" style="gap:56px;align-items:flex-start">
+    <div class="glass pos l" style="--d:.5s">
+      <div class="hd"><span>miniPOS ELNUX</span><span class="pill">Mode Toko</span></div>
+      <div class="it a" style="--d:1s"><span>Beras 5 kg</span><span>Rp72.000</span></div>
+      <div class="it a" style="--d:1.4s"><span>Minyak 2 L</span><span>Rp38.000</span></div>
+      <div class="it a" style="--d:1.8s"><span>Gula 2 kg</span><span>Rp40.000</span></div>
+      <div class="tt p" style="--d:2.3s"><span>TOTAL</span><span>Rp150.000</span></div>
+    </div>
+    <div class="recw">
+      <div class="rec" style="--d:3s">
+        <div class="c">TOKO BERKAH</div><hr>
+        <div class="rw"><span>Beras 5kg</span><span>Rp72.000</span></div>
+        <div class="rw"><span>Minyak 2L</span><span>Rp38.000</span></div>
+        <div class="rw"><span>Gula 2kg</span><span>Rp40.000</span></div><hr>
+        <div class="rw"><b>TOTAL</b><b>Rp150.000</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="a" style="--d:5.6s"><span class="badge am">Struk tercetak dalam rupiah</span></div>
+</div>
+
+<!-- 3 BAYAR -->
+<div class="scene" data-tag="LANGKAH 2 · PEMBAYARAN">
+  <h2 class="a" style="--d:.1s">Pelanggan membayar <em>dengan rupiah</em></h2>
+  <div class="row" style="gap:36px">
+    <div class="glass pay p" style="--d:.7s"><div style="font-size:70px;line-height:1">💵</div>Tunai<small>Rupiah kertas &amp; koin</small></div>
+    <div class="sub a" style="--d:1.1s;font-size:30px">atau</div>
+    <div class="glass pay p" style="--d:1.3s"><div class="qr"></div>QRIS<small>bila toko menyediakan</small></div>
+  </div>
+  <div class="glass a" style="--d:2.8s;padding:14px 34px;font-size:30px;font-weight:800">✅ Toko tidak pernah menolak rupiah</div>
+  <div class="p" style="--d:4.4s"><span class="badge">LUNAS · Rp150.000</span></div>
+</div>
+
+<!-- 4 BONUS -->
+<div class="scene" data-tag="LANGKAH 3 · BONUS POIN">
+  <h2 class="a" style="--d:.1s;font-size:46px">Setelah bayar, <em>bonus poin nusan</em> terbit</h2>
+  <div class="row" style="gap:10px">
+    <div class="glass panel l" style="--d:.6s">
+      <span class="pill" style="align-self:flex-start">MODE TOKO</span>
+      <div class="a" style="--d:1.1s">Belanja <b>Rp150.000</b></div>
+      <div class="a" style="--d:1.6s;color:var(--soft)">Aturan bonus: 1 nusan / Rp1.000</div>
+      <div class="big p" style="--d:2.2s">+150 nusan</div>
+    </div>
+    <div class="mid">
+      <div class="fl" style="--d:2.6s">N</div><div class="fl" style="--d:3s">N</div><div class="fl" style="--d:3.4s">N</div>
+      <div class="bolt a" style="--d:1.8s">⚡</div><small class="a" style="--d:1.9s">Lightning NUX</small>
+    </div>
+    <div class="phone r" style="--d:.9s">
+      <div class="t">Dompet Nusan</div>
+      <div class="bal"><span class="out" style="--d:4.2s">0</span><span class="inn" style="--d:4.4s">150</span></div>
+      <div class="rise" style="--d:4.4s;color:var(--teal);font-weight:800;font-size:26px">+150 nusan</div>
+      <div style="color:var(--soft);font-size:17px">Saldo poin</div>
+    </div>
+  </div>
+  <p class="sub a" style="--d:6.4s">Persentase bonus ditentukan toko, sesuai kebijakan pemilik.</p>
+</div>
+
+<!-- 5 LIGHTNING -->
+<div class="scene" data-tag="PERAN LIGHTNING NUX">
+  <h2 class="a" style="--d:.1s">Di sinilah <em>Lightning NUX</em> berperan</h2>
+  <div class="row" style="gap:30px">
+    <div class="glass feat p" style="--d:.7s"><div class="e">⚡</div><b>Instan</b><span>Poin sampai ke pelanggan dalam sekejap</span></div>
+    <div class="glass feat p" style="--d:1.3s"><div class="e">🪙</div><b>Nyaris tanpa biaya</b><span>Menerbitkan dan memindahkan poin</span></div>
+    <div class="glass feat p" style="--d:1.9s"><div class="e">🧾</div><b>Tercatat rapi</b><span>Setiap poin punya jejak yang jelas</span></div>
+  </div>
+</div>
+
+<!-- 6 TUKAR -->
+<div class="scene" data-tag="LANGKAH 4 · TUKAR POIN">
+  <h2 class="a" style="--d:.1s">Kunjungan berikutnya, <em>poin jadi potongan harga</em></h2>
+  <div class="row" style="gap:20px">
+    <div class="glass l" style="--d:.7s;width:340px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:20px;color:var(--soft)">Saldo pelanggan</span><b style="font-size:56px;color:var(--teal)">150 nusan</b></div>
+    <div class="mid" style="width:180px;height:60px"><div class="fl" style="--d:1.6s">N</div><div class="fl" style="--d:2s">N</div></div>
+    <div class="glass r" style="--d:.9s;width:340px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:20px;color:var(--soft)">Diskon poin</span><b style="font-size:56px;color:var(--amber)">−Rp150</b></div>
+  </div>
+  <div class="big2 p" style="--d:3.4s"><div class="coin n">N</div><span>1 nusan</span><span style="color:var(--amber)">=</span><span>potongan</span><span style="color:var(--amber)">Rp1</span></div>
+  <p class="sub a" style="--d:5.4s">Parameter penukaran ditentukan toko sendiri.</p>
+</div>
+
+<!-- 7 STRUK -->
+<div class="scene" data-tag="BUKTI DOKUMEN">
+  <div class="row" style="gap:80px">
+    <div style="width:560px;text-align:left;display:flex;flex-direction:column;gap:22px">
+      <h2 class="a" style="--d:.1s;font-size:46px;max-width:none">Struk termal mencatat <em>semuanya dalam rupiah</em></h2>
+      <div class="glass a" style="--d:3.3s;padding:12px 24px;font-size:26px;font-weight:700">① Subtotal dalam rupiah</div>
+      <div class="glass a" style="--d:4.5s;padding:12px 24px;font-size:26px;font-weight:700">② Baris “diskon poin”</div>
+      <div class="glass a" style="--d:5.7s;padding:12px 24px;font-size:26px;font-weight:700">③ Sisa dibayar dalam rupiah</div>
+    </div>
+    <div class="recw">
+      <div class="rec" style="--d:.6s">
+        <div class="c">ELNUX miniPOS</div><div class="c">TOKO BERKAH</div><hr>
+        <div class="rw hl" style="--d:3.3s"><span>Subtotal</span><span>Rp80.000</span></div>
+        <div class="rw hl" style="--d:4.5s"><span>Diskon poin</span><span>-Rp150</span></div>
+        <div class="g">(150 nusan)</div><hr>
+        <div class="rw hl" style="--d:5.7s"><b>BAYAR</b><b>Rp79.850</b></div>
+        <div class="g">Tunai / QRIS</div><hr>
+        <div class="c" style="font-size:16px">Terima kasih</div>
+      </div>
+    </div>
+  </div>
+  <div class="p" style="--d:7.4s"><span class="badge">Transaksi rupiah dari awal sampai akhir</span></div>
+</div>
+
+<!-- 8 PENUTUP -->
+<div class="scene" data-tag="RINGKASAN">
+  <h2 class="a" style="--d:.1s;font-size:60px">Rupiah dari awal <em>sampai akhir</em></h2>
+  <div class="row" style="gap:18px">
+    <div class="glass step rp p" style="--d:.8s"><div class="e">🛒</div><b>Belanja</b><span>Rupiah</span></div><span class="arrow a" style="--d:1s">➜</span>
+    <div class="glass step rp p" style="--d:1.3s"><div class="e">💵</div><b>Bayar</b><span>Rupiah</span></div><span class="arrow a" style="--d:1.5s">➜</span>
+    <div class="glass step nx p" style="--d:1.8s"><div class="e">⚡</div><b>Bonus poin</b><span>Nusan</span></div><span class="arrow a" style="--d:2s">➜</span>
+    <div class="glass step rp p" style="--d:2.3s"><div class="e">🏷️</div><b>Diskon</b><span>Rupiah</span></div>
+  </div>
+  <p class="sub a" style="--d:3.4s">Nusan hanya bonus loyalitas yang ditukar menjadi potongan harga.</p>
+  <div class="p" style="--d:4.4s"><span class="badge am">ELNUX miniPOS × Lightning NUX</span></div>
+</div>
+
+</div></div>
+<div class="ctl">
+  <button id="pp" aria-label="Putar atau jeda">⏸</button>
+  <button id="rp" aria-label="Ulangi dari awal">↻</button>
+  <div class="bar"><b id="pb"></b></div>
+</div>
+<div class="dots" id="dots"></div>
+<script>
+(function(){
+var T=[5,7,7,9,6,8,10,7],names=["Pembuka","Belanja","Bayar","Bonus poin","Lightning NUX","Tukar poin","Struk","Penutup"];
+var stage=document.getElementById("stage"),wrap=document.getElementById("wrap");
+var sc=document.querySelectorAll(".scene"),pb=document.getElementById("pb"),pp=document.getElementById("pp"),dots=document.getElementById("dots");
+/* chrome per adegan */
+sc.forEach(function(s,i){
+  var b=document.createElement("div");b.className="brand";b.textContent="ELNUX miniPOS";s.appendChild(b);
+  var t=document.createElement("div");t.className="tag";t.textContent=s.getAttribute("data-tag");s.appendChild(t);
+  var p=document.createElement("div");p.className="pg";
+  for(var k=0;k<sc.length;k++){var d=document.createElement("i");d.className=k<i?"d":k===i?"c":"";p.appendChild(d)}
+  s.appendChild(p);
+});
+/* QR */
+document.querySelectorAll(".qr").forEach(function(q){
+  var seed=7,h="";
+  function fin(r,c){return (r<3&&c<3)||(r<3&&c>5)||(r>5&&c<3)}
+  for(var r=0;r<9;r++)for(var c=0;c<9;c++){seed=(seed*37+11)%101;var on=fin(r,c)?!((r%2===1&&c%2===1)&&false):seed%2===0;h+='<b class="'+(on?"":"o")+'"></b>'}
+  q.innerHTML=h;
+});
+function fit(){var cap=window.CAP,aw=innerWidth-(cap?0:16),ah=innerHeight-(cap?0:130);var s=Math.min(aw/1280,ah/720);
+  wrap.style.width=1280*s+"px";wrap.style.height=720*s+"px";stage.style.transform="scale("+s+")"}
+addEventListener("resize",fit);fit();
+var total=T.reduce(function(a,b){return a+b},0),cur=0,playing=true,last=0,el=0;
+function start(i){cur=i;for(var k=0;k<sc.length;k++)sc[k].classList.remove("on");void sc[i].offsetWidth;sc[i].classList.add("on");el=0;
+  Array.prototype.forEach.call(dots.children,function(b,j){b.setAttribute("aria-current",j===i?"true":"false")});
+  if(!playing)sc[i].getAnimations({subtree:true}).forEach(function(a){a.pause()})}
+names.forEach(function(n,i){var b=document.createElement("button");b.textContent=(i+1)+". "+n;b.onclick=function(){start(i)};dots.appendChild(b)});
+function before(i){var s=0;for(var k=0;k<i;k++)s+=T[k];return s}
+function tick(ts){if(!last)last=ts;var dt=(ts-last)/1000;last=ts;
+  if(playing){el+=dt;if(el>=T[cur]){if(cur<sc.length-1)start(cur+1);else{playing=false;pp.textContent="▶";el=T[cur]}}}
+  pb.style.width=Math.min(100,(before(cur)+Math.min(el,T[cur]))/total*100)+"%";requestAnimationFrame(tick)}
+pp.onclick=function(){if(!playing&&cur===sc.length-1&&el>=T[cur])start(0);
+  playing=!playing;pp.textContent=playing?"⏸":"▶";
+  sc[cur].getAnimations({subtree:true}).forEach(function(a){playing?a.play():a.pause()})};
+document.getElementById("rp").onclick=function(){playing=true;pp.textContent="⏸";start(0)};
+start(0);requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
