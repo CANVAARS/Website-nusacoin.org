@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latihan Soal Ranking 1 MI/SD - Nusachain</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+#navbar-iframe,.navbar,.navbar-ghost{display:none!important;height:0!important;visibility:hidden!important}
+body,.post-body,.entry-content,#main,.main,.post,.article{margin:0!important;padding:0!important;width:100%!important;max-width:100%!important}
+#nx-root,#nx-root *{margin:0;padding:0;box-sizing:border-box}
+#nx-root{--primary:#27ae60;--primary-dark:#1e8449;--bg-body:#fff;--bg-card:#fff;--bg-sub:#f8fafc;--text-main:#1e293b;--text-sub:#64748b;--border:#e2e8f0;--title:#1e8449;--link:#27ae60;--ok:#16a34a;--bad:#dc2626;--gold:#f5b301;
+display:block;width:100%;max-width:100%;container-type:inline-size;overflow-x:clip;font-family:'Inter','Segoe UI',sans-serif;color:var(--text-main);line-height:1.85;background:var(--bg-body);transition:background-color .3s,color .3s}
+#nx-root.dark-mode{--bg-body:#0f172a;--bg-card:#1e293b;--bg-sub:#0f172a;--text-main:#f8fafc;--text-sub:#94a3b8;--border:#334155;--title:#4ade80;--link:#4ade80;--ok:#4ade80;--bad:#f87171}
+#nx-root a{color:var(--link);text-decoration:none}
+#nx-root .top-bar{background:var(--primary-dark);color:#fff;padding:10px 15px;font-size:.85rem;font-weight:600;line-height:1.5}
+#nx-root .tb{max-width:1250px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px}
+#nx-root #topBarHelp{flex:1 1 220px}
+#nx-root .ctl{display:flex;align-items:center;gap:8px;margin-left:auto}
+#nx-root .lang{display:flex;background:rgba(0,0,0,.2);border-radius:4px;padding:2px}
+#nx-root .lb{background:transparent;border:0;color:rgba(255,255,255,.85);padding:2px 8px;font-size:.75rem;font-weight:700;cursor:pointer;border-radius:3px}
+#nx-root .lb.active,#nx-root .lb:hover{background:#fff;color:var(--primary-dark)}
+#nx-root .thm{background:rgba(0,0,0,.2);border:0;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer}
+#nx-root .container{width:100%;max-width:none;margin:20px 0;padding:0}
+#nx-root .card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:32px;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}
+#nx-root .banner-img{width:100%;height:auto;border-radius:8px;border:1px solid var(--border);margin-bottom:28px;display:block}
+#nx-root .page-title{color:var(--title);font:700 1.8rem/1.3 'Titillium Web',sans-serif;margin-bottom:18px}
+#nx-root .card>p{margin-bottom:22px}
+#nx-root .prog{position:sticky;top:0;z-index:5;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:28px 0;display:flex;align-items:center;gap:14px;font-weight:700;font-size:.9rem;color:var(--title)}
+#nx-root .pbar{flex:1;height:8px;border-radius:99px;background:var(--border);overflow:hidden}
+#nx-root .pbar i{display:block;height:100%;width:0;background:var(--primary);transition:width .3s}
+#nx-root .q{background:var(--bg-sub);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:26px}
+#nx-root .qh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+#nx-root .qn{background:var(--primary);color:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-weight:700;font-size:.9rem;flex:0 0 32px}
+#nx-root .qs{font-size:.75rem;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.04em}
+#nx-root .qt{font-weight:600;margin-bottom:12px}
+#nx-root .opts{display:grid;gap:10px}
+#nx-root .opt{display:flex;align-items:center;gap:12px;border:1.5px solid var(--border);background:var(--bg-card);border-radius:8px;padding:10px 14px;cursor:pointer;line-height:1.5}
+#nx-root .opt:hover{border-color:var(--primary)}
+#nx-root .opt input{position:absolute;opacity:0;pointer-events:none}
+#nx-root .opt:has(input:checked){border-color:var(--primary);box-shadow:0 0 0 2px rgba(39,174,96,.25)}
+#nx-root .opt:has(input:focus-visible){outline:3px solid var(--gold);outline-offset:2px}
+#nx-root .ltr{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);display:grid;place-items:center;font-weight:700;font-size:.8rem;flex:0 0 28px}
+#nx-root .opt:has(input:checked) .ltr{background:var(--primary);color:#fff;border-color:var(--primary)}
+#nx-root .opt.ok{border-color:var(--ok);background:rgba(34,197,94,.12)}
+#nx-root .opt.bad{border-color:var(--bad);background:rgba(239,68,68,.12)}
+#nx-root .opt.ok .ltr{background:var(--ok);color:#fff;border-color:var(--ok)}
+#nx-root .opt.bad .ltr{background:var(--bad);color:#fff;border-color:var(--bad)}
+#nx-root .key{margin-top:12px;font-weight:700;font-size:.9rem;color:var(--ok)}
+#nx-root .btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+#nx-root .btn{font:inherit;font-weight:700;border:0;border-radius:99px;padding:12px 28px;background:var(--primary);color:#fff;cursor:pointer}
+#nx-root .btn:disabled{opacity:.45;cursor:not-allowed}
+#nx-root .btn.sec{background:transparent;border:1.5px solid var(--primary);color:var(--link)}
+#nx-root .res{border-left:4px solid var(--gold);background:var(--bg-sub);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:8px;padding:26px;margin:32px 0;text-align:center}
+#nx-root .res[hidden]{display:none}
+#nx-root .sc{font:700 4rem/1.1 'Titillium Web',sans-serif;color:var(--title)}
+#nx-root .rs{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-weight:700;margin:12px 0}
+#nx-root .rs .r{color:var(--ok)}#nx-root .rs .w{color:var(--bad)}
+#nx-root footer{background:var(--bg-sub);border-top:1px solid var(--border);padding:50px 20px 20px;margin-top:50px}
+#nx-root .fg{max-width:1250px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:30px}
+#nx-root .fb h2{font:700 1.3rem 'Titillium Web',sans-serif;color:var(--primary);margin-bottom:15px}
+#nx-root .fb p{color:var(--text-sub);font-size:.95rem;line-height:1.5;margin-bottom:15px}
+#nx-root .fc h3{font:600 1.1rem 'Titillium Web',sans-serif;margin-bottom:15px}
+#nx-root .fc ul{list-style:none}#nx-root .fc li{margin-bottom:10px}
+#nx-root .fc li a{color:var(--text-sub);font-size:.95rem}#nx-root .fc li a:hover{color:var(--primary)}
+#nx-root .soc{display:flex;gap:10px;flex-wrap:wrap}
+#nx-root .sb{display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text-main)}
+#nx-root .sb:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+#nx-root .fbm{max-width:1250px;margin:30px auto 0;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;color:var(--text-sub);font-size:.85rem}
+#nx-root .mono{font-family:monospace;white-space:nowrap}
+@media (max-width:600px){#nx-root .card{padding:16px}#nx-root .page-title{font-size:1.5rem}#nx-root .fbm{flex-direction:column;text-align:center}}
+@container (max-width:600px){#nx-root .card{padding:16px}#nx-root .page-title{font-size:1.5rem}#nx-root .q{padding:16px}#nx-root .sc{font-size:3rem}#nx-root .fbm{flex-direction:column;text-align:center}}
+</style>
+</head>
+<body>
+<div id="nx-root">
+
+<div class="top-bar"><div class="tb">
+  <span id="topBarHelp" data-k="help">Nusacoin.org membutuhkan bantuan anda!</span>
+  <div class="ctl">
+    <div class="lang"><button class="lb active" id="btnIN" onclick="setLang('id')">IN</button><button class="lb" id="btnEN" onclick="setLang('en')">EN</button></div>
+    <button class="thm" onclick="toggleTheme()" aria-label="Ganti Tema" title="Ganti Tema"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+  </div>
+</div></div>
+
+<div class="container"><article class="card" id="top">
+  <img src="https://i.ibb.co.com/jPwbB8Pt/electrum.png" alt="Nusachain" class="banner-img">
+  <h1 class="page-title" data-k="title">📝 Latihan Soal Ranking 1 — MI/SD</h1>
+  <p data-k="intro">20 soal pilihan ganda campuran (Matematika, IPA, Bahasa Indonesia, IPS, PAI, PPKn). Jawab semua soal. Kunci jawaban dan nilai muncul setelah seluruh soal terjawab.</p>
+
+  <div class="prog"><span id="cnt">0/20</span><div class="pbar"><i id="pb"></i></div></div>
+  <div id="qs"></div>
+
+  <div class="btns">
+    <button class="btn" id="go" disabled data-k="btn">Lihat Hasil</button>
+    <button class="btn sec" id="rs" data-k="again">Ulangi</button>
+  </div>
+
+  <div class="res" id="res" hidden role="status" aria-live="polite">
+    <div data-k="score">Nilai kamu</div>
+    <div class="sc" id="sc">0</div>
+    <div class="rs"><span class="r" id="rr"></span><span class="w" id="rw"></span></div>
+    <p id="msg"></p>
+  </div>
+</article></div>
+
+<footer>
+  <div class="fg">
+    <div class="fb">
+      <h2>Nusacoin Network</h2>
+      <p data-k="fdesc">Blockchain milik rakyat dengan prinsip crypto yang adil. Terdesentralisasi, aman, dan dapat diakses semua orang.</p>
+      <div class="soc">
+        <a href="https://x.com/Nusacoin_chain" target="_blank" class="sb" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://discord.gg/NcKKZFBzJ" target="_blank" class="sb" aria-label="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://telegram.me/NusacoinX11" target="_blank" class="sb" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://www.reddit.com/r/Nusacoin" target="_blank" class="sb" aria-label="Reddit"><i class="fab fa-reddit-alien"></i></a>
+        <a href="https://github.com/TaobotX11/nusacoin" target="_blank" class="sb" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+    </div>
+    <div class="fc"><h3 data-k="fq">Tautan Cepat</h3><ul>
+      <li><a href="https://explorer.nusacoin.org" target="_blank">Explorer</a></li>
+      <li><a href="https://dompet.nusacoin.org" target="_blank">Nusacoin Web Wallet</a></li>
+      <li><a href="https://github.com/TaobotX11/nusacoin" target="_blank">Nusacoin Core</a></li>
+      <li><a href="https://green.nusacoin.org" target="_blank">Nusacoin Green Wallet</a></li>
+      <li><a href="https://www.nusachain.org/p/visi-misi.html" target="_blank">Roadmap</a></li></ul></div>
+    <div class="fc"><h3 data-k="fr">Sumber Daya</h3><ul>
+      <li><a href="https://paper.nusacoin.org" target="_blank">Paper Wallet</a></li>
+      <li><a href="https://pool.nusacoin.org" target="_blank">Mining Pool</a></li>
+      <li><a href="https://ijol.nusacoin.org" target="_blank">Ijol Nusacoin (P2P)</a></li>
+      <li><a href="https://t.me/rdnmesin_bot" target="_blank">Nusacard RDN Bot</a></li>
+      <li><a href="https://www.nusachain.org/p/kosa-kata.html" target="_blank" data-k="gl">Kosa Kata</a></li></ul></div>
+    <div class="fc"><h3 data-k="fd">Dokumen &amp; Keamanan</h3><ul>
+      <li><a href="https://docs.google.com/viewer?url=https://raw.githubusercontent.com/nusacoin-org/nusacoin.org/main/Pages/Whitepaper_Nusacoin_in.pdf" target="_blank">Whitepaper IN</a></li>
+      <li><a href="https://docs.google.com/viewer?url=https://raw.githubusercontent.com/nusacoin-org/nusacoin.org/main/Pages/Whitepaper_Nusacoin_en.pdf" target="_blank">Whitepaper EN</a></li>
+      <li><a href="https://www.nusachain.org/p/amankan-wallet-anda.html" target="_blank" data-k="sw">Amankan Wallet</a></li>
+      <li><a href="https://www.nusachain.org/p/lindungi-privasi-anda.html" target="_blank" data-k="pv">Lindungi Privasi</a></li>
+      <li><a href="http://www.nusacoin.org/p/faq.html" target="_blank">FAQ</a></li></ul></div>
+  </div>
+  <div class="fbm"><span data-k="copy">© 2026 Nusacoin Project. Dibangun untuk desentralisasi.</span><span class="mono"> · NUX / X11</span></div>
+</footer>
+
+<script>
+var UI={
+id:{help:"Nusacoin.org membutuhkan bantuan anda!",title:"📝 Latihan Soal Ranking 1 — MI/SD",intro:"20 soal pilihan ganda campuran (Matematika, IPA, Bahasa Indonesia, IPS, PAI, PPKn). Jawab semua soal. Kunci jawaban dan nilai muncul setelah seluruh soal terjawab.",btn:"Lihat Hasil",again:"Ulangi",score:"Nilai kamu",right:"Benar",wrong:"Salah",key:"Jawaban benar",ans:"Terjawab",
+m:["Luar biasa! Kamu siap jadi Ranking 1! 🏆","Bagus! Sedikit lagi menuju Ranking 1 💪","Cukup baik. Pelajari lagi soal yang salah 📚","Jangan menyerah, ayo coba lagi! 🌱"],
+fdesc:"Blockchain milik rakyat dengan prinsip crypto yang adil. Terdesentralisasi, aman, dan dapat diakses semua orang.",fq:"Tautan Cepat",fr:"Sumber Daya",fd:"Dokumen & Keamanan",gl:"Kosa Kata",sw:"Amankan Wallet",pv:"Lindungi Privasi",copy:"© 2026 Nusacoin Project. Dibangun untuk desentralisasi."},
+en:{help:"Nusacoin.org needs your help!",title:"📝 Ranking 1 Practice Questions — Primary School",intro:"20 mixed multiple-choice questions (Math, Science, Indonesian, Social Studies, Islamic Studies, Civics). Answer every question. The answer key and score appear once all are answered.",btn:"See Results",again:"Restart",score:"Your score",right:"Correct",wrong:"Wrong",key:"Correct answer",ans:"Answered",
+m:["Outstanding! You are ready to be Ranking 1! 🏆","Good! Almost at Ranking 1 💪","Fair. Review the ones you missed 📚","Don't give up, try again! 🌱"],
+fdesc:"The people's blockchain built on fair crypto principles. Decentralized, secure, and accessible to everyone.",fq:"Quick Links",fr:"Resources",fd:"Docs & Security",gl:"Glossary",sw:"Secure Wallet",pv:"Protect Privacy",copy:"© 2026 Nusacoin Project. Built for decentralization."}};
+
+/* Bank soal + KUNCI JAWABAN (a = indeks jawaban benar, 0=A ... 3=D) */
+var D=[
+{s:["Matematika","Math"],q:["245 + 378 = ...","245 + 378 = ..."],o:["613","623","633","723"],a:1},
+{s:["Matematika","Math"],q:["12 × 8 = ...","12 × 8 = ..."],o:["86","96","98","108"],a:1},
+{s:["Matematika","Math"],q:["FPB dari 12 dan 18 adalah ...","The GCF of 12 and 18 is ..."],o:["3","6","9","36"],a:1},
+{s:["Matematika","Math"],q:["Keliling persegi dengan sisi 9 cm adalah ...","The perimeter of a square with sides of 9 cm is ..."],o:["18 cm","27 cm","36 cm","81 cm"],a:2},
+{s:["Matematika","Math"],q:["3/4 + 1/4 = ...","3/4 + 1/4 = ..."],o:["1/2","3/4","1","4/8"],a:2},
+{s:["Matematika","Math"],q:["Luas persegi panjang dengan panjang 10 cm dan lebar 6 cm adalah ...","The area of a rectangle 10 cm long and 6 cm wide is ..."],o:["16 cm²","32 cm²","60 cm²","66 cm²"],a:2},
+{s:["Matematika","Math"],q:["1.000 − 457 = ...","1,000 − 457 = ..."],o:["443","543","553","643"],a:1},
+{s:["IPA","Science"],q:["Hewan pemakan tumbuhan disebut ...","Animals that eat plants are called ..."],o:["Karnivora","Herbivora","Omnivora","Insektivora"],oe:["Carnivores","Herbivores","Omnivores","Insectivores"],a:1},
+{s:["IPA","Science"],q:["Proses tumbuhan membuat makanan dengan bantuan cahaya matahari disebut ...","The process by which plants make food using sunlight is called ..."],o:["Respirasi","Fotosintesis","Transpirasi","Evaporasi"],oe:["Respiration","Photosynthesis","Transpiration","Evaporation"],a:1},
+{s:["IPA","Science"],q:["Planet yang paling dekat dengan Matahari adalah ...","The planet closest to the Sun is ..."],o:["Venus","Bumi","Merkurius","Mars"],oe:["Venus","Earth","Mercury","Mars"],a:2},
+{s:["IPA","Science"],q:["Es yang berubah menjadi air disebut ...","Ice turning into water is called ..."],o:["Membeku","Menguap","Mencair","Mengembun"],oe:["Freezing","Evaporating","Melting","Condensing"],a:2},
+{s:["IPA","Science"],q:["Alat gerak ikan untuk berenang adalah ...","A fish uses this to swim: ..."],o:["Kaki","Sirip","Sayap","Tentakel"],oe:["Legs","Fins","Wings","Tentacles"],a:1},
+{s:["B. Indonesia","Indonesian"],q:["Lawan kata dari \"rajin\" adalah ...","The opposite of \"rajin\" (diligent) is ..."],o:["Giat","Malas","Tekun","Pintar"],oe:["Giat (active)","Malas (lazy)","Tekun (persistent)","Pintar (smart)"],a:1},
+{s:["B. Indonesia","Indonesian"],q:["Kata baku yang benar adalah ...","The correct standard Indonesian spelling is ..."],o:["Apotik","Apotek","Apoteck","Apotex"],a:1},
+{s:["B. Indonesia","Indonesian"],q:["Persamaan kata (sinonim) dari \"indah\" adalah ...","A synonym of \"indah\" (beautiful) is ..."],o:["Cantik","Jelek","Kotor","Kecil"],oe:["Cantik (pretty)","Jelek (ugly)","Kotor (dirty)","Kecil (small)"],a:0},
+{s:["IPS","Social Studies"],q:["Ibu kota Provinsi Jawa Tengah adalah ...","The capital of Central Java Province is ..."],o:["Bandung","Semarang","Surabaya","Yogyakarta"],a:1},
+{s:["IPS","Social Studies"],q:["Lambang negara Indonesia adalah ...","Indonesia's national emblem is ..."],o:["Garuda Pancasila","Elang Jawa","Rajawali","Merak"],a:0},
+{s:["IPS","Social Studies"],q:["Hari Kemerdekaan Indonesia diperingati setiap tanggal ...","Indonesian Independence Day is celebrated on ..."],o:["17 Agustus","1 Juni","28 Oktober","10 November"],oe:["17 August","1 June","28 October","10 November"],a:0},
+{s:["PAI","Islamic Studies"],q:["Rukun Islam yang pertama adalah ...","The first pillar of Islam is ..."],o:["Salat","Syahadat","Puasa","Zakat"],oe:["Prayer","Shahada","Fasting","Zakat"],a:1},
+{s:["PPKn","Civics"],q:["Sila pertama Pancasila berbunyi ...","The first principle of Pancasila is ..."],o:["Ketuhanan Yang Maha Esa","Kemanusiaan yang adil dan beradab","Persatuan Indonesia","Keadilan sosial bagi seluruh rakyat Indonesia"],oe:["Belief in the One and Only God","Just and civilized humanity","The unity of Indonesia","Social justice for all Indonesians"],a:0}
+];
+
+var root=document.getElementById("nx-root"),L=0,lang="id",done=false,ans=[];
+function reset(){ans=D.map(function(){return null});done=false}
+function t(k){return UI[lang][k]}
+function render(){
+  document.getElementById("qs").innerHTML=D.map(function(d,i){
+    var o=(L&&d.oe)?d.oe:d.o;
+    return '<div class="q"><div class="qh"><span class="qn">'+(i+1)+'</span><span class="qs">'+d.s[L]+'</span></div><p class="qt">'+d.q[L]+'</p><div class="opts">'+
+    o.map(function(x,j){
+      var c=done?(j===d.a?" ok":(j===ans[i]?" bad":"")):"";
+      return '<label class="opt'+c+'"><input type="radio" name="q'+i+'" value="'+j+'"'+(ans[i]===j?" checked":"")+(done?" disabled":"")+'><span class="ltr">'+"ABCD".charAt(j)+'</span><span>'+x+'</span></label>';
+    }).join("")+'</div>'+(done&&ans[i]!==d.a?'<p class="key">'+t("key")+': '+"ABCD".charAt(d.a)+'. '+o[d.a]+'</p>':'')+'</div>';
+  }).join("");
+  status();
+}
+function status(){
+  var n=ans.filter(function(x){return x!==null}).length;
+  document.getElementById("cnt").textContent=t("ans")+" "+n+"/20";
+  document.getElementById("pb").style.width=(n*5)+"%";
+  document.getElementById("go").disabled=done||n<20;
+  if(done)showResult();
+}
+function showResult(){
+  var r=0;D.forEach(function(d,i){if(ans[i]===d.a)r++});
+  var s=r*5,m=UI[lang].m;
+  document.getElementById("sc").textContent=s;
+  document.getElementById("rr").textContent="✔ "+t("right")+": "+r;
+  document.getElementById("rw").textContent="✘ "+t("wrong")+": "+(20-r);
+  document.getElementById("msg").textContent=s>=90?m[0]:s>=70?m[1]:s>=50?m[2]:m[3];
+  document.getElementById("res").hidden=false;
+}
+document.getElementById("qs").addEventListener("change",function(e){
+  var m=/^q(\d+)$/.exec(e.target.name||"");if(!m||done)return;
+  ans[+m[1]]=+e.target.value;status();
+});
+document.getElementById("go").onclick=function(){
+  if(ans.indexOf(null)>-1)return;
+  done=true;render();
+  document.getElementById("res").scrollIntoView({behavior:"smooth",block:"center"});
+};
+document.getElementById("rs").onclick=function(){
+  reset();document.getElementById("res").hidden=true;render();
+  document.getElementById("top").scrollIntoView({behavior:"smooth"});
+};
+function setLang(l){
+  lang=l;L=l==="en"?1:0;
+  document.getElementById("btnIN").classList.toggle("active",l==="id");
+  document.getElementById("btnEN").classList.toggle("active",l==="en");
+  document.querySelectorAll("[data-k]").forEach(function(el){var v=UI[l][el.getAttribute("data-k")];if(typeof v==="string")el.textContent=v});
+  render();
+}
+function toggleTheme(){
+  root.classList.toggle("dark-mode");
+  document.getElementById("themeIcon").className=root.classList.contains("dark-mode")?"fa-solid fa-sun":"fa-solid fa-moon";
+}
+reset();render();
+</script>
+</div>
+</body>
+</html>
