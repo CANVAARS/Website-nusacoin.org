@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools Nusachain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#007BFF;--dark:#0056B3;--bg:#F4F9FF;--card:#fff;--ink:#0f2742;--mute:#5b7089;--line:#d6e6f8}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:linear-gradient(135deg,var(--dark),var(--blue));color:#fff;padding:48px 20px 72px}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:-.02em}
+header p{margin-top:10px;max-width:560px;opacity:.92}
+.tools{margin-top:-36px;padding:0 20px 56px}
+.bar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:0 6px 20px rgba(0,86,179,.1)}
+.bar input{flex:1 1 240px;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font:inherit;color:var(--ink);background:var(--bg)}
+.bar input:focus,.chip:focus-visible,.card a:focus-visible{outline:3px solid rgba(0,123,255,.45);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fff;color:var(--dark);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+.count{margin:22px 2px 12px;color:var(--mute);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.card:hover{border-color:var(--blue)}
+.ic{width:44px;height:44px;border-radius:12px;background:#e6f1ff;display:grid;place-items:center;font-size:22px}
+.card h2{font-size:17px;font-weight:700}
+.card .cat{font-size:13px;color:var(--mute)}
+.card p{font-size:14px;color:var(--mute);flex:1}
+.card a{align-self:flex-start;margin-top:6px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:9px 16px;border-radius:10px}
+.card a:hover{background:var(--dark)}
+.empty{display:none;text-align:center;padding:48px 0;color:var(--mute)}
+footer{text-align:center;color:var(--mute);font-size:13px;padding:0 20px 36px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Tools Ekosistem Nusachain</h1>
+<p>Kumpulan alat untuk dompet, verifikasi dokumen, komunitas, dan transaksi di blockchain Nusachain. Pilih satu untuk membukanya.</p>
+</div></header>
+
+<main class="tools"><div class="wrap">
+<div class="bar">
+<input id="q" type="search" placeholder="Cari tools, misalnya notaris atau voting" aria-label="Cari tools">
+<div class="chips" id="chips"></div>
+</div>
+<p class="count" id="count" aria-live="polite"></p>
+<div class="grid" id="grid"></div>
+<p class="empty" id="empty">Tidak ada tools yang cocok. Coba kata kunci lain atau pilih kategori Semua.</p>
+</div></main>
+
+<footer>nusachain.org</footer>
+
+<script>
+const B='https://www.nusachain.org/Tools/';
+const T=[
+['🔏','VeriSign Mainnet','Dokumen & Verifikasi','Tanda tangan dan verifikasi data di jaringan utama Nusachain.',B+'VeriSign-Mainnet.html'],
+['🧪','VeriSign Testnet','Dokumen & Verifikasi','Coba VeriSign di jaringan uji tanpa memakai koin asli.',B+'VeriSign-Testnet.html'],
+['💳','Nusa-Card','Dompet & Keamanan','Buat paper wallet card, dekripsi private key, dan buka live wallet.',B+'Nusa-Card.html'],
+['⛓️','Paya-Chain','Komunitas & Data','Tool ekosistem Nusachain.',B+'Paya-Chain.html'],
+['💬','Tanya Nusachain','Utilitas','Tanya jawab seputar Nusachain.','https://tanya.nusachain.site'],
+['📄','Read This File','Utilitas','Baca dan tampilkan isi file.',B+'Read-This-File.html'],
+['🖼️','TA Render','Utilitas','Halaman render untuk Read This File.','http://ta-render.nusachain.org'],
+['#️⃣','Blog Hash Generator','Dokumen & Verifikasi','Buat hash untuk tulisan blog agar keasliannya bisa dibuktikan.',B+'Blog-Hash-Generator.html'],
+['🌳','Inject Silsilah Keluarga','Komunitas & Data','Catat silsilah keluarga ke blockchain.',B+'Inject-Silsilah-Keluarga.html'],
+['🕌','PBNU Pendataan Ranting','Komunitas & Data','Pendataan ranting, SK, anggota, dan aset organisasi.',B+'PBNU-Pendataan-Ranting.html'],
+['🔳','QR Code Generator','Utilitas','Buat QR code untuk URL, teks, email, kontak, dan lainnya.',B+'QR-Code-Generator-Nusachain.html'],
+['🎓','Certificate','Dokumen & Verifikasi','Terbitkan dan verifikasi sertifikat digital.',B+'Certificate.html'],
+['⚖️','Notaris','Dokumen & Verifikasi','Cap waktu dokumen: hash file disimpan di blockchain sebagai bukti.',B+'Notaris.html'],
+['✂️','Split UTXO','Keuangan & Transaksi','Pecah UTXO menjadi banyak bagian kecil.',B+'Split-UTXO.html'],
+['📦','Traceability','Komunitas & Data','Lacak riwayat produksi produk lewat scan QR.',B+'Traceability.html'],
+['📒','Kas RT Koperasi','Keuangan & Transaksi','Catat kas RT atau koperasi secara transparan.',B+'Kas-RT-Koperasi.html'],
+['🎫','Tiket Event','Keuangan & Transaksi','Tiket acara berbasis blockchain.',B+'Tiket-Event.html'],
+['🗳️','Voting','Komunitas & Data','Pemungutan suara yang hasilnya bisa diperiksa publik.',B+'Voting.html'],
+['🧧','Angpao THR','Keuangan & Transaksi','Kirim angpao atau THR dalam NUX.',B+'Angpao-THR.html'],
+['🗺️','Berburu Harta Karun','Komunitas & Data','Permainan berburu harta karun NUX.',B+'Berburu-Harta-Karun.html'],
+['✍️','Tanda Tangan Wallet','Dompet & Keamanan','Tanda tangani pesan memakai wallet Anda.',B+'Tanda-Tangan-Wallet.html'],
+['📤','Pengirim Massal','Keuangan & Transaksi','Kirim NUX ke banyak alamat sekaligus.',B+'Pengirim-Massal.html'],
+['🏛️','Univ-Chain','Dokumen & Verifikasi','Verifikasi ijazah, transkrip, dan sertifikat kampus.',B+'Univ-Chain.html'],
+['🤲','Donasi','Keuangan & Transaksi','Donasi, zakat, dan infaq dengan penyaluran yang transparan.',B+'Donasi.html']
+];
+const cats=['Semua',...new Set(T.map(t=>t[2]))];
+let cat='Semua';
+const $=id=>document.getElementById(id);
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){
+  const q=$('q').value.trim().toLowerCase();
+  const list=T.filter(t=>(cat==='Semua'||t[2]===cat)&&(t[1]+' '+t[2]+' '+t[3]).toLowerCase().includes(q));
+  $('grid').innerHTML=list.map(t=>`<article class="card"><div class="ic" aria-hidden="true">${t[0]}</div><h2>${esc(t[1])}</h2><span class="cat">${esc(t[2])}</span><p>${esc(t[3])}</p><a href="${t[4]}" target="_blank" rel="noopener">Buka ${esc(t[1])}</a></article>`).join('');
+  $('count').textContent=list.length+' dari '+T.length+' tools';
+  $('empty').style.display=list.length?'none':'block';
+}
+function chips(){
+  $('chips').innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c===cat}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+}
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;cat=b.dataset.c;chips();render()});
+$('q').addEventListener('input',render);
+chips();render();
+</script>
+</body>
+</html>
