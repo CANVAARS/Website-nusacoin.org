@@ -1,0 +1,782 @@
+<!--
+  NUSACHAIN VERISIGN — Mainnet & Testnet (versi embed Blogger)
+  Cara pakai: tempel SELURUH isi file ini ke
+    - Blogger > Postingan/Halaman > mode "Tampilan HTML", atau
+    - Tata Letak > Tambah Gadget > HTML/JavaScript.
+  Tidak butuh Tailwind. Semua CSS di-scope ke #vs-app agar tidak bentrok dengan tema Blogger.
+  Layout mengikuti LEBAR KONTAINER (diukur via JS, atribut data-w), bukan hanya lebar layar.
+-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+#vs-app{
+  --nux-green:#27ae60; --nux-green-dark:#1e8449; --gold:#d4a017; --rose:#e5484d;
+  --bg:#f7f5ef; --surface:#ffffff; --surface-2:#f0efe6; --ink:#16231c; --ink-soft:#56645c;
+  --border:#e3ded0; --shadow:rgba(15,61,38,.18); --net:#27ae60; --net-ink:#fff;
+  display:block; width:100%; max-width:100%; margin:0 auto; padding:16px; box-sizing:border-box;
+  background:var(--bg); color:var(--ink-soft); border-radius:16px; overflow:hidden;
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  text-align:left; letter-spacing:normal; text-transform:none;
+  -webkit-text-size-adjust:100%;
+}
+#vs-app.dark{ --bg:#0d1712; --surface:#142219; --surface-2:#182a1e; --ink:#eef3ec; --ink-soft:#9db3a4; --border:#24382c; --shadow:rgba(0,0,0,.55); }
+#vs-app[data-net="testnet"]{ --net:#d4a017; --net-ink:#1b1500; }
+
+/* ---- reset terbatas (melawan style tema Blogger) ---- */
+#vs-app, #vs-app *{ box-sizing:border-box; }
+#vs-app h1,#vs-app h2,#vs-app h3,#vs-app p,#vs-app label,#vs-app span,#vs-app div,#vs-app table,#vs-app tr,#vs-app td,#vs-app th,#vs-app thead,#vs-app tbody{
+  margin:0; padding:0; border:0; background:none; float:none; text-indent:0; text-shadow:none; box-shadow:none; font-family:inherit; letter-spacing:normal; text-transform:none; }
+#vs-app h2,#vs-app h3{ color:var(--ink); line-height:1.3; font-weight:700; }
+#vs-app img{ max-width:100%; height:auto; border:0; box-shadow:none; margin:0; padding:0; background:none; }
+#vs-app button{ font-family:inherit; font-size:inherit; line-height:1.2; margin:0; cursor:pointer; text-transform:none; letter-spacing:normal; box-shadow:none; text-shadow:none; min-height:0; width:auto; }
+#vs-app input[type=text]{ font-family:inherit; margin:0; width:100%; max-width:100%; min-height:0; height:auto; box-shadow:none; }
+#vs-app i{ font-style:normal; }
+#vs-app .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace; }
+#vs-app .vs-hide{ display:none !important; }
+#vs-app .vs-ok{ color:var(--nux-green); } #vs-app .vs-bad{ color:var(--rose); } #vs-app .vs-gold{ color:var(--gold); }
+#vs-app .vs-muted{ color:var(--ink-soft); }
+#vs-app .vs-fade{ animation:vsFade .35s ease; }
+@keyframes vsFade{ from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+/* ---- header ---- */
+#vs-app .vs-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 16px; padding-bottom:14px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+#vs-app .vs-brand{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; min-width:0; }
+#vs-app .vs-logo{ height:40px; width:auto; object-fit:contain; flex:none; }
+#vs-app .vs-title{ color:var(--ink); font-size:1.15rem; font-weight:900; letter-spacing:.04em !important; text-transform:uppercase !important; line-height:1.2; }
+#vs-app .vs-title b{ color:var(--nux-green); font-weight:900; }
+#vs-app .vs-badge{ border:1px solid var(--net) !important; color:var(--net); background:var(--surface-2) !important; padding:2px 10px; border-radius:999px; font-size:10px; letter-spacing:.1em !important; text-transform:uppercase !important; }
+#vs-app .vs-ctrl{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+
+#vs-app .vs-seg{ display:flex; background:var(--surface-2) !important; border:1px solid var(--border) !important; padding:3px; border-radius:12px; }
+#vs-app .vs-seg button{ border:0; background:transparent; color:var(--ink-soft); padding:6px 12px; border-radius:9px; font-weight:800; font-size:12px; display:flex; align-items:center; gap:6px; transition:all .2s; }
+#vs-app .vs-seg button .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.5; }
+#vs-app .vs-seg button.active{ background:var(--net); color:var(--net-ink); }
+#vs-app .vs-seg button.active .dot{ background:var(--net-ink); opacity:1; }
+#vs-app .vs-seg.lang button.active{ background:var(--nux-green); color:#fff; }
+#vs-app .vs-tab{ border:1px solid var(--border); background:var(--surface-2); color:var(--ink-soft); padding:8px 14px; border-radius:12px; font-weight:700; font-size:12px; transition:all .2s; }
+#vs-app .vs-tab.active{ background:var(--nux-green); color:#fff; border-color:var(--nux-green); }
+#vs-app .vs-icon{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); background:var(--surface-2); color:var(--gold); border-radius:12px; padding:0; }
+
+/* ---- kartu & form ---- */
+#vs-app .vs-card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; box-shadow:0 4px 20px var(--shadow); }
+#vs-app .vs-h2{ font-size:1.1rem; margin-bottom:4px; }
+#vs-app .vs-sub{ font-size:12px; color:var(--ink-soft); margin-bottom:16px; }
+#vs-app .vs-label{ display:block; font-size:11px; font-weight:700; text-transform:uppercase !important; letter-spacing:.05em !important; color:var(--ink-soft); margin-bottom:6px; }
+#vs-app .vs-note{ font-size:11px; color:var(--ink-soft); margin-top:6px; }
+#vs-app .vs-input{ background:var(--surface-2) !important; color:var(--ink) !important; border:1px solid var(--border) !important; border-radius:12px; padding:11px 14px; font-size:12px; outline:none; }
+#vs-app .vs-input:focus{ border-color:var(--nux-green) !important; box-shadow:0 0 0 3px rgba(39,174,96,.2) !important; }
+#vs-app .vs-input[readonly]{ cursor:not-allowed; }
+#vs-app .vs-drop{ position:relative; border:2px dashed rgba(39,174,96,.4); background:var(--surface-2); border-radius:12px; padding:24px 16px; text-align:center; cursor:pointer; transition:border-color .2s; }
+#vs-app .vs-drop:hover{ border-color:var(--nux-green); }
+#vs-app .vs-drop input[type=file]{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0; }
+#vs-app .vs-drop .ic{ width:48px; height:48px; border-radius:50%; background:rgba(39,174,96,.18); color:var(--nux-green); display:flex; align-items:center; justify-content:center; margin:0 auto 10px; font-size:20px; }
+#vs-app .vs-drop .tt{ color:var(--ink); font-weight:700; font-size:13px; word-break:break-word; }
+#vs-app .vs-box{ background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:16px; }
+#vs-app .vs-hash{ word-break:break-all; overflow-wrap:anywhere; color:var(--ink); font-size:12px; }
+#vs-app .vs-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; color:#fff; font-weight:700; border-radius:12px; padding:11px 16px; font-size:13px; background:linear-gradient(90deg,var(--nux-green),var(--nux-green-dark)); transition:opacity .2s; }
+#vs-app .vs-btn:hover{ opacity:.9; } #vs-app .vs-btn:disabled{ opacity:.6; cursor:wait; }
+#vs-app .vs-btn.block{ width:100%; }
+#vs-app .vs-btn.ghost{ background:var(--surface-2); color:var(--ink); border:1px solid var(--border); font-size:12px; padding:9px 12px; }
+#vs-app .vs-btn.ghost:hover{ border-color:var(--nux-green); }
+#vs-app .vs-btn.soft{ background:rgba(39,174,96,.18); color:var(--nux-green); font-size:12px; padding:7px 12px; }
+#vs-app .vs-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+#vs-app .vs-grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+#vs-app .vs-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+#vs-app .vs-stack > * + *{ margin-top:16px; }
+#vs-app .vs-ext{ margin-top:10px; padding:8px 10px; border:1px solid currentColor; border-radius:10px; white-space:pre-wrap; word-break:break-word; font-size:12px; }
+#vs-app .vs-ext:empty{ display:none; }
+#vs-app .vs-ext.bad{ color:var(--rose); border-color:var(--rose); }
+
+/* ---- hasil verifikasi ---- */
+#vs-app .vs-status{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; }
+#vs-app .vs-result .cols{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-top:10px; margin-top:10px; border-top:1px solid var(--border); font-size:12px; }
+#vs-app .vs-result .k{ display:block; font-size:10px; text-transform:uppercase !important; color:var(--ink-soft); font-family:inherit; margin-bottom:2px; }
+
+/* ---- tabel ---- */
+#vs-app .vs-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+#vs-app table{ width:100%; min-width:520px; border-collapse:collapse; font-size:12px; margin:0; table-layout:auto; }
+#vs-app th{ text-align:left; font-size:10px; text-transform:uppercase !important; color:var(--ink-soft); padding:0 8px 8px 0; border-bottom:1px solid var(--border); font-weight:600; }
+#vs-app td{ padding:10px 8px 10px 0; border-bottom:1px solid var(--border); vertical-align:top; }
+#vs-app td.d{ color:var(--ink); font-family:inherit; font-weight:500; }
+#vs-app td.t{ color:var(--gold); cursor:pointer; word-break:break-all; max-width:200px; }
+#vs-app td.t:hover{ text-decoration:underline; }
+#vs-app td.h{ color:var(--nux-green); word-break:break-all; max-width:240px; }
+#vs-app td.e{ text-align:center; color:var(--ink-soft); }
+
+/* ---- toast (menempel ke layar, bukan kontainer) ---- */
+#vs-toasts{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:2147483000; display:flex; flex-direction:column; gap:8px; max-width:calc(100vw - 32px); }
+#vs-toasts .vs-toast{ background:var(--surface,#fff); color:var(--ink,#111); border:1px solid var(--border,#ddd); box-shadow:0 10px 30px rgba(0,0,0,.35); border-radius:12px; padding:10px 14px; font:600 12px/1.4 -apple-system,"Segoe UI",Roboto,Arial,sans-serif; display:flex; gap:8px; align-items:center; animation:vsFade .35s ease; }
+#vs-toasts.dark{ --surface:#142219; --ink:#eef3ec; --border:#24382c; }
+#vs-toasts .vs-ok{ color:#27ae60; } #vs-toasts .vs-bad{ color:#e5484d; }
+
+/* ---- responsif mengikuti LEBAR KONTAINER: data-w = l (>700) | m (<=700) | s (<=520, HP) ---- */
+#vs-app[data-w="m"] .vs-head, #vs-app[data-w="s"] .vs-head{ flex-direction:column; align-items:stretch; text-align:center; }
+#vs-app[data-w="m"] .vs-brand, #vs-app[data-w="s"] .vs-brand,
+#vs-app[data-w="m"] .vs-ctrl, #vs-app[data-w="s"] .vs-ctrl{ justify-content:center; }
+#vs-app[data-w="m"] .vs-grid2, #vs-app[data-w="s"] .vs-grid2,
+#vs-app[data-w="m"] .vs-grid3, #vs-app[data-w="s"] .vs-grid3,
+#vs-app[data-w="m"] .vs-result .cols, #vs-app[data-w="s"] .vs-result .cols{ grid-template-columns:1fr; }
+#vs-app[data-w="m"] .vs-card, #vs-app[data-w="s"] .vs-card{ padding:16px; border-radius:14px; }
+#vs-app[data-w="m"] .vs-wallet-row, #vs-app[data-w="s"] .vs-wallet-row{ flex-direction:column; align-items:stretch; }
+#vs-app[data-w="m"] .vs-wallet-row > .vs-btn, #vs-app[data-w="s"] .vs-wallet-row > .vs-btn{ width:100%; }
+
+/* ===== HP ===== */
+#vs-app[data-w="s"]{ padding:10px; border-radius:12px; font-size:14px; }
+#vs-app[data-w="s"] .vs-head{ gap:10px; padding-bottom:12px; margin-bottom:12px; }
+#vs-app[data-w="s"] .vs-logo{ height:32px; }
+#vs-app[data-w="s"] .vs-title{ font-size:1rem; }
+#vs-app[data-w="s"] .vs-badge{ font-size:9px; padding:2px 8px; }
+/* kontrol header: jaringan 1 baris penuh, tab 2 kolom, bahasa + tema 2 kolom */
+#vs-app[data-w="s"] .vs-head .vs-ctrl{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+#vs-app[data-w="s"] .vs-head .vs-seg.net{ grid-column:1 / -1; }
+#vs-app[data-w="s"] .vs-seg button{ flex:1; justify-content:center; min-height:40px; font-size:13px; }
+#vs-app[data-w="s"] .vs-tab{ width:100%; min-height:44px; text-align:center; font-size:13px; padding:8px 6px; }
+#vs-app[data-w="s"] .vs-icon{ width:100%; height:100%; min-height:44px; }
+/* kartu, form */
+#vs-app[data-w="s"] .vs-card{ padding:14px; margin-bottom:12px; }
+#vs-app[data-w="s"] .vs-h2{ font-size:1rem; }
+#vs-app[data-w="s"] .vs-input{ font-size:16px; padding:12px; }          /* cegah zoom otomatis iOS */
+#vs-app[data-w="s"] .vs-btn{ min-height:46px; font-size:14px; }
+#vs-app[data-w="s"] .vs-btn.ghost, #vs-app[data-w="s"] .vs-btn.soft{ min-height:42px; font-size:13px; }
+#vs-app[data-w="s"] .vs-drop{ padding:18px 10px; }
+#vs-app[data-w="s"] .vs-drop .ic{ width:40px; height:40px; font-size:17px; margin-bottom:8px; }
+#vs-app[data-w="s"] .vs-hash{ font-size:11px; }
+#vs-app[data-w="s"] .vs-status{ font-size:13px; align-items:flex-start; }
+#vs-app[data-w="s"] .vs-status i{ margin-top:3px; }
+#vs-app[data-w="s"] .vs-label{ font-size:10.5px; }
+/* tombol wallet aktif: berdampingan */
+#vs-app[data-w="s"] #walletActive .vs-ctrl{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+#vs-app[data-w="s"] #walletActive .vs-ctrl .vs-btn{ width:100%; padding:9px 6px; }
+/* tabel database -> kartu bertumpuk (tanpa geser samping) */
+#vs-app[data-w="s"] .vs-scroll{ overflow:visible; }
+#vs-app[data-w="s"] table{ min-width:0; display:block; }
+#vs-app[data-w="s"] thead{ display:none; }
+#vs-app[data-w="s"] tbody{ display:block; }
+#vs-app[data-w="s"] tr{ display:block; background:var(--surface-2) !important; border:1px solid var(--border) !important; border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+#vs-app[data-w="s"] td{ display:block; padding:4px 0; border:0; max-width:none; word-break:break-all; }
+#vs-app[data-w="s"] td::before{ content:attr(data-l); display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; margin-bottom:1px; }
+#vs-app[data-w="s"] td.d{ word-break:normal; overflow-wrap:anywhere; }
+#vs-app[data-w="s"] td.e::before{ display:none; }
+/* toast selebar layar di HP */
+@media (max-width:520px){
+  #vs-toasts{ left:10px; right:10px; max-width:none; }
+  #vs-toasts .vs-toast{ width:100%; }
+}
+@media (prefers-reduced-motion:reduce){ #vs-app *, #vs-toasts *{ animation:none !important; transition:none !important; } }
+</style>
+
+<div id="vs-app" class="dark" data-net="mainnet">
+
+  <!-- HEADER -->
+  <div class="vs-head">
+    <div class="vs-brand">
+      <img class="vs-logo" src="https://iili.io/Cr21Nx2.th.png" alt="Nusachain Logo">
+      <span class="vs-title">Nusachain <b>Verisign</b></span>
+      <span id="badgeConnected" class="vs-badge mono"></span>
+    </div>
+
+    <div class="vs-ctrl">
+      <div class="vs-seg net" role="group" aria-label="Network">
+        <button id="btnMainnet" type="button" class="active" onclick="vsSetNetwork('mainnet')"><span class="dot"></span>Mainnet</button>
+        <button id="btnTestnet" type="button" onclick="vsSetNetwork('testnet')"><span class="dot"></span>Testnet</button>
+      </div>
+      <button id="tabBtnGen" type="button" class="vs-tab active" onclick="vsSwitchTab('generator')" data-i18n="tabGen"></button>
+      <button id="tabBtnVer" type="button" class="vs-tab" onclick="vsSwitchTab('verifier')" data-i18n="tabVer"></button>
+      <div class="vs-seg lang">
+        <button id="btnIN" type="button" class="active" onclick="vsSetLanguage('id')">IN</button>
+        <button id="btnEN" type="button" onclick="vsSetLanguage('en')">EN</button>
+      </div>
+      <button id="themeToggle" type="button" class="vs-icon" aria-label="Theme"><i id="themeIcon" class="fa-solid fa-sun"></i></button>
+    </div>
+  </div>
+
+  <!-- WALLET -->
+  <div class="vs-card">
+    <div id="walletLogin">
+      <div class="vs-row vs-wallet-row">
+        <div style="min-width:0;flex:1 1 240px">
+          <h3 style="font-size:.9rem"><i class="fa-solid fa-wallet vs-ok"></i> <span data-i18n="walletTitle"></span></h3>
+          <p class="vs-note" data-i18n="walletDesc"></p>
+        </div>
+        <button id="btnExt" type="button" class="vs-btn" onclick="vsWalletConnect()"><i class="fa-solid fa-plug"></i> <span data-i18n="btnConnect"></span></button>
+      </div>
+      <div id="msgExt" class="vs-ext"></div>
+    </div>
+    <div id="walletActive" class="vs-hide">
+      <div class="vs-row vs-wallet-row">
+        <div style="min-width:0;flex:1 1 240px">
+          <div class="vs-label" style="margin:0" data-i18n="walletActive"></div>
+          <div id="wAddr" class="mono vs-hash" style="margin-top:4px"></div>
+          <div style="font-size:12px;margin-top:4px"><span data-i18n="lblBalance"></span>: <span id="wBal" class="mono vs-gold">...</span></div>
+        </div>
+        <div class="vs-ctrl">
+          <button type="button" class="vs-btn ghost" onclick="vsRefreshBalance()"><i class="fa-solid fa-rotate"></i> <span data-i18n="btnRefresh"></span></button>
+          <button type="button" class="vs-btn ghost" onclick="vsWalletLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="btnDisconnect"></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: GENERATOR -->
+  <div id="section-generator" class="vs-card vs-fade">
+    <h2 class="vs-h2" data-i18n="genTitle"></h2>
+    <p class="vs-sub" data-i18n="genDesc"></p>
+    <div class="vs-drop">
+      <input type="file" id="genFileInput" onchange="vsGenFile(this.files)">
+      <div class="ic"><i class="fa-solid fa-file-arrow-up"></i></div>
+      <div class="tt" data-i18n="genDropTitle"></div>
+      <div class="vs-note" data-i18n="genDropSub"></div>
+    </div>
+    <div id="genFileInfo" class="vs-box vs-hide mono vs-ok" style="font-size:12px;margin-top:12px"><span id="genFileName" style="word-break:break-all"></span></div>
+    <div id="genResult" class="vs-box vs-hide">
+      <div class="vs-row" style="margin-bottom:8px">
+        <span class="vs-label" style="margin:0" data-i18n="genOutputLabel"></span>
+        <button type="button" class="vs-btn soft" onclick="vsCopyHash()"><i class="fa-regular fa-copy"></i> <span data-i18n="btnCopyHash"></span></button>
+      </div>
+      <input type="text" id="genHashOutput" class="vs-input mono" readonly data-i18n-ph="phHashOutput">
+    </div>
+  </div>
+
+  <!-- TAB: VERIFIKASI -->
+  <div id="section-verifier" class="vs-card vs-fade vs-hide vs-stack">
+    <div>
+      <h2 class="vs-h2" data-i18n="verTitle"></h2>
+      <p class="vs-sub" style="margin:0" data-i18n="verDesc"></p>
+    </div>
+
+    <div class="vs-grid2">
+      <div>
+        <label class="vs-label" data-i18n="lblVerFile"></label>
+        <div class="vs-drop" style="padding:20px 12px">
+          <input type="file" id="verFileInput" onchange="vsVerFile(this.files)">
+          <div class="ic" style="width:42px;height:42px;font-size:18px"><i class="fa-solid fa-file-shield"></i></div>
+          <div id="verFileText" class="tt"></div>
+        </div>
+      </div>
+      <div class="vs-stack">
+        <div>
+          <label class="vs-label" for="manualTxInput" data-i18n="lblTxidManual"></label>
+          <input type="text" id="manualTxInput" class="vs-input mono" data-i18n-ph="phTxid" autocomplete="off" spellcheck="false">
+          <p class="vs-note" data-i18n="lblTxidNote"></p>
+        </div>
+        <div>
+          <label class="vs-label" for="refHashInput" data-i18n="lblHashField"></label>
+          <input type="text" id="refHashInput" class="vs-input mono" data-i18n-ph="phHash" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="vs-btn block" onclick="vsVerify()"><i class="fa-solid fa-magnifying-glass-chart"></i> <span data-i18n="btnRunVerify"></span></button>
+
+    <div id="verResultCard" class="vs-box vs-result vs-hide mono" style="margin-top:0">
+      <div id="verStatusHeader" class="vs-status"></div>
+      <div class="cols">
+        <div><span class="k" data-i18n="lblCalculatedHash"></span><span id="verActualHash" class="vs-hash"></span></div>
+        <div><span class="k" data-i18n="lblFoundSource"></span><span id="verFoundSource" class="vs-ok" style="word-break:break-all"></span></div>
+      </div>
+    </div>
+
+    <div id="autoSaveContainer" class="vs-box vs-hide vs-fade" style="margin-top:0;border-color:rgba(39,174,96,.45)">
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <input type="checkbox" id="saveToggleCheck" onchange="vsToggleSave()" style="margin:3px 0 0;width:16px;height:16px;flex:none;cursor:pointer">
+        <label for="saveToggleCheck" class="vs-label vs-ok" style="margin:0;cursor:pointer" data-i18n="lblSaveSpreadsheet"></label>
+      </div>
+      <div id="saveMenuFields" class="vs-hide vs-stack" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <p class="vs-note" style="margin:0" data-i18n="lblSaveFieldsNote"></p>
+        <div class="vs-grid3">
+          <div><label class="vs-label" data-i18n="lblDocDesc"></label><input type="text" id="autoRegDesc" class="vs-input" data-i18n-ph="phDocDesc"></div>
+          <div><label class="vs-label" data-i18n="lblAutoTxid"></label><input type="text" id="autoRegTxid" class="vs-input mono vs-ok" readonly></div>
+          <div><label class="vs-label" data-i18n="lblAutoHash"></label><input type="text" id="autoRegHash" class="vs-input mono vs-gold" readonly></div>
+        </div>
+        <button type="button" class="vs-btn" onclick="vsSaveData()"><i class="fa-solid fa-cloud-arrow-up"></i> <span data-i18n="btnConfirmSave"></span></button>
+      </div>
+    </div>
+
+    <div style="padding-top:16px;border-top:1px solid var(--border)">
+      <div class="vs-row" style="margin-bottom:10px">
+        <h3 style="font-size:11px;letter-spacing:.1em;text-transform:uppercase" class="vs-ok"><i class="fa-solid fa-database"></i> <span data-i18n="dbHeading"></span></h3>
+        <span id="lblSyncStatus" class="mono vs-muted" style="font-size:10px"></span>
+      </div>
+      <div class="vs-scroll mono">
+        <table>
+          <thead><tr><th data-i18n="thDesc"></th><th data-i18n="thTxid"></th><th data-i18n="thHash"></th></tr></thead>
+          <tbody id="databaseTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="vs-toasts" class="dark"></div>
+
+<script>
+//<![CDATA[
+(function(){
+'use strict';
+
+var ROOT = document.getElementById('vs-app');
+var TOASTS = document.getElementById('vs-toasts');
+var $ = function(id){ return document.getElementById(id); };
+
+/* =====================================================================
+   KONFIGURASI JARINGAN
+   `sheet` = URL Google Apps Script (database + simpan otomatis). Kosongkan ('') bila tidak ada:
+   jaringan itu memakai database lokal & fitur simpan disembunyikan.
+   ===================================================================== */
+var MAINNET_LOCAL_DB = [
+  { hash:"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    txid:"4a5e1f7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f",
+    desc:"Contoh Dokumen Kosong / Perjanjian Kerjasama V1" },
+  { hash:"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+    txid:"9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e",
+    desc:"Sertifikat Aset Digital Nusachain" }
+];
+
+var NETWORKS = {
+  mainnet: {
+    key:'mainnet', label:'Mainnet',
+    explorer:'https://explorer.nusacoin.org',
+    sheet:'',
+    fetchTx: async function(txid){
+      var res = await fetch(this.explorer + '/ext/gettx/' + encodeURIComponent(txid));
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var d = await res.json();
+      return (d && d.tx) ? { block: d.tx.blockindex } : null;
+    },
+    fetchBalance: async function(addr){
+      var res = await fetch(this.explorer + '/ext/getbalance/' + encodeURIComponent(addr));
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var n = parseFloat(await res.text());
+      return isNaN(n) ? null : n;
+    }
+  },
+  testnet: {
+    key:'testnet', label:'Testnet',
+    explorer:'https://apitest.taobot.org',
+    sheet:'https://script.google.com/macros/s/AKfycbzNsq05CHIwKqGtkDOuyDoy0Emi9V6--mSNHshw65Fp4XwYq5KiNU4f6Q6r6pMLC60E/exec',
+    apiFetch: async function(ep){
+      var res = await fetch(this.explorer + ep);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var j = await res.json();
+      if(j.error) throw new Error(j.error.message || 'API Error');
+      return j.result;
+    },
+    fetchTx: async function(txid){
+      var d = await this.apiFetch('/transaction/' + encodeURIComponent(txid));
+      if(d && (d.hash || d.txid || d.vin || d.vout)) return { block: d.blockheight || d.blockindex || d.block_height || null };
+      return null;
+    },
+    // Endpoint saldo testnet belum terverifikasi — best effort.
+    fetchBalance: async function(addr){
+      var d = await this.apiFetch('/address/' + encodeURIComponent(addr));
+      if(typeof d === 'number') return d;
+      var v = (d && typeof d === 'object') ? (d.balance != null ? d.balance : (d.final_balance != null ? d.final_balance : d.confirmed_balance)) : d;
+      var n = parseFloat(v);
+      return isNaN(n) ? null : n;
+    }
+  }
+};
+
+var currentNet = 'mainnet', currentLang = 'id';
+var NET = function(){ return NETWORKS[currentNet]; };
+
+/* =====================================================================
+   i18n
+   ===================================================================== */
+var i18n = {
+  id: {
+    badge:"Explorer {net} Terhubung", tabGen:"Generator Hash", tabVer:"Verifikasi & Explorer",
+    walletTitle:"Login Wallet",
+    walletDesc:"Opsional. Hubungkan wallet extension untuk menampilkan alamat & saldo di jaringan {net}. Verifikasi tetap bisa dipakai tanpa login.",
+    btnConnect:"Hubungkan Wallet Extension (Nusa Wallet / NUX Connect)",
+    walletActive:"Wallet aktif", lblBalance:"Saldo", btnRefresh:"Refresh saldo", btnDisconnect:"Keluar",
+    balFail:"gagal memuat saldo", balNA:"tidak tersedia",
+    extWait:"Menunggu persetujuan di extension wallet...",
+    extNop:"Ekstensi wallet (Nusa Wallet / NUX Connect) tidak terdeteksi. Pasang/aktifkan ekstensi lalu muat ulang halaman ini.",
+    extNoAddr:"Ekstensi tidak mengembalikan alamat.", extRej:"Koneksi ditolak di ekstensi.",
+    extNet:"NUX Connect sedang di jaringan {n}. Pindahkan ke {net} di popup extension lalu coba lagi.",
+    toastWalletOk:"Wallet terhubung!", toastWalletReset:"Jaringan diganti ke {net}. Wallet diputus — hubungkan ulang.",
+    genTitle:"Generator Hash SHA-256 File",
+    genDesc:"Unggah file jenis apa pun untuk mendapatkan sidik jari digital (hash) secara aman di browser.",
+    genDropTitle:"Pilih atau seret file ke sini", genDropSub:"Mendukung dokumen, gambar, video, arsip, dan format lainnya",
+    genOutputLabel:"Kolom Hasil SHA-256 Hash", btnCopyHash:"Salin Hash", phHashOutput:"Hash akan muncul di sini...",
+    verTitle:"Verifikasi File dengan Explorer {net} & Database TXID",
+    verDesc:"Cukup pilih file untuk verifikasi otomatis. Masukkan TXID secara opsional jika ingin mencocokkan transaksi spesifik dengan blockchain.",
+    lblVerFile:"1. Unggah File yang Ingin Dicheck", verFileDefault:"Klik atau seret file verifikasi",
+    lblTxidManual:"2. Masukkan TXID Verisign (Opsional)", phTxid:"Kosongkan jika ingin deteksi otomatis...",
+    lblTxidNote:"TXID manual wajib terdaftar dan valid di blockchain {net}.",
+    lblHashField:"3. Hash SHA-256 (Otomatis terisi dari file)", phHash:"Hash file...",
+    btnRunVerify:"Jalankan Verifikasi & Pencocokan Explorer",
+    lblCalculatedHash:"Hash File Terhitung:", lblFoundSource:"Sumber / TXID Ditemukan:",
+    lblSaveSpreadsheet:"Simpan data dokumen ini ke Spreadsheet agar tidak perlu input TXID di kemudian hari?",
+    lblSaveFieldsNote:"TXID dan Hash SHA-256 terisi otomatis sesuai data valid dari blockchain.",
+    lblDocDesc:"Keterangan Dokumen", phDocDesc:"Contoh: Laporan Keuangan Q3",
+    lblAutoTxid:"TXID Verisign (Otomatis)", lblAutoHash:"Hash SHA-256 (Otomatis)", btnConfirmSave:"Konfirmasi & Simpan ke Spreadsheet",
+    dbHeading:"Database Terekam Verisign", syncSheet:"Sinkronisasi Otomatis Spreadsheet", syncLocal:"Database lokal (bawaan)",
+    thDesc:"Keterangan Dokumen", thTxid:"TXID Verisign", thHash:"Hash SHA-256", dbEmpty:"Memuat data atau database kosong...",
+    toastHashSuccess:"Hash SHA-256 berhasil dibuat!", toastHashFailed:"Gagal memproses file.",
+    toastCopySuccess:"Hash berhasil disalin ke clipboard!", toastUploadFirst:"Silakan unggah file atau masukkan hash terlebih dahulu!",
+    toastDescRequired:"Keterangan Dokumen harus diisi!", toastDuplicate:"Gagal: TXID dan Hash yang sama sudah tersimpan di Spreadsheet!",
+    toastSaving:"Menyimpan data otomatis ke spreadsheet...", toastSaveSuccess:"BERHASIL: Data berhasil disimpan ke spreadsheet!",
+    toastSaveError:"Terjadi kesalahan koneksi saat menyimpan ke spreadsheet.", toastTxidCopied:"TXID disalin!",
+    toastHashMismatch:"TXID ditemukan, tetapi Hash file berbeda dari catatan database!",
+    toastTxNotFound:"TXID tidak ditemukan di blockchain {net}!", toastApiFail:"Gagal terhubung ke Explorer atau TXID tidak valid.",
+    verChecking:"Memeriksa TXID ke Explorer {net}...", verSuccess:"VERIFIKASI BERHASIL: Sesuai dengan Blockchain {net}!",
+    verFailed:"VERIFIKASI GAGAL: TXID Tidak Valid atau Tidak Ditemukan.", verErrSystem:"Terjadi kesalahan sistem saat verifikasi.",
+    srcExplorerDb:"Explorer & Database (Valid): {x}", srcExplorerOnly:"Explorer {net} (Blockchain Valid): {x}",
+    srcDb:"Database (TXID: {x})", srcOnChain:"On-chain valid", srcBlock:"Block {b}",
+    srcRejected:"TXID ditolak oleh jaringan {net}", srcNoMatch:"Tidak ada kecocokan."
+  },
+  en: {
+    badge:"{net} Explorer Connected", tabGen:"Hash Generator", tabVer:"Verification & Explorer",
+    walletTitle:"Wallet Login",
+    walletDesc:"Optional. Connect a wallet extension to show your address & balance on {net}. Verification works without logging in.",
+    btnConnect:"Connect Wallet Extension (Nusa Wallet / NUX Connect)",
+    walletActive:"Active wallet", lblBalance:"Balance", btnRefresh:"Refresh balance", btnDisconnect:"Disconnect",
+    balFail:"failed to load balance", balNA:"not available",
+    extWait:"Waiting for approval in the wallet extension...",
+    extNop:"Wallet extension (Nusa Wallet / NUX Connect) not detected. Install/enable it, then reload this page.",
+    extNoAddr:"The extension did not return an address.", extRej:"Connection rejected in the extension.",
+    extNet:"NUX Connect is on {n}. Switch to {net} in the extension popup and try again.",
+    toastWalletOk:"Wallet connected!", toastWalletReset:"Network switched to {net}. Wallet disconnected — please reconnect.",
+    genTitle:"File SHA-256 Hash Generator",
+    genDesc:"Upload any file type to get its digital fingerprint (hash) securely within your browser.",
+    genDropTitle:"Choose or drop a file here", genDropSub:"Supports documents, images, videos, archives, and other formats",
+    genOutputLabel:"SHA-256 Hash Output Field", btnCopyHash:"Copy Hash", phHashOutput:"Hash will appear here...",
+    verTitle:"Verify File with {net} Explorer & TXID Database",
+    verDesc:"Simply select a file for auto-verification. Optionally enter a TXID to match a specific transaction with the blockchain.",
+    lblVerFile:"1. Upload File to Check", verFileDefault:"Click or drag verification file",
+    lblTxidManual:"2. Enter Verisign TXID (Optional)", phTxid:"Leave empty for auto-detection...",
+    lblTxidNote:"Manual TXID must be registered and valid on the {net} blockchain.",
+    lblHashField:"3. SHA-256 Hash (Auto-filled from file)", phHash:"File hash...",
+    btnRunVerify:"Run Verification & Explorer Match",
+    lblCalculatedHash:"Calculated File Hash:", lblFoundSource:"Source / TXID Found:",
+    lblSaveSpreadsheet:"Save this document data to Spreadsheet to avoid typing TXID in the future?",
+    lblSaveFieldsNote:"TXID and SHA-256 Hash are auto-filled according to valid blockchain data.",
+    lblDocDesc:"Document Description", phDocDesc:"Example: Q3 Financial Report",
+    lblAutoTxid:"Verisign TXID (Auto)", lblAutoHash:"SHA-256 Hash (Auto)", btnConfirmSave:"Confirm & Save to Spreadsheet",
+    dbHeading:"Recorded Verisign Database", syncSheet:"Spreadsheet Auto-Sync", syncLocal:"Local (built-in) database",
+    thDesc:"Document Description", thTxid:"Verisign TXID", thHash:"SHA-256 Hash", dbEmpty:"Loading data or database is empty...",
+    toastHashSuccess:"SHA-256 Hash successfully generated!", toastHashFailed:"Failed to process file.",
+    toastCopySuccess:"Hash successfully copied to clipboard!", toastUploadFirst:"Please upload a file or enter a hash first!",
+    toastDescRequired:"Document Description is required!", toastDuplicate:"Failed: Identical TXID and Hash are already saved in Spreadsheet!",
+    toastSaving:"Saving data automatically to spreadsheet...", toastSaveSuccess:"SUCCESS: Data successfully saved to spreadsheet!",
+    toastSaveError:"Connection error occurred while saving to spreadsheet.", toastTxidCopied:"TXID copied!",
+    toastHashMismatch:"TXID found, but the file hash differs from the database record!",
+    toastTxNotFound:"TXID not found on the {net} blockchain!", toastApiFail:"Failed to connect to Explorer or invalid TXID.",
+    verChecking:"Checking TXID on {net} Explorer...", verSuccess:"VERIFICATION SUCCESSFUL: Matches {net} Blockchain!",
+    verFailed:"VERIFICATION FAILED: Invalid or Unfound TXID.", verErrSystem:"System error occurred during verification.",
+    srcExplorerDb:"Explorer & Database (Valid): {x}", srcExplorerOnly:"{net} Explorer (Blockchain Valid): {x}",
+    srcDb:"Database (TXID: {x})", srcOnChain:"On-chain valid", srcBlock:"Block {b}",
+    srcRejected:"TXID rejected by {net} network", srcNoMatch:"No match found."
+  }
+};
+
+function t(key, vars){
+  var s = (i18n[currentLang][key] != null ? i18n[currentLang][key] : key).replace(/\{net\}/g, NET().label);
+  for(var k in (vars || {})) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+}
+
+function applyI18n(){
+  ROOT.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent = t(el.getAttribute('data-i18n')); });
+  ROOT.querySelectorAll('[data-i18n-ph]').forEach(function(el){ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  $('badgeConnected').textContent = t('badge');
+  if(!selectedVerFile) $('verFileText').textContent = t('verFileDefault');
+  $('lblSyncStatus').textContent = NET().sheet ? t('syncSheet') : t('syncLocal');
+  renderDatabaseTable();
+  if(wallet.address) renderWallet();
+}
+
+window.vsSetLanguage = function(lang){
+  currentLang = lang;
+  $('btnIN').classList.toggle('active', lang === 'id');
+  $('btnEN').classList.toggle('active', lang === 'en');
+  applyI18n();
+};
+
+/* =====================================================================
+   TOGGLE JARINGAN
+   ===================================================================== */
+window.vsSetNetwork = function(key, initial){
+  if(!NETWORKS[key]) key = 'mainnet';
+  var changed = key !== currentNet;
+  currentNet = key;
+  ROOT.setAttribute('data-net', key);
+  $('btnMainnet').classList.toggle('active', key === 'mainnet');
+  $('btnTestnet').classList.toggle('active', key === 'testnet');
+  try{ localStorage.setItem('verisign_net', key); }catch(e){}
+
+  $('verResultCard').classList.add('vs-hide');
+  $('autoSaveContainer').classList.add('vs-hide');
+
+  if(changed && !initial && wallet.address){
+    vsWalletLogout(); applyI18n();
+    toast(t('toastWalletReset'), 'fa-plug-circle-xmark');
+  } else applyI18n();
+  loadDatabase();
+};
+
+/* =====================================================================
+   LOGIN WALLET VIA EXTENSION (Nusa Wallet / NUX Connect)
+   ===================================================================== */
+var wallet = { address:null, kind:null };
+function extProvider(){ return window.nusa || window.nux || null; }
+function extKind(p){
+  if(!p) return null;
+  if(typeof p.connect === 'function') return 'nusa';   // Nusa Wallet
+  if(typeof p.request === 'function') return 'nux';    // NUX Connect (EIP-1193)
+  return null;
+}
+function extName(){ return wallet.kind === 'nux' ? 'NUX Connect' : 'Nusa Wallet'; }
+function waitForExt(ms){
+  return new Promise(function(res){
+    var p = extProvider(); if(p) return res(p);
+    var timer;
+    var done = function(){
+      clearTimeout(timer);
+      window.removeEventListener('nux#initialized', done);
+      window.removeEventListener('nusa#initialized', done);
+      res(extProvider());
+    };
+    timer = setTimeout(done, ms || 1500);
+    window.addEventListener('nux#initialized', done);
+    window.addEventListener('nusa#initialized', done);
+  });
+}
+function extMsg(text, bad){ var e = $('msgExt'); e.textContent = text || ''; e.className = 'vs-ext' + (bad ? ' bad' : ''); }
+function renderWallet(){
+  $('walletLogin').classList.toggle('vs-hide', !!wallet.address);
+  $('walletActive').classList.toggle('vs-hide', !wallet.address);
+  if(wallet.address) $('wAddr').textContent = wallet.address + '  (' + extName() + ' · ' + NET().label + ')';
+}
+window.vsWalletConnect = async function(){
+  var btn = $('btnExt'); btn.disabled = true; extMsg(t('extWait'));
+  try{
+    var p = await waitForExt(); if(!p) throw new Error(t('extNop'));
+    var kind = extKind(p), r;
+    if(kind === 'nux'){
+      var net = await p.request({ method:'nux_getNetwork' });
+      if(String(net).toLowerCase() !== NET().key) throw new Error(t('extNet', { n:String(net) }));
+      var acc = await p.request({ method:'nux_requestAccounts' });
+      r = { address: Array.isArray(acc) ? acc[0] : (acc && acc.address) };
+    } else if(kind === 'nusa'){
+      r = await p.connect();
+    } else throw new Error(t('extNop'));
+    if(!r || !r.address) throw new Error(t('extNoAddr'));
+    wallet.address = r.address; wallet.kind = kind;
+    extMsg(''); renderWallet(); toast(t('toastWalletOk'), 'fa-wallet'); vsRefreshBalance();
+  }catch(e){
+    extMsg(e && e.code === 4001 ? t('extRej') : ((e && e.message) || String(e)), true);
+  }finally{ btn.disabled = false; }
+};
+window.vsWalletLogout = function(){
+  try{ var p = extProvider(); if(p && wallet.address && typeof p.disconnect === 'function') p.disconnect().catch(function(){}); }catch(e){}
+  wallet.address = null; wallet.kind = null; $('wBal').textContent = '...'; renderWallet();
+};
+window.vsRefreshBalance = async function(){
+  if(!wallet.address) return;
+  var el = $('wBal'), n0 = currentNet, a0 = wallet.address;
+  el.textContent = '...';
+  try{
+    var bal = await NETWORKS[n0].fetchBalance(a0);
+    if(n0 !== currentNet || a0 !== wallet.address) return;
+    el.textContent = bal === null ? t('balNA') : (bal + ' NUX');
+  }catch(e){
+    if(n0 !== currentNet || a0 !== wallet.address) return;
+    el.textContent = t('balFail');
+  }
+};
+
+/* =====================================================================
+   DATABASE
+   ===================================================================== */
+var dbByNet = { mainnet: MAINNET_LOCAL_DB.slice(), testnet: [] };
+function db(){ return dbByNet[currentNet]; }
+
+async function loadDatabase(){
+  var key = currentNet, net = NETWORKS[key];
+  renderDatabaseTable();
+  if(!net.sheet) return;
+  try{
+    var res = await fetch(net.sheet); var data = await res.json();
+    if(Array.isArray(data)){ dbByNet[key] = data; if(key === currentNet) renderDatabaseTable(); }
+  }catch(err){ console.warn('Failed to load database from Spreadsheet.', err); }
+}
+function renderDatabaseTable(){
+  var tbody = $('databaseTableBody'); tbody.innerHTML = '';
+  var rows = db();
+  if(!rows.length){
+    var tr0 = document.createElement('tr');
+    tr0.innerHTML = '<td class="e" colspan="3">' + esc(t('dbEmpty')) + '</td>';
+    tbody.appendChild(tr0); return;
+  }
+  rows.forEach(function(item){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="d" data-l="' + esc(t('thDesc')) + '">' + esc(item.desc) + '</td>' +
+      '<td class="t" data-l="' + esc(t('thTxid')) + '" title="' + esc(item.txid) + '">' + esc(item.txid) + '</td>' +
+      '<td class="h" data-l="' + esc(t('thHash')) + '">' + esc(item.hash) + '</td>';
+    tr.querySelector('.t').addEventListener('click', function(){
+      try{ navigator.clipboard.writeText(String(item.txid)); }catch(e){}
+      toast(t('toastTxidCopied'), 'fa-copy');
+    });
+    tbody.appendChild(tr);
+  });
+}
+window.vsToggleSave = function(){ $('saveMenuFields').classList.toggle('vs-hide', !$('saveToggleCheck').checked); };
+window.vsSaveData = async function(){
+  var net = NET(); if(!net.sheet) return;
+  var desc = $('autoRegDesc').value.trim(), txid = $('autoRegTxid').value.trim(), hash = $('autoRegHash').value.trim();
+  if(!desc){ toast(t('toastDescRequired'), 'fa-triangle-exclamation', 'bad'); return; }
+  var dup = db().some(function(i){ return String(i.txid).trim().toLowerCase() === txid.toLowerCase() && String(i.hash).trim().toLowerCase() === hash.toLowerCase(); });
+  if(dup){ toast(t('toastDuplicate'), 'fa-circle-xmark', 'bad'); return; }
+  toast(t('toastSaving'), 'fa-spinner fa-spin');
+  try{
+    await fetch(net.sheet, { method:'POST', mode:'no-cors', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ desc:desc, txid:txid, hash:hash }) });
+    toast(t('toastSaveSuccess'), 'fa-circle-check');
+    $('autoRegDesc').value = ''; $('saveToggleCheck').checked = false;
+    $('saveMenuFields').classList.add('vs-hide'); $('autoSaveContainer').classList.add('vs-hide');
+    setTimeout(loadDatabase, 2500);
+  }catch(err){ toast(t('toastSaveError'), 'fa-triangle-exclamation', 'bad'); }
+};
+
+/* =====================================================================
+   TAB, TEMA
+   ===================================================================== */
+window.vsSwitchTab = function(tab){
+  var gen = tab === 'generator';
+  $('section-generator').classList.toggle('vs-hide', !gen);
+  $('section-verifier').classList.toggle('vs-hide', gen);
+  $('tabBtnGen').classList.toggle('active', gen);
+  $('tabBtnVer').classList.toggle('active', !gen);
+};
+$('themeToggle').addEventListener('click', function(){
+  var dark = ROOT.classList.toggle('dark');
+  TOASTS.classList.toggle('dark', dark);
+  $('themeIcon').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+});
+
+/* =====================================================================
+   HASH & VERIFIKASI
+   ===================================================================== */
+async function sha256(file){
+  var buf = await file.arrayBuffer();
+  var h = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(h)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+}
+window.vsGenFile = async function(files){
+  if(!files || !files.length) return;
+  var f = files[0];
+  $('genFileInfo').classList.remove('vs-hide');
+  $('genFileName').textContent = f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)';
+  $('genResult').classList.remove('vs-hide');
+  $('genHashOutput').value = '...';
+  try{ $('genHashOutput').value = await sha256(f); toast(t('toastHashSuccess'), 'fa-circle-check'); }
+  catch(err){ $('genHashOutput').value = t('toastHashFailed'); }
+};
+window.vsCopyHash = function(){
+  var i = $('genHashOutput');
+  if(i.value && i.value !== '...' && i.value !== t('toastHashFailed')){
+    i.select(); try{ navigator.clipboard.writeText(i.value); }catch(e){}
+    toast(t('toastCopySuccess'), 'fa-copy');
+  }
+};
+
+var selectedVerFile = null;
+window.vsVerFile = async function(files){
+  if(!files || !files.length) return;
+  selectedVerFile = files[0];
+  $('verFileText').textContent = selectedVerFile.name;
+  try{ $('refHashInput').value = await sha256(selectedVerFile); }
+  catch(err){ toast(t('toastHashFailed'), 'fa-triangle-exclamation', 'bad'); }
+};
+
+window.vsVerify = async function(){
+  var net = NET(), netKey = net.key;
+  var manualTx = $('manualTxInput').value.trim(), typedHash = $('refHashInput').value.trim();
+  if(!selectedVerFile && !typedHash){ toast(t('toastUploadFirst'), 'fa-triangle-exclamation', 'bad'); return; }
+
+  var card = $('verResultCard'), head = $('verStatusHeader'), hashEl = $('verActualHash'), srcEl = $('verFoundSource'), saveBox = $('autoSaveContainer');
+  card.classList.remove('vs-hide'); saveBox.classList.add('vs-hide');
+  head.innerHTML = '<i class="fa-solid fa-spinner fa-spin vs-gold"></i> <span>' + esc(t('verChecking')) + '</span>';
+  hashEl.textContent = '...'; srcEl.textContent = net.explorer;
+
+  try{
+    var fileHash = (typedHash || await sha256(selectedVerFile)).toLowerCase();
+    hashEl.textContent = fileHash;
+    var matched = false, sourceInfo = '', validTxid = '';
+
+    if(manualTx){
+      try{
+        var tx = await net.fetchTx(manualTx);
+        if(tx){
+          var dbItem = db().filter(function(i){ return String(i.txid).trim().toLowerCase() === manualTx.toLowerCase(); })[0];
+          if(dbItem && String(dbItem.hash).trim().toLowerCase() !== fileHash){
+            toast(t('toastHashMismatch'), 'fa-triangle-exclamation', 'bad');
+          } else {
+            matched = true; validTxid = manualTx;
+            sourceInfo = (dbItem ? t('srcExplorerDb', { x:manualTx }) : t('srcExplorerOnly', { x:manualTx })) + (tx.block ? ' — ' + t('srcBlock', { b:tx.block }) : '');
+          }
+        } else toast(t('toastTxNotFound'), 'fa-circle-xmark', 'bad');
+      }catch(e){ console.warn('API verification error:', e); toast(t('toastApiFail'), 'fa-triangle-exclamation', 'bad'); }
+    } else {
+      var found = db().filter(function(i){ return String(i.hash).trim().toLowerCase() === fileHash; })[0];
+      if(found){
+        matched = true; validTxid = found.txid; sourceInfo = t('srcDb', { x:found.txid });
+        try{
+          var tx2 = await net.fetchTx(found.txid);
+          if(tx2) sourceInfo += ' — ' + t('srcOnChain') + (tx2.block ? ' (' + t('srcBlock', { b:tx2.block }) + ')' : '');
+        }catch(e){ /* cocok di database; konfirmasi on-chain gagal */ }
+      }
+    }
+
+    if(netKey !== currentNet) return;   // jaringan diganti saat menunggu
+
+    if(matched){
+      head.innerHTML = '<i class="fa-solid fa-circle-check vs-ok"></i> <span class="vs-ok">' + esc(t('verSuccess')) + '</span>';
+      srcEl.textContent = sourceInfo;
+      toast(t('verSuccess'), 'fa-circle-check');
+      var saved = db().some(function(i){ return i.txid === validTxid && String(i.hash).toLowerCase() === fileHash; });
+      if(net.sheet && !saved && validTxid){
+        $('autoRegTxid').value = validTxid; $('autoRegHash').value = fileHash; saveBox.classList.remove('vs-hide');
+      }
+    } else {
+      head.innerHTML = '<i class="fa-solid fa-circle-xmark vs-bad"></i> <span class="vs-bad">' + esc(t('verFailed')) + '</span>';
+      srcEl.textContent = manualTx ? t('srcRejected') : t('srcNoMatch');
+      toast(t('verFailed'), 'fa-triangle-exclamation', 'bad');
+    }
+  }catch(err){
+    head.innerHTML = '<i class="fa-solid fa-triangle-exclamation vs-bad"></i> <span class="vs-bad">' + esc(t('verErrSystem')) + '</span>';
+  }
+};
+
+function toast(msg, icon, color){
+  var el = document.createElement('div');
+  el.className = 'vs-toast';
+  el.innerHTML = '<i class="fa-solid ' + (icon || 'fa-cube') + ' ' + (color === 'bad' ? 'vs-bad' : 'vs-ok') + '"></i> <span>' + esc(msg) + '</span>';
+  TOASTS.appendChild(el);
+  setTimeout(function(){ el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(function(){ el.remove(); }, 400); }, 4500);
+}
+
+/* UKUR LEBAR KONTAINER -> data-w (l / m / s) */
+function fit(){
+  var w = ROOT.getBoundingClientRect().width || ROOT.parentNode.clientWidth || window.innerWidth;
+  ROOT.setAttribute('data-w', w <= 520 ? 's' : (w <= 700 ? 'm' : 'l'));
+}
+fit();
+if(window.ResizeObserver) new ResizeObserver(fit).observe(ROOT);
+window.addEventListener('resize', fit);
+window.addEventListener('load', fit);
+
+/* INIT — jaringan awal: ?net=testnet di URL, lalu pilihan terakhir, lalu mainnet */
+var net0 = 'mainnet';
+try{
+  var q = new URLSearchParams(location.search).get('net');
+  net0 = (q && NETWORKS[q]) ? q : (localStorage.getItem('verisign_net') || 'mainnet');
+}catch(e){}
+window.vsSetNetwork(NETWORKS[net0] ? net0 : 'mainnet', true);
+window.vsSetLanguage('id');
+})();
+//]]>
+</script>
