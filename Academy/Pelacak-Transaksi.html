@@ -65,13 +65,13 @@ a{color:var(--ac)}
 </div>
 <script>
 // Konfigurasi endpoint / endpoint configuration
-var EX='https://explorer.nusacoin.org',API='https://api.nusacoin.org';
-var I={id:{ttl:"Pelacak Transaksi Nusacoin",go:"Lacak",ph:"Tempel TXID (64 karakter hex)",bad:"TXID tidak valid. Harus 64 karakter hex.",wait:"Transaksi belum terlihat di jaringan. Mencari ulang otomatis tiap 15 detik…",net:"Gagal menghubungi API explorer. Mencoba lagi…",done:"Selesai: transaksi sudah 6 konfirmasi atau lebih.",live:"Memantau otomatis tiap 15 detik.",
+var EX='https://explorer.nusacoin.org',API='https://api.nusacoin.org',TB='https://apinusa.taobot.org';
+var I={id:{ttl:"Pelacak Transaksi Nusacoin",go:"Lacak",ph:"Tempel TXID (64 karakter hex)",bad:"TXID tidak valid. Harus 64 karakter hex.",wait:"Transaksi belum terlihat di jaringan. Mencari ulang otomatis tiap 15 detik…",net:"Gagal menghubungi API explorer. Mencoba lagi…",done:"Selesai: transaksi sudah 6 konfirmasi atau lebih.",live:"Memantau otomatis tiap 15 detik.",mp:"Transaksi terdeteksi di mempool (belum terkonfirmasi). Memantau tiap 15 detik sampai masuk blok…",
 s:[["Disiarkan","Transaksi dikenali jaringan"],["Masuk mempool","Menunggu penambang memasukkan ke blok"],["1 konfirmasi","Sudah masuk satu blok"],["6 konfirmasi","Dianggap final dan aman"]],
-d:["Konfirmasi","Tinggi blok","Waktu","Total output (NUX)","Explorer"],open:"Buka di explorer"},
-en:{ttl:"Nusacoin Transaction Tracker",go:"Track",ph:"Paste TXID (64 hex characters)",bad:"Invalid TXID. It must be 64 hex characters.",wait:"Transaction not visible on the network yet. Auto-retrying every 15 seconds…",net:"Could not reach the explorer API. Retrying…",done:"Done: the transaction has 6 or more confirmations.",live:"Auto-refreshing every 15 seconds.",
+d:["Konfirmasi","Tinggi blok","Waktu","Total output (NUX)","Explorer","Sumber data"],open:"Buka di explorer"},
+en:{ttl:"Nusacoin Transaction Tracker",go:"Track",ph:"Paste TXID (64 hex characters)",bad:"Invalid TXID. It must be 64 hex characters.",wait:"Transaction not visible on the network yet. Auto-retrying every 15 seconds…",net:"Could not reach the explorer API. Retrying…",done:"Done: the transaction has 6 or more confirmations.",live:"Auto-refreshing every 15 seconds.",mp:"Transaction detected in the mempool (unconfirmed). Checking every 15 seconds until it is mined…",
 s:[["Broadcast","Transaction recognised by the network"],["In mempool","Waiting for a miner to include it in a block"],["1 confirmation","Included in one block"],["6 confirmations","Considered final and safe"]],
-d:["Confirmations","Block height","Time","Total output (NUX)","Explorer"],open:"Open in explorer"}};
+d:["Confirmations","Block height","Time","Total output (NUX)","Explorer","Data source"],open:"Open in explorer"}};
 var lang='id',timer=null,last=null,txid='';
 try{if(localStorage.getItem('pt_l'))lang=localStorage.getItem('pt_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
 function L(l){lang=l;try{localStorage.setItem('pt_l',l)}catch(e){}ui();if(last)draw(last)}
@@ -79,23 +79,42 @@ function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(mat
 function ui(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;ttl.textContent=t.ttl;go.textContent=t.go;tx.placeholder=t.ph;bi.className=lang==='id'?'on':'';be.className=lang==='en'?'on':''}
 function msg(k,e){ms.textContent=k?I[lang][k]:'';ms.className='msg'+(e?' er':'')}
 function jf(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.text()}).then(function(t){try{return JSON.parse(t)}catch(e){return t}})}
-// Ambil status: {st:0..4, conf, height, time, total}
+// Ambil status: {st:0..4, conf, height, time, total, src}. Urutan sumber: Taobot -> Nusacoin API -> Explorer
+// jx: tidak melempar error untuk status HTTP non-200; ok=false hanya bila jaringan/CORS gagal
+function jx(u){return fetch(u,{cache:'no-store'}).then(function(r){return r.text().then(function(t){var d;try{d=JSON.parse(t)}catch(e){d=t}return{ok:true,s:r.status,d:d}})}).catch(function(){return{ok:false}})}
+// Baca hasil /transaction/<txid> (format {error,result:{amount,blockhash,confirmations,height,blocktime}})
+function ptx(d){var x=d&&typeof d==='object'&&!d.error&&d.result;if(!x||typeof x!=='object'||!Object.keys(x).length)return null;
+ var conf=+x.confirmations||0;if(!conf&&x.blockhash)conf=1;
+ var tot=x.amount!=null?(Number.isInteger(+x.amount)?+x.amount/1e8:+x.amount):undefined;
+ return{conf:conf,height:x.height,time:x.blocktime||x.time,total:tot,bh:x.blockhash}}
+// Cek satu API bergaya apinusa: /transaction lalu /mempool
+async function viaApi(base,label,id){
+ var r=await jx(base+'/transaction/'+id),reach=r.ok,x=ptx(r.d);
+ if(x){
+  if(!x.bh&&x.conf===0)return{res:{st:2,conf:0,total:x.total,src:label+' · mempool'},reach:true};
+  if(x.time==null&&x.bh){var b=await jx(base+'/block/'+x.bh),bb=b.d&&b.d.result;if(bb&&typeof bb==='object')x.time=bb.time||bb.mediantime}
+  return{res:{st:x.conf>=6?4:x.conf>=1?3:2,conf:x.conf,height:x.height,time:x.time,total:x.total,src:label},reach:true}}
+ var m=await jx(base+'/mempool');reach=reach||m.ok;
+ if(m.ok&&JSON.stringify(m.d).indexOf(id)>-1)return{res:{st:2,conf:0,src:label+' · mempool'},reach:true};
+ return{res:null,reach:reach}}
 async function query(id){
- var conf,h,tm,tot,found=false,net=true;
- try{var d=await jf(EX+'/ext/gettx/'+id);net=false;var x=d&&d.tx;
+ var reach=false,v;
+ v=await viaApi(TB,'Taobot',id);reach=reach||v.reach;if(v.res)return v.res;
+ v=await viaApi(API,'Nusacoin API',id);reach=reach||v.reach;if(v.res)return v.res;
+ // cadangan terakhir: explorer
+ var conf,h,tm,tot,found=false;
+ try{var d=await jf(EX+'/ext/gettx/'+id);reach=true;var x=d&&d.tx;
   if(x&&!d.error){found=true;h=x.blockindex;tm=x.timestamp;tot=x.total;
    conf=d.confirmations!=null?d.confirmations:(d.blockcount&&h?d.blockcount-h+1:(x.blockhash?1:0));
    if(x.total>1e6)tot=x.total/1e8;}
  }catch(e){}
- if(!found){try{var r=await jf(EX+'/api/getrawtransaction?txid='+id+'&decrypt=1');net=false;
+ if(!found){try{var r=await jf(EX+'/api/getrawtransaction?txid='+id+'&decrypt=1');reach=true;
   if(r&&typeof r==='object'&&r.txid){found=true;conf=r.confirmations||0;tm=r.time;
    if(r.vout)tot=r.vout.reduce(function(a,o){return a+(+o.value||0)},0);
    if(r.blockhash&&!conf)conf=1;}
  }catch(e){}}
- if(found){return{st:conf>=6?4:conf>=1?3:2,conf:conf||0,height:h,time:tm,total:tot}}
- try{var m=await jf(API+'/mempool');net=false;
-  if((typeof m==='string'?m:JSON.stringify(m)).indexOf(id)>-1)return{st:2,conf:0}}catch(e){}
- return net?{st:-1}:{st:0}}
+ if(found)return{st:conf>=6?4:conf>=1?3:2,conf:conf||0,height:h,time:tm,total:tot,src:'Explorer'};
+ return reach?{st:0}:{st:-1}}
 function fmt(ts){if(!ts)return '-';var n=+ts;if(n<1e12)n*=1000;return new Date(n).toLocaleString(lang==='id'?'id-ID':'en-GB')}
 function draw(r){var t=I[lang],st=r.st<0?0:r.st,pct=[0,0,33.3,66.6,100][st];
  fl.style.width=pct+'%';pk.style.left=pct+'%';
@@ -107,13 +126,13 @@ function draw(r){var t=I[lang],st=r.st<0?0:r.st,pct=[0,0,33.3,66.6,100][st];
  var p2=[0,1,2,3].filter(function(i){return done[i]}).length;pct=[0,33.3,66.6,100][Math.max(0,p2-1)];if(p2===0)pct=0;
  fl.style.width=pct+'%';pk.style.left=pct+'%';
  st_.innerHTML=t.s.map(function(s,i){return '<li class="s '+(done[i]?'d':i===act?'a':'')+'"><span class="ic">'+(done[i]?'✓':i+1)+'</span><div><b>'+s[0]+'</b><small>'+s[1]+'</small></div></li>'}).join('');
- var cells=[[t.d[0],r.conf!=null&&r.st>=2?r.conf:'-'],[t.d[1],r.height||'-'],[t.d[2],fmt(r.time)],[t.d[3],r.total!=null?(+r.total).toLocaleString('en-US',{maximumFractionDigits:8}):'-']];
+ var cells=[[t.d[0],r.conf!=null&&r.st>=2?(r.conf===0?'0 · mempool':r.conf):'-'],[t.d[1],r.height||'-'],[t.d[2],fmt(r.time)],[t.d[3],r.total!=null?(+r.total).toLocaleString('en-US',{maximumFractionDigits:8}):'-'],[t.d[5],r.src||'-']];
  dt.innerHTML=cells.map(function(c){return '<div><span>'+c[0]+'</span>'+c[1]+'</div>'}).join('')+'<div><span>'+t.d[4]+'</span><a target="_blank" rel="noopener" href="'+EX+'/tx/'+txid+'">'+t.open+'</a></div>'}
 var st_,dt;
 async function poll(){var r=await query(txid);
  if(r.st<0){msg('net',1);if(!last)draw({st:0})}
- else{var prev=last&&last.st;last=r;draw(r);
-  if(r.st===0)msg('wait');else if(r.st>=4){msg('done');clearInterval(timer);timer=null;if(prev!==4)party()}else msg('live')}}
+ else{if(r.st===0&&last&&last.st>=2)r=last;var prev=last&&last.st;last=r;draw(r);
+  if(r.st===0)msg('wait');else if(r.st>=4){msg('done');clearInterval(timer);timer=null;if(prev!==4)party()}else if(r.st===2&&!r.conf)msg('mp');else msg('live')}}
 function party(){var e=['🪙','✨','🎉','📦'];for(var i=0;i<24;i++){var s=document.createElement('span');s.className='cf';s.textContent=e[i%4];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*1.2+'s';document.body.appendChild(s);setTimeout(function(x){x.remove()},4500,s)}}
 function start(){var v=tx.value.trim().toLowerCase();if(!/^[0-9a-f]{64}$/.test(v)){msg('bad',1);return}
  txid=v;last=null;clearInterval(timer);msg('wait');document.getElementById('tr').style.display='block';draw({st:0});poll();timer=setInterval(poll,15000)}
