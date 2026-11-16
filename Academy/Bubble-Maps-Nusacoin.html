@@ -100,16 +100,23 @@ function proc(id,d,fresh){if(seen[id])return;seen[id]=1;FZ=!!fresh;var x=d.tx||d
  var tin=vi.reduce(function(s,o){return s+o[1]},0);
  vo.forEach(function(o){vi.forEach(function(q){if(q[0]===o[0])return;var sh2=tin>0?q[1]/tin:1/vi.length,m=o[1]*sh2;if(m>0)flow(q[0],o[0],m,id,tm)})});if(fresh)fa(id,tot/sc,!!pend[id]);FZ=false}
 // ---- data ----
-async function hist(a){try{var d=await jf(API+'/history/'+a),r=d&&d.result;if(r&&r.tx&&r.tx.length)return r.tx.map(String)}catch(e){}
- try{var e=await jf(EX+'/ext/getaddress/'+a),l=e&&e.last_txs;if(l&&l.length)return l.map(function(q){return String(q.addresses||q.txid||q)})}catch(e){}return[]}
+var HD='';
+function hx(v){if(v==null)return null;if(typeof v==='string')return v;if(Array.isArray(v)){for(var q=0;q<v.length;q++){var y=hx(v[q]);if(typeof y==='string'&&/^[0-9a-fA-F]{64}$/.test(y))return y}return null}if(typeof v==='object')return v.tx_hash||v.txid||v.hash||v.txhash||v.tx||v.addresses||v.id||null;return null}
+function hl(l){return(Array.isArray(l)?l:[]).map(hx).filter(function(x){return typeof x==='string'&&/^[0-9a-fA-F]{64}$/.test(x)})}
+function ho(d){var r=d&&typeof d==='object'?(d.result!==undefined?d.result:d):null;return Array.isArray(r)?r:(r&&(r.tx||r.txs||r.data||r.history||r.transactions||r.last_txs))||[]}
+async function hist(a){var D=[],x;
+ try{var d=await jf(API+'/history/'+a);x=hl(ho(d));D.push('API '+(x.length?x.length+' tx':(d&&d.error?'error':'kosong')));if(x.length){HD=D.join(', ');return x}}catch(e){D.push('API gagal dijangkau')}
+ try{var e1=await jf(EX+'/ext/getaddress/'+a);x=hl(ho(e1)).concat(hl(e1&&e1.last_txs));D.push('Explorer '+(x.length?x.length+' tx':'kosong'));if(x.length){HD=D.join(', ');return x}}catch(e){D.push('Explorer gagal dijangkau')}
+ try{var e2=await jf(EX+'/ext/getaddresstxs/'+a+'/0/100');x=hl(ho(e2));D.push('Explorer-txs '+(x.length?x.length+' tx':'kosong'));if(x.length){HD=D.join(', ');return x.reverse()}}catch(e){D.push('Explorer-txs gagal')}
+ HD=D.join(', ');return[]}
 async function txd(id){if(cache[id])return cache[id];try{var d=await jf(EX+'/ext/gettx/'+id);if(d&&(d.tx||d.vout)){cache[id]=d;return d}}catch(e){}return null}
 async function ex(a){if(busy)return;busy=true;watch[a]=1;var t=I[lang],N=+$('nn').value;st(t.load);
  var ids=(await hist(a)).filter(function(x,i,r){return /^[0-9a-fA-F]{64}$/.test(x)&&r.indexOf(x)===i}).slice(-N);
- if(!ids.length){st(t.none+(live?' '+t.wait:''),1);busy=false;lu();sched();return}
+ if(!ids.length){st(t.none+' ['+HD+']'+(live?' '+t.wait:''),1);busy=false;lu();sched();return}
  var idx=0,done=0,ok=0;
  async function wk(){while(idx<ids.length){var q=ids[idx++],d=await txd(q);done++;if(d){proc(q,d);ok++}$('pg').style.width=done/ids.length*100+'%';st(t.prog+done+'/'+ids.length)}}
  await Promise.all([wk(),wk(),wk(),wk(),wk()]);
- if(!ok)st(t.none,1);else{st(t.done+NS.length+t.nb.replace(/,\s*$/,'')+', '+ES.length+t.ne);alpha=1;if(G.n[a])pick(a);setTimeout(fit,700)}
+ if(!ok)st(t.none+' ['+HD+' · detail tx '+ok+'/'+ids.length+']',1);else{st(t.done+NS.length+t.nb.replace(/,\s*$/,'')+', '+ES.length+t.ne);alpha=1;if(G.n[a])pick(a);setTimeout(fit,700)}
  busy=false;lastU=Date.now();lu();sched()}
 function va(a){return /^[A-Za-z0-9]{14,90}$/.test(a)}
 function go(){var a=$('ad').value.trim().split(/[\/?#\s]+/).filter(Boolean).pop()||'';if(!va(a)){st(I[lang].bad,1);return}$('ad').value=a;reset();root=a;ex(a)}
