@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tokenomics Nusacoin</title>
+<style>
+:root{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da}}
+:root[data-theme="light"]{--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da}
+:root[data-theme="dark"]{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.w{max-width:900px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:1.25rem;margin:0;display:flex;gap:8px;align-items:center}
+.logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#8dffd6,var(--ac));display:inline-grid;place-items:center;color:#033;font-weight:800;font-size:.8rem;animation:fl 3s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-4px)}}
+.b button,.tabs button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer}
+.b button.on,.tabs button.on{border-color:var(--ac);color:var(--ac)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0}
+.st{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;animation:in .6s both}
+.st:nth-child(2){animation-delay:.1s}.st:nth-child(3){animation-delay:.2s}.st:nth-child(4){animation-delay:.3s}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.st span{display:block;color:var(--mut);font-size:.75rem}.st b{font-size:1.25rem;color:var(--ac)}
+.st input{width:100%;background:transparent;color:var(--gd);border:0;border-bottom:1px dashed var(--bd);font-size:1.25rem;font-weight:700;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-top:10px}
+.pn{display:none}.pn.on{display:block;animation:in .5s}
+.dn{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center}
+.dn svg{width:260px;max-width:100%;flex:none}
+.dn circle{transition:stroke-dasharray 1.4s cubic-bezier(.2,.8,.2,1),opacity .3s,stroke-width .3s;cursor:pointer}
+.lg{flex:1 1 220px;display:grid;gap:5px}
+.lg div{display:flex;gap:8px;align-items:center;font-size:.85rem;padding:5px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.lg div.h,.lg div:hover{border-color:var(--bd);background:var(--bg)}
+.lg i{width:12px;height:12px;border-radius:3px;flex:none}.lg em{margin-left:auto;color:var(--mut);font-style:normal}
+.tl{position:relative;margin:6px 0 0 14px;padding-left:20px;border-left:3px solid var(--bd)}
+.ev{position:relative;padding:8px 0 14px;animation:in .5s both}
+.ev:before{content:"";position:absolute;left:-30px;top:12px;width:16px;height:16px;border-radius:50%;background:var(--bd);border:3px solid var(--card)}
+.ev.p:before{background:var(--ac)}.ev.c:before{background:var(--gd);animation:pu 1.4s infinite}
+@keyframes pu{0%{box-shadow:0 0 0 0 rgba(245,185,66,.7)}100%{box-shadow:0 0 0 14px rgba(245,185,66,0)}}
+.ev b{color:var(--gd)}.ev small{display:block;color:var(--mut)}
+.sl{margin-top:12px}.sl input{width:100%;accent-color:var(--ac)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px}
+.kv div{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:.8rem}
+.kv span{display:block;color:var(--mut);font-size:.7rem}
+.ch svg{width:100%;height:auto}
+.ln{fill:none;stroke:var(--ac);stroke-width:3;stroke-dasharray:var(--l);stroke-dashoffset:var(--l);animation:dr 2.2s ease forwards}
+@keyframes dr{to{stroke-dashoffset:0}}
+.note{font-size:.78rem;color:var(--mut);margin-top:12px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ln{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1><span class="logo">N</span><span id="ttl"></span></h1>
+<div class="b"><button id="bi" onclick="L('id')">ID</button> <button id="be" onclick="L('en')">EN</button> <button onclick="T()">◐</button></div></header>
+<div class="stats">
+<div class="st"><span id="l1"></span><b id="v1"></b></div>
+<div class="st"><span id="l2"></span><b id="v2">30 NUX</b></div>
+<div class="st"><span id="l3"></span><b id="v3"></b></div>
+<div class="st"><span id="l4"></span><input id="iN" type="number" min="1000" step="1000" value="300000" oninput="U()"></div>
+</div>
+<div class="tabs"><button id="t0" onclick="tab(0)"></button><button id="t1" onclick="tab(1)"></button><button id="t2" onclick="tab(2)"></button></div>
+<div class="box">
+<div class="pn" id="p0"><div class="dn"><svg viewBox="0 0 200 200" id="dsv"></svg><div class="lg" id="lg"></div></div></div>
+<div class="pn" id="p1"><div class="tl" id="tl"></div></div>
+<div class="pn" id="p2"><div class="ch" id="ch"></div>
+<div class="sl"><label id="sll"></label><input id="rg" type="range" min="0" max="100" step="0.1" value="0" oninput="S()"></div>
+<div class="kv" id="kv"></div></div>
+<div class="note" id="nt"></div>
+</div>
+</div>
+<script>
+var EX='https://explorer.nusacoin.org',R0=30,BT=360,YR=31557600;
+var I={id:{ttl:"Tokenomics Nusacoin (NUX)",l:["Suplai maksimum","Reward per blok","Waktu blok","Interval halving (blok)"],bt:"6 menit",tabs:["Donat distribusi","Timeline halving","Kurva suplai"],
+ep:"Epoch",rest:"Epoch berikutnya",of:"dari total",blk:"blok",yrs:"tahun",done:"selesai",now:"berjalan sekarang",est:"perkiraan mulai",rw:"Reward",issued:"Diterbitkan",slide:"Geser untuk menjelajahi tinggi blok",k:["Tinggi blok","Reward saat ini","Suplai diterbitkan","% dari maksimum","Epoch","Sisa blok ke halving"],
+live:"Data langsung: tinggi blok",nolive:"Data langsung belum tersedia; menampilkan jadwal teoritis.",
+nt:"Catatan: suplai maksimum dihitung dari reward × interval × 2 (deret halving). Dengan interval 300.000 blok hasilnya 18.000.000 NUX, sesuai angka suplai maksimum yang tercantum di agregator publik. Rincian alokasi awal (jika ada) tidak saya temukan, jadi donat menunjukkan jadwal penerbitan per epoch. Ubah interval bila nilai resminya berbeda."},
+en:{ttl:"Nusacoin (NUX) Tokenomics",l:["Max supply","Block reward","Block time","Halving interval (blocks)"],bt:"6 minutes",tabs:["Distribution donut","Halving timeline","Supply curve"],
+ep:"Epoch",rest:"Later epochs",of:"of total",blk:"blocks",yrs:"years",done:"completed",now:"running now",est:"estimated start",rw:"Reward",issued:"Issued",slide:"Drag to explore block height",k:["Block height","Current reward","Supply issued","% of max","Epoch","Blocks to halving"],
+live:"Live data: block height",nolive:"Live data unavailable; showing the theoretical schedule.",
+nt:"Note: max supply is derived as reward × interval × 2 (halving series). With a 300,000-block interval this gives 18,000,000 NUX, matching the max supply listed on public aggregators. I could not find an initial allocation breakdown (if any), so the donut shows the issuance schedule per epoch. Change the interval if the official value differs."}};
+var lang='id',N=300000,H=null,cur=0,hl=-1;
+try{if(localStorage.getItem('tk_l'))lang=localStorage.getItem('tk_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
+function $(i){return document.getElementById(i)}
+function nf(n,d){return (+n).toLocaleString(lang==='id'?'id-ID':'en-US',{maximumFractionDigits:d==null?0:d})}
+function rew(h){return R0/Math.pow(2,Math.floor(h/N))}
+function cum(h){var e=Math.floor(h/N),s=0;for(var k=0;k<e&&k<60;k++)s+=N*R0/Math.pow(2,k);return s+(h-e*N)*R0/Math.pow(2,e)}
+function L(l){lang=l;try{localStorage.setItem('tk_l',l)}catch(e){}R()}
+function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
+function tab(i){cur=i;[0,1,2].forEach(function(j){$('p'+j).className='pn'+(j===i?' on':'');$('t'+j).className=j===i?'on':''});if(i===0)setTimeout(donut,30);if(i===2)chart()}
+function U(){var v=+$('iN').value;if(v>=1000){N=Math.round(v);R()}}
+function col(i,n){return 'hsl('+(160-i*(125/(n-1)))+',75%,'+(55-i*1.5)+'%)'}
+function eps(){var a=[],n=8,tot=2*R0*N,s=0;for(var k=0;k<n;k++){var v=N*R0/Math.pow(2,k);a.push(v);s+=v}a.push(tot-s);return a}
+function donut(){var t=I[lang],a=eps(),tot=2*R0*N,C=2*Math.PI*70,off=0,svg='';
+ a.forEach(function(v,i){var len=v/tot*C;svg+='<circle cx="100" cy="100" r="70" fill="none" stroke="'+col(i,a.length)+'" stroke-width="'+(hl===i?34:26)+'" stroke-dasharray="0 '+C+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 100 100)" opacity="'+(hl<0||hl===i?1:.35)+'" data-l="'+len+'" data-c="'+C+'" onmouseover="hv('+i+')" onclick="hv('+i+')"/>';off+=len});
+ var c=hl>=0?nf(a[hl]/tot*100,hl>5?2:1)+'%':nf(tot);var s2=hl>=0?(hl<8?t.ep+' '+(hl+1)+' · '+rew(hl*N)+' NUX':t.rest):'NUX';
+ svg+='<text x="100" y="98" text-anchor="middle" font-size="19" font-weight="800" fill="var(--tx)">'+c+'</text><text x="100" y="116" text-anchor="middle" font-size="9" fill="var(--mut)">'+s2+'</text>';
+ $('dsv').innerHTML=svg;
+ $('lg').innerHTML=a.map(function(v,i){return '<div class="'+(hl===i?'h':'')+'" onmouseover="hv('+i+')" onclick="hv('+i+')"><i style="background:'+col(i,a.length)+'"></i>'+(i<8?t.ep+' '+(i+1):t.rest)+'<em>'+nf(v)+' ('+nf(v/tot*100,2)+'%)</em></div>'}).join('');
+ requestAnimationFrame(function(){requestAnimationFrame(function(){document.querySelectorAll('#dsv circle').forEach(function(c){c.setAttribute('stroke-dasharray',c.dataset.l+' '+c.dataset.c)})})})}
+function hv(i){hl=hl===i?-1:i;donut()}
+function timeline(){var t=I[lang],h=H,ce=h!=null?Math.floor(h/N):-1,s='';
+ for(var k=0;k<8;k++){var sb=k*N,cls=ce<0?'':k<ce?'p':k===ce?'c':'',lbl='';
+  if(ce>=0){if(k<ce)lbl=t.done;else if(k===ce)lbl=t.now;else lbl=t.est+' '+new Date(Date.now()+(sb-h)*BT*1000).toLocaleDateString(lang==='id'?'id-ID':'en-GB',{month:'short',year:'numeric'})}
+  s+='<div class="ev '+cls+'" style="animation-delay:'+(k*.08)+'s"><b>'+t.ep+' '+(k+1)+' · '+t.rw+' '+rew(sb)+' NUX</b><small>'+t.blk+' '+nf(sb)+' → '+nf(sb+N)+' · '+nf(N*BT/YR,1)+' '+t.yrs+' · '+t.issued+' '+nf(N*rew(sb))+' NUX'+(lbl?' · '+lbl:'')+'</small></div>'}
+ $('tl').innerHTML=s}
+function chart(){var W=600,Hh=260,P=34,M=6*N,pts=[],mx=2*R0*N;
+ for(var i=0;i<=120;i++){var h=M*i/120;pts.push((P+(W-P-10)*i/120).toFixed(1)+','+(Hh-P-(Hh-P-10)*cum(h)/mx).toFixed(1))}
+ var g='';for(var k=1;k<=6;k++){var x=P+(W-P-10)*k/6;g+='<line x1="'+x+'" x2="'+x+'" y1="10" y2="'+(Hh-P)+'" stroke="var(--bd)" stroke-dasharray="3 4"/><text x="'+x+'" y="'+(Hh-14)+'" text-anchor="middle" font-size="10" fill="var(--mut)">H'+k+'</text>'}
+ [0,.5,1].forEach(function(f){var y=Hh-P-(Hh-P-10)*f;g+='<text x="4" y="'+(y+3)+'" font-size="10" fill="var(--mut)">'+nf(mx*f/1e6,1)+'M</text>'});
+ var mk=H!=null&&H<=M?'<circle cx="'+(P+(W-P-10)*H/M)+'" cy="'+(Hh-P-(Hh-P-10)*cum(H)/mx)+'" r="6" fill="var(--gd)"><animate attributeName="r" values="5;10;5" dur="1.6s" repeatCount="indefinite"/></circle>':'';
+ $('ch').innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'">'+g+'<polyline class="ln" style="--l:1400" points="'+pts.join(' ')+'" pathLength="1400"/>'+mk+'</svg>';S()}
+function S(){var t=I[lang],v=+$('rg').value/100*6*N;var h=Math.round(v),e=Math.floor(h/N),mx=2*R0*N;
+ var c=[[t.k[0],nf(h)],[t.k[1],nf(rew(h),4)+' NUX'],[t.k[2],nf(cum(h))],[t.k[3],nf(cum(h)/mx*100,2)+'%'],[t.k[4],e+1],[t.k[5],nf((e+1)*N-h)]];
+ $('kv').innerHTML=c.map(function(x){return '<div><span>'+x[0]+'</span><b>'+x[1]+'</b></div>'}).join('');$('sll').textContent=t.slide}
+function R(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;$('ttl').textContent=t.ttl;
+ $('bi').className=lang==='id'?'on':'';$('be').className=lang==='en'?'on':'';
+ for(var i=0;i<4;i++)$('l'+(i+1)).textContent=t.l[i];$('v1').textContent=nf(2*R0*N)+' NUX';$('v3').textContent=t.bt;
+ for(i=0;i<3;i++)$('t'+i).textContent=t.tabs[i];
+ $('nt').textContent=(H!=null?t.live+': '+nf(H)+'. ':t.nolive+' ')+t.nt;
+ timeline();tab(cur)}
+async function live(){try{var r=await fetch(EX+'/api/getblockcount',{cache:'no-store'});var x=parseInt(await r.text(),10);if(x>0){H=x;$('rg').value=Math.min(100,x/(6*N)*100);R()}}catch(e){}}
+R();live();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panduan Pemula Nusacoin</title>
+<style>
+:root{--bg:#0b1220;--card:#131c2e;--tx:#e8eefc;--mut:#8fa0c0;--ac:#f5b942;--ac2:#2ee6a6;--bd:#243050;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f6fb;--card:#fff;--tx:#14203a;--mut:#5b6b8c;--ac:#d98b00;--ac2:#0a9d6e;--bd:#d9e0f0}}
+:root[data-theme="light"]{--bg:#f4f6fb;--card:#fff;--tx:#14203a;--mut:#5b6b8c;--ac:#d98b00;--ac2:#0a9d6e;--bd:#d9e0f0}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#131c2e;--tx:#e8eefc;--mut:#8fa0c0;--ac:#f5b942;--ac2:#2ee6a6;--bd:#243050}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.w{max-width:860px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:1.3rem;margin:0;display:flex;align-items:center;gap:8px}
+.logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffe08a,var(--ac));display:inline-grid;place-items:center;color:#5a3a00;font-weight:800;font-size:.8rem;animation:spin 6s linear infinite}
+@keyframes spin{50%{transform:rotateY(180deg)}}
+.btns button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.85rem}
+.btns button.on{border-color:var(--ac);color:var(--ac)}
+.prog{margin:14px 0 8px;height:8px;background:var(--bd);border-radius:6px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .5s}
+.pl{font-size:.85rem;color:var(--mut);margin-bottom:10px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+nav button{flex:1 0 auto;background:var(--card);color:var(--mut);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.85rem;white-space:nowrap}
+nav button.act{color:var(--tx);border-color:var(--ac);box-shadow:0 0 0 1px var(--ac) inset}
+nav button.done::after{content:" ✓";color:var(--ac2)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin-top:10px;animation:in .45s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}}
+.stage{background:linear-gradient(160deg,rgba(245,185,66,.08),rgba(46,230,166,.08));border-radius:12px;display:grid;place-items:center;padding:6px;overflow:hidden}
+.stage svg{width:100%;max-width:420px;height:auto}
+h2{margin:14px 0 6px;font-size:1.15rem}
+p{margin:0 0 10px;color:var(--mut)}
+ul{list-style:none;padding:0;margin:10px 0}
+li label{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.2s}
+li label:hover{border-color:var(--ac)}
+li input{accent-color:var(--ac2);width:20px;height:20px;margin-top:1px;flex:none}
+li input:checked+span{text-decoration:line-through;color:var(--mut)}
+.tip{border-left:3px solid var(--ac);padding:8px 12px;background:rgba(245,185,66,.08);border-radius:6px;font-size:.88rem;color:var(--tx)}
+.ft{display:flex;justify-content:space-between;margin-top:14px;gap:8px}
+.ft button{background:var(--ac);color:#2a1b00;border:0;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer}
+.ft button.g{background:transparent;color:var(--mut);border:1px solid var(--bd)}
+.ft button:disabled{opacity:.35;cursor:default}
+.fin{text-align:center;padding:10px;color:var(--ac2);font-weight:700;display:none}
+.fin.show{display:block;animation:in .6s}
+/* motion */
+.fl{animation:fl 2.4s ease-in-out infinite}@keyframes fl{50%{transform:translateY(-8px)}}
+.pu{animation:pu 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes pu{50%{transform:scale(1.12);opacity:.7}}
+.dw{animation:dw 1.6s ease-in-out infinite}@keyframes dw{0%{transform:translateY(-10px);opacity:0}50%{opacity:1}100%{transform:translateY(12px);opacity:0}}
+.rt{animation:rt 3s linear infinite;transform-box:fill-box;transform-origin:center}@keyframes rt{to{transform:rotate(360deg)}}
+.pk{animation:pk 1s ease-in-out infinite;transform-box:fill-box;transform-origin:90% 90%}@keyframes pk{50%{transform:rotate(-35deg)}}
+.cx{animation:cx 2.6s ease-in infinite}@keyframes cx{0%{transform:translate(0,0);opacity:1}85%{opacity:1}100%{transform:translate(var(--x),var(--y));opacity:0}}
+.bk{animation:bk 3s ease-out infinite;transform-box:fill-box;transform-origin:bottom}@keyframes bk{0%{transform:scaleY(0)}30%,100%{transform:scaleY(1)}}
+.sc{animation:sc 2.2s linear infinite}@keyframes sc{0%{transform:translateY(0)}100%{transform:translateY(60px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<header>
+<h1><span class="logo">N</span><span id="ttl"></span></h1>
+<div class="btns"><button id="bi" onclick="L('id')">ID</button> <button id="be" onclick="L('en')">EN</button> <button onclick="T()">◐</button></div>
+</header>
+<div class="prog"><i id="pb"></i></div>
+<div class="pl" id="pl"></div>
+<nav id="nv"></nav>
+<div id="cd"></div>
+</div>
+<script>
+var D={
+id:{ttl:"Panduan Pemula Nusacoin (NUX)",prog:"Selesai",of:"dari",tasks:"tugas",prev:"Kembali",next:"Lanjut",fin:"🎉 Selamat! Semua langkah selesai. Kamu siap menjelajah Nusacoin.",reset:"Reset checklist",
+s:[
+{n:"1. Pasang Wallet",t:"Pasang wallet Nusacoin",d:"Wallet adalah ‘dompet’ tempat kamu menyimpan dan mengelola NUX. Mulailah dengan mengunduh aplikasi resmi.",c:["Unduh Nusacoin Core dari halaman unduh resmi (Android, Windows, Linux, atau Mac)","Pasang dan jalankan aplikasinya","Tunggu sinkronisasi blockchain sampai selesai","Catat frasa pemulihan/backup di kertas, simpan di tempat aman"],tip:"Jangan pernah membagikan frasa pemulihan atau kunci privat kepada siapa pun, termasuk yang mengaku admin."},
+{n:"2. Terima NUX",t:"Terima NUX",d:"Untuk menerima NUX kamu cukup membagikan alamat wallet. Alamat aman dibagikan, kunci privat tidak.",c:["Buka menu Terima / Receive di wallet","Buat alamat baru","Salin alamat atau tunjukkan kode QR kepada pengirim","Cek transaksi masuk di wallet atau di explorer.nusacoin.org"],tip:"Periksa alamat dua kali. Satu karakter yang salah bisa membuat dana tidak sampai."},
+{n:"3. Kirim NUX",t:"Kirim NUX",d:"Mengirim berarti membuat transaksi yang ditandatangani wallet lalu disiarkan ke jaringan.",c:["Buka menu Kirim / Send","Tempel alamat tujuan dan periksa ulang","Isi jumlah NUX yang akan dikirim","Periksa biaya jaringan, lalu konfirmasi","Pantau konfirmasi blok sampai transaksi selesai"],tip:"Coba kirim nominal kecil dulu ke alamat baru sebelum mengirim jumlah besar."},
+{n:"4. Mulai Mining",t:"Mulai mining NUX",d:"Mining adalah proses mengamankan jaringan dengan menyelesaikan blok. Penambang yang berhasil mendapat reward blok.",c:["Siapkan alamat wallet sebagai tujuan reward","Perkirakan hasil dengan Kalkulator Mining Nusacoin","Pilih cara mining (solo atau pool) dan ikuti petunjuk resmi komunitas","Jalankan miner dan pastikan perangkat tidak terlalu panas","Pantau hashrate dan blok kamu di explorer"],tip:"Hasil mining tergantung hashrate dan difficulty. Hitung dulu biaya listrik dan perangkat."},
+{n:"5. Amankan",t:"Jaga keamanan dana",d:"Kebiasaan aman sama pentingnya dengan langkah teknis.",c:["Simpan backup wallet di lebih dari satu tempat aman","Gunakan kata sandi wallet yang kuat dan unik","Unduh aplikasi hanya dari sumber resmi","Waspadai tautan dan pesan penipuan"],tip:"Tidak ada pihak resmi yang akan meminta frasa pemulihan kamu."}]},
+en:{ttl:"Nusacoin (NUX) Beginner’s Guide",prog:"Completed",of:"of",tasks:"tasks",prev:"Back",next:"Next",fin:"🎉 Congratulations! All steps done. You’re ready to explore Nusacoin.",reset:"Reset checklist",
+s:[
+{n:"1. Install Wallet",t:"Install the Nusacoin wallet",d:"A wallet is where you store and manage your NUX. Start by downloading the official app.",c:["Download Nusacoin Core from the official download page (Android, Windows, Linux or Mac)","Install and launch the app","Wait for the blockchain to finish syncing","Write down your recovery/backup phrase on paper and keep it safe"],tip:"Never share your recovery phrase or private key with anyone, even someone claiming to be an admin."},
+{n:"2. Receive NUX",t:"Receive NUX",d:"To receive NUX, just share your wallet address. Addresses are safe to share; private keys are not.",c:["Open the Receive menu in your wallet","Generate a new address","Copy the address or show the QR code to the sender","Check the incoming transaction in the wallet or at explorer.nusacoin.org"],tip:"Double-check the address. One wrong character can mean funds never arrive."},
+{n:"3. Send NUX",t:"Send NUX",d:"Sending means creating a transaction signed by your wallet and broadcast to the network.",c:["Open the Send menu","Paste the destination address and verify it","Enter the amount of NUX to send","Review the network fee, then confirm","Watch block confirmations until the transaction completes"],tip:"Try a small amount first with a new address before sending a large sum."},
+{n:"4. Start Mining",t:"Start mining NUX",d:"Mining secures the network by solving blocks. Successful miners earn the block reward.",c:["Prepare a wallet address for your rewards","Estimate returns with the Nusacoin Mining Calculator","Choose a method (solo or pool) and follow official community instructions","Run the miner and make sure your device doesn’t overheat","Track your hashrate and blocks in the explorer"],tip:"Results depend on hashrate and difficulty. Account for electricity and hardware costs first."},
+{n:"5. Stay Safe",t:"Keep your funds safe",d:"Safe habits matter as much as the technical steps.",c:["Keep wallet backups in more than one safe place","Use a strong, unique wallet password","Download apps from official sources only","Beware of scam links and messages"],tip:"No legitimate party will ever ask for your recovery phrase."}]}};
+var G=[
+'<svg viewBox="0 0 400 200"><rect x="150" y="30" width="100" height="150" rx="14" fill="none" stroke="var(--ac)" stroke-width="4"/><g class="fl"><circle cx="200" cy="85" r="26" fill="var(--ac)"/><text x="200" y="94" text-anchor="middle" font-size="26" font-weight="800" fill="#5a3a00">N</text></g><g class="dw"><path d="M200 120v26m-10-10l10 10 10-10" fill="none" stroke="var(--ac2)" stroke-width="5" stroke-linecap="round"/></g><rect x="170" y="158" width="60" height="8" rx="4" fill="var(--ac2)" class="pu"/></svg>',
+'<svg viewBox="0 0 400 200"><rect x="70" y="50" width="110" height="110" rx="10" fill="var(--card)" stroke="var(--ac)" stroke-width="3"/><g fill="var(--tx)"><rect x="85" y="65" width="25" height="25"/><rect x="140" y="65" width="25" height="25"/><rect x="85" y="120" width="25" height="25"/><rect x="120" y="100" width="12" height="12"/><rect x="145" y="125" width="18" height="18"/></g><rect x="70" y="50" width="110" height="4" fill="var(--ac2)" class="sc" opacity=".7"/><g><circle class="cx" style="--x:-140px;--y:20px" cx="360" cy="60" r="14" fill="var(--ac)"/><circle class="cx" style="--x:-140px;--y:20px;animation-delay:1.3s" cx="360" cy="60" r="14" fill="var(--ac)"/></g><rect x="215" y="85" width="70" height="55" rx="8" fill="var(--bd)"/><circle cx="260" cy="112" r="6" fill="var(--ac2)" class="pu"/></svg>',
+'<svg viewBox="0 0 400 200"><rect x="40" y="70" width="90" height="70" rx="10" fill="var(--bd)"/><text x="85" y="112" text-anchor="middle" fill="var(--tx)" font-size="14">Wallet</text><rect x="270" y="70" width="90" height="70" rx="10" fill="var(--bd)"/><text x="315" y="112" text-anchor="middle" fill="var(--tx)" font-size="14">Tujuan</text><path d="M130 105H270" stroke="var(--mut)" stroke-dasharray="6 6" stroke-width="2"/><circle class="cx" style="--x:140px;--y:0px" cx="130" cy="105" r="14" fill="var(--ac)"/><circle class="cx" style="--x:140px;--y:0px;animation-delay:1.3s" cx="130" cy="105" r="14" fill="var(--ac)"/><path d="M300 55l10 10 18-20" fill="none" stroke="var(--ac2)" stroke-width="5" stroke-linecap="round" class="pu"/></svg>',
+'<svg viewBox="0 0 400 200"><g><rect x="60" y="130" width="50" height="40" rx="6" fill="var(--ac)" class="bk"/><rect x="120" y="130" width="50" height="40" rx="6" fill="var(--ac)" class="bk" style="animation-delay:.6s"/><rect x="180" y="130" width="50" height="40" rx="6" fill="var(--ac)" class="bk" style="animation-delay:1.2s"/></g><g class="rt"><circle cx="300" cy="70" r="26" fill="none" stroke="var(--ac2)" stroke-width="8" stroke-dasharray="10 8"/></g><circle cx="300" cy="70" r="10" fill="var(--ac2)"/><g class="pk"><rect x="120" y="40" width="8" height="70" rx="3" fill="var(--mut)" transform="rotate(30 124 75)"/><path d="M85 45q40-30 80 0" fill="none" stroke="var(--tx)" stroke-width="7" stroke-linecap="round" transform="rotate(30 124 75)"/></g></svg>',
+'<svg viewBox="0 0 400 200"><path d="M200 25l80 30v50c0 40-34 62-80 75-46-13-80-35-80-75V55z" fill="none" stroke="var(--ac2)" stroke-width="5" class="pu"/><rect x="170" y="95" width="60" height="50" rx="8" fill="var(--ac)"/><path d="M180 95v-14a20 20 0 0140 0v14" fill="none" stroke="var(--ac)" stroke-width="7"/><circle cx="200" cy="120" r="6" fill="#5a3a00"/></svg>'];
+var lang=localStorage.getItem?'id':'id',cur=0,ck={};
+try{lang=localStorage.getItem('pn_lang')||(navigator.language||'id').slice(0,2)==='en'?'en':'id';ck=JSON.parse(localStorage.getItem('pn_ck')||'{}')}catch(e){}
+function sv(){try{localStorage.setItem('pn_ck',JSON.stringify(ck));localStorage.setItem('pn_lang',lang)}catch(e){}}
+function L(l){lang=l;sv();R()}
+function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
+function cnt(i){var n=D[lang].s[i].c.length,k=0;for(var j=0;j<n;j++)if(ck[i+'_'+j])k++;return k}
+function R(){var d=D[lang],S=d.s,tot=0,dn=0,h='';document.documentElement.lang=lang;
+document.getElementById('ttl').textContent=d.ttl;document.title=d.ttl;
+document.getElementById('bi').className=lang==='id'?'on':'';document.getElementById('be').className=lang==='en'?'on':'';
+S.forEach(function(s,i){tot+=s.c.length;dn+=cnt(i)});
+document.getElementById('pb').style.width=(dn/tot*100)+'%';
+document.getElementById('pl').textContent=d.prog+' '+dn+' '+d.of+' '+tot+' '+d.tasks;
+document.getElementById('nv').innerHTML=S.map(function(s,i){return '<button class="'+(i===cur?'act ':'')+(cnt(i)===s.c.length?'done':'')+'" onclick="cur='+i+';R()">'+s.n+'</button>'}).join('');
+var s=S[cur];
+var items=s.c.map(function(t,j){return '<li><label><input type="checkbox" '+(ck[cur+'_'+j]?'checked':'')+' onchange="ck[\''+cur+'_'+j+'\']=this.checked;sv();R2()"><span>'+t+'</span></label></li>'}).join('');
+document.getElementById('cd').innerHTML='<div class="card"><div class="stage">'+G[cur]+'</div><h2>'+s.t+'</h2><p>'+s.d+'</p><ul>'+items+'</ul><div class="tip">💡 '+s.tip+'</div><div class="fin '+(dn===tot?'show':'')+'">'+d.fin+'</div><div class="ft"><button class="g" '+(cur===0?'disabled':'')+' onclick="cur--;R()">← '+d.prev+'</button><button class="g" onclick="ck={};sv();R()">'+d.reset+'</button><button '+(cur===S.length-1?'disabled':'')+' onclick="cur++;R()">'+d.next+' →</button></div></div>'}
+function R2(){var sy=scrollY;R();scrollTo(0,sy)}
+R();
+</script>
+</body>
+</html>

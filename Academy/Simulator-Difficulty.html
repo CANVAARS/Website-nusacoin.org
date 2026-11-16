@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulator Difficulty Nusacoin</title>
+<style>
+:root{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da;--er:#d63c3c}}
+:root[data-theme="light"]{--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da;--er:#d63c3c}
+:root[data-theme="dark"]{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+.w{max-width:980px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:1.25rem;margin:0;display:flex;gap:8px;align-items:center}
+.logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#8dffd6,var(--ac));display:inline-grid;place-items:center;color:#033;font-weight:800;font-size:.8rem;animation:fl 3s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-4px)}}
+button,select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit;font-size:.85rem}
+button.on{border-color:var(--ac);color:var(--ac)}
+.g{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:12px;margin-top:14px}
+@media(max-width:760px){.g{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.ct label{display:flex;justify-content:space-between;font-size:.82rem;color:var(--mut);margin-top:12px}.ct label b{color:var(--gd)}
+.ct input[type=range]{width:100%;accent-color:var(--ac)}
+.bt{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ck{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:.85rem}
+.sts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.sts div{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:.78rem}
+.sts span{display:block;color:var(--mut);font-size:.68rem}.sts b{font-size:1rem;color:var(--ac)}
+canvas{width:100%;display:block;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}
+.pr{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;margin:10px 0 4px}.pr i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--gd))}
+.fx{min-height:22px;font-size:.85rem;color:var(--gd);font-weight:700}
+.lg{display:flex;gap:12px;flex-wrap:wrap;font-size:.74rem;color:var(--mut);margin-top:6px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.ex{font-size:.82rem;color:var(--mut);margin-top:12px}
+@media(prefers-reduced-motion:reduce){.logo{animation:none}}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1><span class="logo">N</span><span id="ttl"></span></h1>
+<div><button id="bi" onclick="L('id')">ID</button> <button id="be" onclick="L('en')">EN</button> <button onclick="T()">◐</button></div></header>
+<div class="g">
+<div class="box ct">
+<label><span id="lh"></span><b id="vh"></b></label><input id="sh" type="range" min="0" max="1000" value="333" oninput="rd()">
+<label><span id="ld"></span><b id="vd"></b></label><input id="sd" type="range" min="0" max="1000" value="556" oninput="rd()">
+<label><span id="ls"></span><b id="vs"></b></label><select id="sp" onchange="rd()" style="width:100%"><option value="1">1×</option><option value="60">60×</option><option value="360" selected>360×</option><option value="1800">1800×</option><option value="7200">7200×</option></select>
+<div class="bt"><button id="b1" onclick="mh(2)"></button><button id="b2" onclick="mh(.5)"></button><button id="b3" onclick="fit()"></button><button id="b4" onclick="net()"></button></div>
+<label class="ck" style="justify-content:flex-start;color:var(--tx)"><input type="checkbox" id="ad" checked onchange="rd()"><span id="la"></span></label>
+<div class="bt"><button id="pp" onclick="pa()"></button><button id="rs" onclick="rst()"></button></div>
+<div class="ex" id="ex"></div>
+</div>
+<div class="box">
+<div class="sts" id="sts"></div>
+<canvas id="cv" height="270"></canvas>
+<div class="pr"><i id="pr"></i></div><div class="fx" id="fx"></div>
+<canvas id="c2" height="90"></canvas>
+<div class="lg" id="lg"></div>
+</div>
+</div>
+</div>
+<script>
+var EX='https://explorer.nusacoin.org',TG=360,RW=30,TWO32=4294967296;
+var I={id:{ttl:"Simulator Difficulty & Blok NUX",lh:"Hashrate jaringan",ld:"Difficulty",ls:"Kecepatan simulasi",b1:"Hashrate ×2",b2:"Hashrate ÷2",b3:"Selaraskan ke target",b4:"Data jaringan",la:"Penyesuaian difficulty otomatis",pp:"Jeda",pl:"Lanjut",rs:"Reset",
+st:["Blok dihasilkan","Perkiraan waktu blok","Rata-rata aktual","Target","Blok/hari (perkiraan)","NUX/hari (perkiraan)"],
+adj:"Difficulty disesuaikan ×",lg:["≤ target","> target","> 2× target","garis putus: target 6 menit"],
+ex:"Waktu blok rata-rata = difficulty × 2³² ÷ hashrate. Difficulty tinggi atau hashrate rendah membuat blok lambat; sebaliknya blok jadi cepat. Blok datang acak, jadi ada yang cepat dan ada yang lambat. Dengan penyesuaian aktif, difficulty dikoreksi tiap 10 blok agar rata-ratanya kembali ke target (batas ×0,25 sampai ×4). Ini model sederhana untuk penjelasan, bukan aturan resmi Nusacoin."},
+en:{ttl:"NUX Difficulty & Block Simulator",lh:"Network hashrate",ld:"Difficulty",ls:"Simulation speed",b1:"Hashrate ×2",b2:"Hashrate ÷2",b3:"Align to target",b4:"Network data",la:"Automatic difficulty adjustment",pp:"Pause",pl:"Resume",rs:"Reset",
+st:["Blocks produced","Expected block time","Actual average","Target","Blocks/day (est.)","NUX/day (est.)"],
+adj:"Difficulty adjusted ×",lg:["≤ target","> target","> 2× target","dashed line: 6-minute target"],
+ex:"Average block time = difficulty × 2³² ÷ hashrate. High difficulty or low hashrate slows blocks; the opposite speeds them up. Blocks arrive randomly, so some are quick and some slow. With adjustment on, difficulty is corrected every 10 blocks to bring the average back to target (limited to ×0.25 to ×4). This is a simplified explanatory model, not the official Nusacoin rule."}};
+var lang='id',S;
+try{if(localStorage.getItem('sd_l'))lang=localStorage.getItem('sd_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
+function $(i){return document.getElementById(i)}
+function H(){return Math.pow(10,11+$('sh').value/1000*3)}
+function D(){return Math.pow(10,$('sd').value/1000*4)}
+function fh(h){var u=['H/s','kH/s','MH/s','GH/s','TH/s','PH/s'],i=0;while(h>=1000&&i<5){h/=1000;i++}return h.toFixed(h<10?2:1)+' '+u[i]}
+function fd(s){return s<60?s.toFixed(0)+' s':s<7200?(s/60).toFixed(1)+' min':(s/3600).toFixed(1)+' h'}
+function nf(n,d){return (+n).toLocaleString(lang==='id'?'id-ID':'en-US',{maximumFractionDigits:d||0})}
+function mean(){return D()*TWO32/H()}
+function rst(){S={t:0,last:0,next:0,iv:[],n:0,win:[],fx:'',fxT:0,run:S?S.run:true,born:0};S.next=ex();$('pp').textContent=I[lang][S.run?'pp':'pl']}
+function ex(){return S.last+-Math.log(1-Math.random())*mean()}
+function rd(){$('vh').textContent=fh(H());$('vd').textContent=nf(D(),1);$('vs').textContent=$('sp').value+'×';if(S){S.next=S.t+-Math.log(1-Math.random())*mean()}}
+function mh(f){var v=Math.log10(H()*f)-11;$('sh').value=Math.max(0,Math.min(1000,v/3*1000));rd()}
+function fit(){var v=Math.log10(H()*TG/TWO32)/4*1000;$('sd').value=Math.max(0,Math.min(1000,v));rd()}
+function setD(d){$('sd').value=Math.max(0,Math.min(1000,Math.log10(d)/4*1000));$('vd').textContent=nf(D(),1)}
+async function net(){try{var r=await fetch(EX+'/api/getdifficulty',{cache:'no-store'});var d=parseFloat(await r.text());if(d>0){var h=d*TWO32/TG;$('sh').value=Math.max(0,Math.min(1000,(Math.log10(h)-11)/3*1000));$('sd').value=Math.max(0,Math.min(1000,Math.log10(d)/4*1000));rd()}}catch(e){$('fx').textContent='API?'}}
+function pa(){S.run=!S.run;$('pp').textContent=I[lang][S.run?'pp':'pl']}
+function L(l){lang=l;try{localStorage.setItem('sd_l',l)}catch(e){}ui()}
+function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
+function ui(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;$('ttl').textContent=t.ttl;$('bi').className=lang==='id'?'on':'';$('be').className=lang==='en'?'on':'';
+ ['lh','ld','ls','b1','b2','b3','b4','la','rs','ex'].forEach(function(k){$(k).textContent=t[k]});$('pp').textContent=t[S&&!S.run?'pl':'pp'];
+ $('lg').innerHTML='<span><i style="background:var(--ac)"></i>'+t.lg[0]+'</span><span><i style="background:var(--gd)"></i>'+t.lg[1]+'</span><span><i style="background:var(--er)"></i>'+t.lg[2]+'</span><span>'+t.lg[3]+'</span>'}
+function mint(at){var iv=at-S.last;S.last=at;S.iv.push(iv);S.n++;S.born=performance.now();S.win.push(iv);
+ if($('ad').checked&&S.win.length>=10){var a=S.win.reduce(function(x,y){return x+y},0),f=Math.max(.25,Math.min(4,TG*S.win.length/a));setD(D()*f);S.fx=I[lang].adj+f.toFixed(2);S.fxT=performance.now();S.win=[]}
+ S.next=at+-Math.log(1-Math.random())*mean()}
+function C(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function sz(c){var r=c.getBoundingClientRect(),d=devicePixelRatio||1;if(c.width!==Math.round(r.width*d)){c.width=Math.round(r.width*d);c.height=Math.round(c.clientHeight*d)}var x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return[x,r.width,c.clientHeight]}
+function bc(iv){return iv>2*TG?C('--er'):iv>TG?C('--gd'):C('--ac')}
+function draw(){var a=sz($('cv')),x=a[0],w=a[1],h=a[2],PER=10,ROWS=9,bw=w/PER,bh=(h-10)/ROWS,n=S.n;x.clearRect(0,0,w,h);
+ var base=Math.max(0,(Math.floor((n-1)/PER)-(ROWS-1))*PER);
+ for(var k=Math.max(base,0);k<n;k++){var j=k-base,col=j%PER,row=Math.floor(j/PER),px=col*bw,py=h-5-(row+1)*bh,fall=0;
+  if(k===n-1){var p=Math.min(1,(performance.now()-S.born)/450);fall=(1-p*p)*-(h);if(p<1)py+=fall}
+  var gl=Math.max(0,1-(n-1-k)/3);x.fillStyle=bc(S.iv[k]);x.globalAlpha=.9;x.fillRect(px+2,py+2,bw-4,bh-4);x.globalAlpha=1;
+  x.fillStyle='rgba(0,0,0,.55)';x.font='600 '+Math.min(11,bh*.45)+'px system-ui';x.textAlign='center';x.fillText(fd(S.iv[k]),px+bw/2,py+bh/2+3)}
+ x.fillStyle=C('--mut');x.textAlign='left';x.font='11px system-ui';x.fillText('#'+n,6,12);
+ var b=sz($('c2')),y=b[0],W=b[1],Hh=b[2];y.clearRect(0,0,W,Hh);var v=S.iv.slice(-40),mx=Math.max(TG*2.5,Math.max.apply(null,v.concat([1]))),bw2=W/40;
+ v.forEach(function(q,i){var bh2=q/mx*(Hh-8);y.fillStyle=bc(q);y.fillRect(i*bw2+1,Hh-bh2,bw2-2,bh2)});
+ var ty=Hh-TG/mx*(Hh-8);y.strokeStyle=C('--tx');y.setLineDash([5,4]);y.beginPath();y.moveTo(0,ty);y.lineTo(W,ty);y.stroke();y.setLineDash([])}
+function stats(){var t=I[lang],m=mean(),av=S.iv.length?S.iv.reduce(function(x,y){return x+y},0)/S.iv.length:0;
+ var c=[[t.st[0],S.n],[t.st[1],fd(m)],[t.st[2],S.iv.length?fd(av):'-'],[t.st[3],'6 min'],[t.st[4],nf(86400/m,1)],[t.st[5],nf(86400/m*RW,1)]];
+ $('sts').innerHTML=c.map(function(q){return '<div><span>'+q[0]+'</span><b>'+q[1]+'</b></div>'}).join('');
+ $('pr').style.width=Math.min(100,(S.t-S.last)/(S.next-S.last||1)*100)+'%';$('fx').textContent=performance.now()-S.fxT<4000?S.fx:''}
+var lt=performance.now();
+function loop(now){var dt=Math.min(.1,(now-lt)/1000);lt=now;if(S.run){S.t+=dt*(+$('sp').value);var g=0;while(S.t>=S.next&&g++<400)mint(S.next)}draw();stats();requestAnimationFrame(loop)}
+rst();ui();rd();fit();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
