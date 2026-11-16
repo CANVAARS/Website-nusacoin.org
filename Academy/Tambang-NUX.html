@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tambang NUX</title>
+<style>
+:root{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da;--er:#d63c3c}}
+:root[data-theme="light"]{--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#d98b00;--bd:#cfe3da;--er:#d63c3c}
+:root[data-theme="dark"]{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-user-select:none;user-select:none}
+.w{max-width:760px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:1.25rem;margin:0;display:flex;gap:8px;align-items:center}
+.logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#8dffd6,var(--ac));display:inline-grid;place-items:center;color:#033;font-weight:800;font-size:.8rem;animation:fl 3s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-4px)}}
+button,select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer;font:inherit;font-size:.85rem}
+button.on{border-color:var(--ac);color:var(--ac)}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:12px}
+.in{font-size:.82rem;color:var(--mut);margin:10px 0 0}
+.sts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.sts div{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:.78rem}
+.sts span{display:block;color:var(--mut);font-size:.68rem}.sts b{font-size:1rem;color:var(--ac)}
+.pr{height:10px;background:var(--bd);border-radius:6px;overflow:hidden;margin:12px 0 4px}.pr i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--gd))}
+.lb{font-size:.74rem;color:var(--mut)}
+.bx{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;min-height:28px}
+.bk{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-size:.7rem;color:#000;border:2px solid transparent}
+.bk.m{border-color:var(--tx);box-shadow:0 0 0 2px var(--gd)}
+.bst{width:100%;margin-top:6px;font-size:1.3rem;font-weight:800;padding:18px;background:linear-gradient(135deg,var(--ac),var(--gd));color:#033;border:0;border-radius:14px;transition:transform .08s}
+.bst:active{transform:scale(.96)}
+.fx{min-height:22px;font-size:.85rem;color:var(--gd);font-weight:700;margin-top:8px}
+.sh{display:grid;gap:8px;margin-top:8px}
+.rg{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;text-align:left}
+.rg small{display:block;color:var(--mut)}
+.rg:disabled{opacity:.45;cursor:not-allowed}
+.rg:not(:disabled){border-color:var(--ac)}
+.fo{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;font-size:.82rem;color:var(--mut)}
+.pop{position:fixed;font-weight:800;color:var(--gd);pointer-events:none;animation:up 1s ease-out forwards}
+@keyframes up{to{transform:translateY(-60px);opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1><span class="logo">N</span><span id="ttl"></span></h1>
+<div><button id="bi" onclick="L('id')">ID</button> <button id="be" onclick="L('en')">EN</button> <button onclick="T()">◐</button></div></header>
+<div class="box">
+<div class="sts" id="sts"></div>
+<div class="pr"><i id="pr"></i></div><div class="lb" id="lp"></div>
+<div class="lb" id="lh" style="margin-top:10px"></div><div class="bx" id="bx"></div>
+<div class="fx" id="fx"></div>
+<button class="bst" id="bs"></button>
+</div>
+<div class="box"><b id="lsh"></b><div class="sh" id="sh"></div>
+<div class="fo"><span id="tip"></span><span><label id="ls"></label> <select id="sp" onchange="SP=+this.value"><option value="60" selected>60×</option><option value="240">240×</option></select> <button id="rs" onclick="rst()"></button></span></div></div>
+<p class="in" id="in"></p>
+</div>
+<script>
+var TG=360,RW=30,BASE=10,K=1000,SP=60,LS='tn_s';
+var R=[{h:5,c:20},{h:20,c:120},{h:100,c:700},{h:600,c:4500},{h:4000,c:30000}];
+var I={id:{ttl:"Tambang NUX",in:"Bangun tambangmu! Beli rig untuk menaikkan hashrate dan porsimu. Difficulty menyesuaikan otomatis agar blok tetap sekitar 6 menit (waktu game dipercepat). Klik Boost untuk dorongan hashrate sesaat. Ini model sederhana untuk belajar, bukan aturan resmi Nusacoin.",
+bs:"⛏️ Boost hashrate",st:["Saldo NUX","Hashrate Anda","Hashrate jaringan","Porsi Anda","Difficulty","Rata-rata waktu blok","Blok Anda","Perkiraan NUX/jam"],lp:"Menuju blok berikutnya",lh:"Blok terakhir (warna = waktu ÷ target, bingkai emas = blok Anda)",lsh:"Toko rig",ow:"dimiliki",ls:"Kecepatan",rs:"Reset",
+y:"Anda menemukan blok #",o:"Jaringan menemukan blok #",adj:"Difficulty disesuaikan ×",tip:"Tip: hashrate jaringan terus naik, jadi perbesar porsimu.",cf:"Hapus semua progres dan mulai ulang?",
+rk:["Pemula","Penambang Muda","Penambang Handal","Juragan Tambang"],rg:["Laptop CPU","GPU Rig","ASIC Mini","ASIC Farm","Data Center"],rank:"Peringkat"},
+en:{ttl:"NUX Mining Tycoon",in:"Build your mine! Buy rigs to raise your hashrate and your share. Difficulty adjusts automatically so blocks stay near 6 minutes (game time is sped up). Tap Boost for a short hashrate surge. This is a simplified learning model, not the official Nusacoin rules.",
+bs:"⛏️ Boost hashrate",st:["NUX balance","Your hashrate","Network hashrate","Your share","Difficulty","Average block time","Your blocks","Estimated NUX/hour"],lp:"Progress to next block",lh:"Latest blocks (colour = time ÷ target, gold frame = your block)",lsh:"Rig shop",ow:"owned",ls:"Speed",rs:"Reset",
+y:"You found block #",o:"The network found block #",adj:"Difficulty adjusted ×",tip:"Tip: network hashrate keeps growing, so grow your share.",cf:"Erase all progress and start over?",
+rk:["Rookie","Young Miner","Skilled Miner","Mining Tycoon"],rg:["Laptop CPU","GPU Rig","ASIC Mini","ASIC Farm","Data Center"],rank:"Rank"}};
+var lang='id',S,lt=performance.now(),lb=-1,btns=[],cells=[];
+try{if(localStorage.getItem('tn_l'))lang=localStorage.getItem('tn_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
+function $(i){return document.getElementById(i)}
+function nf(n,d){return (+n).toLocaleString(lang==='id'?'id-ID':'en-US',{maximumFractionDigits:d||0})}
+function fh(h){return h>=1000?nf(h/1000,2)+' GH/s':nf(h,1)+' MH/s'}
+function fd(s){return s<60?s.toFixed(0)+' s':s<7200?(s/60).toFixed(1)+' min':(s/3600).toFixed(1)+' h'}
+function cost(i){return Math.ceil(R[i].c*Math.pow(1.15,S.own[i]))}
+function hp(){return BASE+S.own.reduce(function(a,n,i){return a+n*R[i].h},0)}
+function tot(){return hp()+S.oth}
+function mean(){return S.D*K/tot()}
+function ex(){return -Math.log(1-Math.random())*mean()}
+function def(){return{nux:0,own:[0,0,0,0,0],oth:90,D:36,t:0,last:0,next:0,iv:[],win:[],blocks:0,mine:0,boost:0,hist:[],msg:'',mt:0}}
+function rst(f){if(f!==1&&!confirm(I[lang].cf))return;S=def();S.next=ex();lb=-1;try{localStorage.removeItem(LS)}catch(e){}ui()}
+function sv(){try{localStorage.setItem(LS,JSON.stringify({nux:S.nux,own:S.own,oth:S.oth,D:S.D,blocks:S.blocks,mine:S.mine}))}catch(e){}}
+function ld(){S=def();try{var d=JSON.parse(localStorage.getItem(LS));if(d&&d.own&&d.own.length===5){S.nux=+d.nux||0;S.own=d.own.map(function(n){return +n||0});S.oth=+d.oth||90;S.D=+d.D||36;S.blocks=+d.blocks||0;S.mine=+d.mine||0}}catch(e){}S.next=ex()}
+function L(l){lang=l;try{localStorage.setItem('tn_l',l)}catch(e){}ui()}
+function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
+function ui(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;$('ttl').textContent=t.ttl;$('bi').className=lang==='id'?'on':'';$('be').className=lang==='en'?'on':'';
+ ['in','lp','lh','lsh','ls','rs','tip','bs'].forEach(function(k){$(k).textContent=t[k]});
+ $('sts').innerHTML=t.st.map(function(s){return '<div><span>'+s+'</span><b></b></div>'}).join('');cells=[].slice.call($('sts').querySelectorAll('b'));
+ $('sh').innerHTML='';btns=R.map(function(r,i){var b=document.createElement('button');b.className='rg';b.onclick=function(){buy(i)};$('sh').appendChild(b);return b});lb=-1;shop()}
+function shop(){var t=I[lang];btns.forEach(function(b,i){b.innerHTML='<span><b>'+t.rg[i]+'</b><small>+'+fh(R[i].h)+' · '+t.ow+': '+S.own[i]+'</small></span><span>🪙 '+nf(cost(i))+'</span>'})}
+function buy(i){var c=cost(i);if(S.nux<c)return;S.nux-=c;S.own[i]++;S.next=S.t+ex();shop();sv()}
+function boost(e){S.boost=Math.min(60,S.boost+6);var p=document.createElement('span');p.className='pop';p.textContent='+H';p.style.left=((e&&e.clientX)||innerWidth/2)-8+'px';p.style.top=((e&&e.clientY)||innerHeight/2)-20+'px';document.body.appendChild(p);setTimeout(function(){p.remove()},1000)}
+var ST=[[0,[34,197,94]],[.7,[34,197,94]],[1.5,[250,204,21]],[2.5,[239,68,68]],[4.5,[122,62,29]],[5,[122,62,29]]];
+function bc(iv){var r=Math.max(0,Math.min(5,iv/TG));for(var i=1;i<ST.length;i++){if(r<=ST[i][0]){var a=ST[i-1],b=ST[i],f=b[0]===a[0]?1:(r-a[0])/(b[0]-a[0]);return 'rgb('+a[1].map(function(c,k){return Math.round(c+(b[1][k]-c)*f)}).join(',')+')'}}return 'rgb(122,62,29)'}
+function say(m){S.msg=m;S.mt=performance.now()}
+function mint(at){var t=I[lang],iv=at-S.last,hb=hp()+S.boost,mine=Math.random()<hb/(hb+S.oth);S.last=at;S.blocks++;S.iv.push(iv);S.win.push(iv);
+ if(mine){S.nux+=RW;S.mine++;say(t.y+S.blocks+'  +'+RW+' NUX');shop()}else say(t.o+S.blocks);
+ S.hist.push({iv:iv,m:mine});if(S.hist.length>24)S.hist.shift();
+ S.oth*=1+.01+Math.random()*.02;
+ if(S.win.length>=10){var a=S.win.reduce(function(x,y){return x+y},0),f=Math.max(.25,Math.min(4,TG*S.win.length/a));S.D*=f;S.win=[];say(t.adj+f.toFixed(2))}
+ S.next=at+ex();if(S.blocks%5===0)sv()}
+function draw(){var t=I[lang],m=mean(),h=hp(),sh=h/tot(),av=S.iv.length?S.iv.slice(-10).reduce(function(x,y){return x+y},0)/Math.min(10,S.iv.length):0,rk=S.mine>=100?3:S.mine>=25?2:S.mine>=5?1:0;
+ var v=[nf(S.nux),fh(h+S.boost),fh(tot()),nf(sh*100,1)+'%',nf(S.D,1),av?fd(av):'-',S.mine+' · '+t.rk[rk],nf(3600/m*sh*RW)];
+ cells.forEach(function(c,i){c.textContent=v[i]});
+ $('pr').style.width=Math.min(100,(S.t-S.last)/m*100)+'%';
+ $('fx').textContent=performance.now()-S.mt<4000?S.msg:'';
+ btns.forEach(function(b,i){b.disabled=S.nux<cost(i)});
+ if(lb!==S.blocks){lb=S.blocks;$('bx').innerHTML=S.hist.map(function(q){return '<div class="bk'+(q.m?' m':'')+'" style="background:'+bc(q.iv)+'" title="'+fd(q.iv)+'">'+(q.m?'⛏':'')+'</div>'}).join('')}}
+function loop(now){var dt=Math.min(.1,(now-lt)/1000);lt=now;S.boost*=Math.pow(.8,dt);S.t+=dt*SP;var g=0;while(S.t>=S.next&&g++<300)mint(S.next);draw();requestAnimationFrame(loop)}
+$('bs').addEventListener('pointerdown',boost);
+setInterval(sv,10000);
+ld();ui();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
