@@ -40,6 +40,11 @@ canvas{width:100%;height:62vh;min-height:340px;display:block;touch-action:none;b
 .ac{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 a.bt{display:inline-block;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:.85rem;text-decoration:none}
 .ex{font-size:.78rem;color:var(--mut);margin-top:12px}
+.lv{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut);margin-right:6px}
+.dot.ok{background:var(--ac);animation:pl 1.6s ease-out infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 var(--ac)}100%{box-shadow:0 0 0 8px transparent}}
+#fd h3{font-size:.85rem;margin:2px 0 6px}a.rw{color:inherit;text-decoration:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -50,24 +55,26 @@ a.bt{display:inline-block;background:var(--card);color:var(--tx);border:1px soli
 <div class="box">
 <div class="bar"><input id="ad" placeholder="" spellcheck="false" autocomplete="off"><select id="nn"><option value="20">20 tx</option><option value="50" selected>50 tx</option><option value="100">100 tx</option></select><button class="go" id="gb" onclick="go()"></button><button id="db" onclick="demo()"></button></div>
 <div class="pg"><i id="pg"></i></div><div class="st" id="st"></div>
+<div class="lv"><button id="lb" onclick="LV()"></button><span class="hn" id="lh"></span></div>
 <div class="cw"><canvas id="cv"></canvas><div class="zb"><button onclick="zm(1.3)">+</button><button onclick="zm(.77)">−</button><button onclick="fit()">⤢</button></div></div>
 <div class="lg" id="lg"></div>
 </div>
 <div class="box" id="pn"></div>
+<div class="box" id="fd" style="display:none"></div>
 <p class="ex" id="ex"></p>
 </div>
 <script>
 var EX='https://explorer.nusacoin.org',API='https://api.nusacoin.org';
 var C={root:'#f5b942',src:'#38bdf8',dst:'#2ee6a6',bal:'#a78bfa',cb:'#8a4b22'};
-var I={id:{ttl:"Bubble Maps Nusacoin",ph:"Alamat Nusacoin (contoh: XFd7D7…)",gb:"Telusuri",db:"Demo",bad:"Alamat tidak valid.",load:"Memuat riwayat alamat…",none:"Tidak ada transaksi terbaca. Alamat belum punya riwayat atau API tidak dapat dijangkau.",prog:"Membaca transaksi ",done:"Selesai: ",nb:" bubble, ",ne:" aliran",
+var I={id:{live:"LIVE",pause:"JEDA",blk:"Blok",upd:"diperbarui",off:"Offline, mencoba lagi…",wait:"Menunggu transaksi baru secara real-time.",feed:"Aktivitas terbaru",demo:"Demo (simulasi real-time)",ttl:"Bubble Maps Nusacoin",ph:"Alamat Nusacoin (contoh: XFd7D7…)",gb:"Telusuri",db:"Demo",bad:"Alamat tidak valid.",load:"Memuat riwayat alamat…",none:"Tidak ada transaksi terbaca. Alamat belum punya riwayat atau API tidak dapat dijangkau.",prog:"Membaca transaksi ",done:"Selesai: ",nb:" bubble, ",ne:" aliran",
 lg:["Alamat awal","Cenderung pengirim","Cenderung penerima","Seimbang","Coinbase (hasil mining)"],hint:"Ketuk sebuah bubble untuk melihat ke mana koin mengalir. Seret untuk memindahkan, gunakan tombol + − untuk zoom. Ukuran bubble = total volume NUX; titik bergerak = arah aliran.",
 tin:"Total masuk",tout:"Total keluar",ntx:"Transaksi",from:"Masuk dari",to:"Keluar ke",none2:"Tidak ada",expand:"Telusuri alamat ini",copy:"Salin alamat",copied:"Tersalin!",exp:"Buka di explorer",cb:"Coinbase (mining)",unk:"Tidak diketahui",
-ex:"Aliran dihitung dari transaksi terakhir alamat: pada transaksi dengan banyak input/output, nilai dibagi proporsional, sehingga aliran bersifat perkiraan. Bubble hanya menampilkan transaksi yang dimuat, bukan seluruh riwayat jaringan. Mode Demo memakai data acak, bukan data Nusacoin."},
-en:{ttl:"Nusacoin Bubble Maps",ph:"Nusacoin address (e.g. XFd7D7…)",gb:"Trace",db:"Demo",bad:"Invalid address.",load:"Loading address history…",none:"No transactions could be read. The address has no history or the API is unreachable.",prog:"Reading transactions ",done:"Done: ",nb:" bubbles, ",ne:" flows",
+ex:"Data diperbarui otomatis tiap beberapa detik (polling API): transaksi baru muncul saat masuk mempool lalu ditandai terkonfirmasi. Aliran dihitung dari transaksi terakhir alamat: pada transaksi dengan banyak input/output, nilai dibagi proporsional, sehingga aliran bersifat perkiraan. Bubble hanya menampilkan transaksi yang dimuat, bukan seluruh riwayat jaringan. Mode Demo memakai data acak, bukan data Nusacoin."},
+en:{live:"LIVE",pause:"PAUSED",blk:"Block",upd:"updated",off:"Offline, retrying…",wait:"Waiting for new transactions in real time.",feed:"Latest activity",demo:"Demo (real-time simulation)",ttl:"Nusacoin Bubble Maps",ph:"Nusacoin address (e.g. XFd7D7…)",gb:"Trace",db:"Demo",bad:"Invalid address.",load:"Loading address history…",none:"No transactions could be read. The address has no history or the API is unreachable.",prog:"Reading transactions ",done:"Done: ",nb:" bubbles, ",ne:" flows",
 lg:["Start address","Mostly sender","Mostly receiver","Balanced","Coinbase (mining)"],hint:"Tap a bubble to see where coins flow. Drag to move, use + − to zoom. Bubble size = total NUX volume; moving dots = flow direction.",
 tin:"Total in",tout:"Total out",ntx:"Transactions",from:"Received from",to:"Sent to",none2:"None",expand:"Trace this address",copy:"Copy address",copied:"Copied!",exp:"Open in explorer",cb:"Coinbase (mining)",unk:"Unknown",
-ex:"Flows are computed from the address’s latest transactions: in transactions with many inputs/outputs the value is split proportionally, so flows are estimates. Bubbles only show the loaded transactions, not the whole network history. Demo mode uses random data, not Nusacoin data."}};
-var lang='id',G,NS=[],ES=[],seen={},cache={},sel=null,root=null,view={x:0,y:0,k:1},alpha=1,W=600,H=400,dpr=1,busy=false,cs={},fr=0;
+ex:"Data refreshes automatically every few seconds (API polling): new transactions appear when they hit the mempool and are marked confirmed later. Flows are computed from the address’s latest transactions: in transactions with many inputs/outputs the value is split proportionally, so flows are estimates. Bubbles only show the loaded transactions, not the whole network history. Demo mode uses random data, not Nusacoin data."}};
+var lang='id',G,NS=[],ES=[],seen={},cache={},sel=null,root=null,view={x:0,y:0,k:1},alpha=1,W=600,H=400,dpr=1,busy=false,cs={},fr=0,live=true,watch={},tmr=null,lastH=0,lastU=0,fails=0,feed=[],pend={},demoT=null,ptick=0,okc=0,ep=0,FZ=false,pbusy=false;
 try{if(localStorage.getItem('bm_l'))lang=localStorage.getItem('bm_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
 function $(i){return document.getElementById(i)}
 function nf(n,d){return (+n).toLocaleString(lang==='id'?'id-ID':'en-US',{maximumFractionDigits:d==null?2:d})}
@@ -76,41 +83,76 @@ function SL(l){lang=l;try{localStorage.setItem('bm_l',l)}catch(e){}ui()}
 function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark');fr=0}
 function ui(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;$('ttl').textContent=t.ttl;$('bi').className=lang==='id'?'on':'';$('be').className=lang==='en'?'on':'';
  $('ad').placeholder=t.ph;$('gb').textContent=t.gb;$('db').textContent=t.db;$('ex').textContent=t.ex;
- var cl=[C.root,C.src,C.dst,C.bal,C.cb];$('lg').innerHTML=t.lg.map(function(l,i){return '<span><i style="background:'+cl[i]+'"></i>'+l+'</span>'}).join('');pn()}
+ var cl=[C.root,C.src,C.dst,C.bal,C.cb];$('lg').innerHTML=t.lg.map(function(l,i){return '<span><i style="background:'+cl[i]+'"></i>'+l+'</span>'}).join('');pn();lu();rf()}
 function st(m,e){var s=$('st');s.textContent=m;s.className='st'+(e?' er':'')}
-function jf(u){return fetch(u,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(t){try{return JSON.parse(t)}catch(e){return t}})}
+function jf(u){var c=window.AbortController?new AbortController():null,tm=c?setTimeout(function(){c.abort()},12000):0;return fetch(u,{cache:'no-store',signal:c?c.signal:undefined}).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.text()}).then(function(t){okc++;try{return JSON.parse(t)}catch(e){return t}},function(e){clearTimeout(tm);throw e})}
 // ---- graf ----
-function reset(){G={n:{},e:{}};NS=[];ES=[];seen={};sel=null;alpha=1;view={x:0,y:0,k:1};$('pg').style.width='0'}
-function nd(id){var n=G.n[id];if(!n){n={id:id,x:W/2+(Math.random()-.5)*160,y:H/2+(Math.random()-.5)*160,vx:0,vy:0,i:0,o:0,t:{},r:10};G.n[id]=n;NS.push(n)}return n}
-function flow(a,b,m,tx,tm){var A=nd(a),B=nd(b);A.o+=m;B.i+=m;A.t[tx]=1;B.t[tx]=1;var k=a+'>'+b,e=G.e[k];if(!e){e={a:A,b:B,m:0,n:0,last:0,ph:Math.random()};G.e[k]=e;ES.push(e)}e.m+=m;e.n++;if(tm>e.last)e.last=tm}
+function reset(){ep++;G={n:{},e:{}};NS=[];ES=[];seen={};sel=null;alpha=1;view={x:0,y:0,k:1};$('pg').style.width='0';watch={};pend={};feed=[];lastH=0;lastU=0;fails=0;clearInterval(demoT);demoT=null;clearTimeout(tmr);rf();lu()}
+function nd(id,nr){var n=G.n[id];if(!n){var now=performance.now(),bx=nr?nr.x:W/2,by=nr?nr.y:H/2,sp=nr?70:160;n={id:id,x:bx+(Math.random()-.5)*sp,y:by+(Math.random()-.5)*sp,vx:0,vy:0,i:0,o:0,t:{},r:10,born:FZ?now:-1e9,fl:FZ?now:-1e9};G.n[id]=n;NS.push(n)}return n}
+function flow(a,b,m,tx,tm){var A=nd(a,G.n[b]),B=nd(b,A);A.o+=m;B.i+=m;A.t[tx]=1;B.t[tx]=1;var k=a+'>'+b,e=G.e[k];if(!e){e={a:A,b:B,m:0,n:0,last:0,ph:Math.random()};G.e[k]=e;ES.push(e)}e.m+=m;e.n++;if(tm>e.last)e.last=tm;if(FZ){var now=performance.now();e.fl=now;A.fl=now;B.fl=now}}
 function ad(o){var a=o&&o.addresses;if(Array.isArray(a))a=a[0];return typeof a==='string'&&a&&a!=='coinbase'&&a!=='nonstandard'?a:null}
-function proc(id,d){if(seen[id])return;seen[id]=1;var x=d.tx||d,vi=[],vo=[],tm=+x.timestamp||0;
+function proc(id,d,fresh){if(seen[id])return;seen[id]=1;FZ=!!fresh;var x=d.tx||d,vi=[],vo=[],tm=+x.timestamp||0;
  (x.vin||[]).forEach(function(o){var a=ad(o);if(a)vi.push([a,+o.amount||0])});
  (x.vout||[]).forEach(function(o){var a=ad(o),m=+o.amount||0;if(a&&m>0)vo.push([a,m])});
  var tot=vo.reduce(function(s,o){return s+o[1]},0),ints=vo.concat(vi).every(function(o){return Number.isInteger(o[1])}),sc=(tot>=1e6&&ints)?1e8:1;
  vo=vo.map(function(o){return[o[0],o[1]/sc]});vi=vi.map(function(o){return[o[0],o[1]/sc]});
  if(!vi.length){var v0=x.vin&&x.vin[0],cb=!v0||v0.coinbase||v0.addresses==='coinbase';vi=[[cb?'COINBASE':'UNKNOWN',tot/sc]]}
  var tin=vi.reduce(function(s,o){return s+o[1]},0);
- vo.forEach(function(o){vi.forEach(function(q){if(q[0]===o[0])return;var sh2=tin>0?q[1]/tin:1/vi.length,m=o[1]*sh2;if(m>0)flow(q[0],o[0],m,id,tm)})})}
+ vo.forEach(function(o){vi.forEach(function(q){if(q[0]===o[0])return;var sh2=tin>0?q[1]/tin:1/vi.length,m=o[1]*sh2;if(m>0)flow(q[0],o[0],m,id,tm)})});if(fresh)fa(id,tot/sc,!!pend[id]);FZ=false}
 // ---- data ----
 async function hist(a){try{var d=await jf(API+'/history/'+a),r=d&&d.result;if(r&&r.tx&&r.tx.length)return r.tx.map(String)}catch(e){}
  try{var e=await jf(EX+'/ext/getaddress/'+a),l=e&&e.last_txs;if(l&&l.length)return l.map(function(q){return String(q.addresses||q.txid||q)})}catch(e){}return[]}
 async function txd(id){if(cache[id])return cache[id];try{var d=await jf(EX+'/ext/gettx/'+id);if(d&&(d.tx||d.vout)){cache[id]=d;return d}}catch(e){}return null}
-async function ex(a){if(busy)return;busy=true;var t=I[lang],N=+$('nn').value;st(t.load);
+async function ex(a){if(busy)return;busy=true;watch[a]=1;var t=I[lang],N=+$('nn').value;st(t.load);
  var ids=(await hist(a)).filter(function(x,i,r){return /^[0-9a-fA-F]{64}$/.test(x)&&r.indexOf(x)===i}).slice(-N);
- if(!ids.length){st(t.none,1);busy=false;return}
+ if(!ids.length){st(t.none+(live?' '+t.wait:''),1);busy=false;lu();sched();return}
  var idx=0,done=0,ok=0;
  async function wk(){while(idx<ids.length){var q=ids[idx++],d=await txd(q);done++;if(d){proc(q,d);ok++}$('pg').style.width=done/ids.length*100+'%';st(t.prog+done+'/'+ids.length)}}
  await Promise.all([wk(),wk(),wk(),wk(),wk()]);
  if(!ok)st(t.none,1);else{st(t.done+NS.length+t.nb.replace(/,\s*$/,'')+', '+ES.length+t.ne);alpha=1;if(G.n[a])pick(a);setTimeout(fit,700)}
- busy=false}
+ busy=false;lastU=Date.now();lu();sched()}
 function go(){var a=$('ad').value.trim();if(!/^[1-9A-HJ-NP-Za-km-z]{25,40}$/.test(a)){st(I[lang].bad,1);return}reset();root=a;ex(a)}
 function rid(n){var s='';for(var i=0;i<30;i++)s+='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random()*57)];return 'X'+s}
 function demo(){reset();root=rid();var d=[];for(var i=0;i<14;i++)d.push(rid());var x=rid(),t=0;
  flow('COINBASE',root,900+Math.random()*300,'d0',0);
  d.forEach(function(a,i){flow(root,a,5+Math.random()*120,'d'+i,t++);if(i%3===0)flow(a,x,2+Math.random()*60,'e'+i,t++);if(i%4===1)flow(a,d[(i+3)%14],1+Math.random()*30,'f'+i,t++)});
  flow(x,root,40+Math.random()*50,'g',t);flow('COINBASE',d[2],100,'h',t);
- $('ad').value=root;st(I[lang].done+NS.length+I[lang].nb.replace(/,\s*$/,'')+', '+ES.length+I[lang].ne);alpha=1;pick(root);setTimeout(fit,700)}
+ $('ad').value=root;st(I[lang].done+NS.length+I[lang].nb.replace(/,\s*$/,'')+', '+ES.length+I[lang].ne);alpha=1;pick(root);setTimeout(fit,700);demoT=setInterval(dtick,2500);lu()}
+// ---- real-time ----
+function stat(){var t=I[lang];st(t.done+NS.length+t.nb.replace(/,\s*$/,'')+', '+ES.length+t.ne)}
+function tmf(ms){return new Date(ms).toLocaleTimeString(lang==='id'?'id-ID':'en-US')}
+function lu(){var t=I[lang],b=$('lb'),h=$('lh');if(!b)return;b.className=live?'on':'';b.innerHTML='<i class="dot'+(live&&!fails?' ok':'')+'"></i>'+(live?t.live:t.pause);
+ var s='';if(demoT)s=t.demo;else if(root&&live&&fails)s=t.off;else if(root)s=(lastH?t.blk+' #'+nf(lastH,0):'')+(lastU?' · '+t.upd+' '+tmf(lastU):'');h.textContent=s}
+function fa(id,tot,p){feed.unshift({id:id,tot:tot,p:p,t:Date.now()});feed=feed.slice(0,8);rf()}
+function fu(id){feed.forEach(function(f){if(f.id===id)f.p=false});rf()}
+function rf(){var t=I[lang],b=$('fd');if(!b)return;if(!feed.length){b.style.display='none';return}b.style.display='';
+ b.innerHTML='<h3>'+t.feed+'</h3>'+feed.map(function(f){var ok=/^[0-9a-fA-F]{64}$/.test(f.id);return '<a class="rw"'+(ok?' target="_blank" rel="noopener" href="'+EX+'/tx/'+f.id+'"':'')+'><span>'+sh(f.id)+' · '+tmf(f.t)+'</span><b>'+nf(f.tot)+' NUX'+(f.p?' ⏳':' ✓')+'</b></a>'}).join('')}
+function LV(){live=!live;clearTimeout(tmr);lu();if(live&&root&&!demoT)poll().then(sched)}
+function sched(){clearTimeout(tmr);if(!live||!root||demoT)return;tmr=setTimeout(async function(){await poll();sched()},Math.min(60000,8000*Math.pow(2,Math.min(fails,3))))}
+async function newIds(a){var r=[];
+ try{var d=await jf(API+'/mempool/'+a),m=d&&d.result&&d.result.tx;if(m&&m.length)m.forEach(function(x){x=String(x);if(/^[0-9a-fA-F]{64}$/.test(x)){if(!seen[x])pend[x]=1;r.push(x)}})}catch(e){}
+ var h=await hist(a);h.forEach(function(x){if(/^[0-9a-fA-F]{64}$/.test(x)){if(pend[x]){delete pend[x];fu(x)}r.push(x)}});
+ return r.filter(function(x,i,l){return !seen[x]&&l.indexOf(x)===i}).slice(-10)}
+async function poll(){
+ if(!live||!root||demoT||document.hidden||busy||pbusy)return;
+ pbusy=true;var e0=ep,got=0,n0=NS.length;okc=0;
+ try{
+  var ot=Object.keys(watch).filter(function(k){return k!==root}),L=[root];
+  for(var i=0;i<Math.min(2,ot.length);i++)L.push(ot[(ptick++)%ot.length]);
+  var inf=await jf(API+'/info').catch(function(){return null});
+  if(e0!==ep)return;
+  if(inf&&inf.result&&inf.result.blocks)lastH=inf.result.blocks;
+  for(var j=0;j<L.length;j++){
+   var ids=await newIds(L[j]);if(e0!==ep)return;
+   for(var k=0;k<ids.length;k++){var d=await txd(ids[k]);if(e0!==ep)return;if(d){proc(ids[k],d,true);got++}}}
+ }catch(e){}finally{pbusy=false}
+ if(e0!==ep)return;
+ if(!okc)fails++;else{fails=0;lastU=Date.now()}
+ if(got){alpha=Math.max(alpha,.35);stat();if(!n0&&NS.length){setTimeout(fit,700);pick(root)}else if(sel)pn()}
+ lu()}
+function dtick(){if(!live||NS.length<2)return;var r=NS.filter(function(n){return n.id!=='COINBASE'}),a=r[Math.floor(Math.random()*r.length)],bid=Math.random()<.3?rid():r[Math.floor(Math.random()*r.length)].id;if(a.id===bid)return;
+ var m=1+Math.random()*40;FZ=true;flow(a.id,bid,m,'L'+Date.now(),Date.now()/1000);FZ=false;fa('L'+Date.now(),m,false);alpha=Math.max(alpha,.35);stat();if(sel)pn();lu()}
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&live&&root&&!demoT){clearTimeout(tmr);poll().then(sched)}});
 // ---- panel ----
 function pick(id){sel=id;pn();alpha=Math.max(alpha,.3)}
 function rows(l,k){var t=I[lang];return l.length?l.slice(0,8).map(function(e){var o=k==='a'?e.a:e.b;return '<div class="rw" onclick="pick(\''+o.id+'\')"><span>'+sh(o.id)+' · '+e.n+' tx</span><b>'+nf(e.m)+' NUX</b></div>'}).join(''):'<div class="hn">'+t.none2+'</div>'}
@@ -139,12 +181,13 @@ function draw(ts){var c=$('cv'),r=c.getBoundingClientRect(),d=devicePixelRatio||
  var sn=sel&&G.n[sel],mx=1;ES.forEach(function(e){mx=Math.max(mx,e.m)});
  ES.forEach(function(e){var a=e.a,b=e.b,dx=b.x-a.x,dy=b.y-a.y,L=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/L,uy=dy/L,nx=-uy*5,ny=ux*5,w=1+3*Math.sqrt(e.m/mx),hot=!sn||e.a===sn||e.b===sn;
   var x1=a.x+ux*a.r+nx,y1=a.y+uy*a.r+ny,x2=b.x-ux*(b.r+2)+nx,y2=b.y-uy*(b.r+2)+ny,col=cc(a);
-  x.globalAlpha=hot?.55:.08;x.strokeStyle=col;x.lineWidth=w;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
+  var ag=ts-(e.fl||-1e9),fl=ag<3500?1-ag/3500:0;x.globalAlpha=Math.min(1,(hot?.55:.08)+fl*.45);x.strokeStyle=fl>.3?C.root:col;x.lineWidth=w+fl*2;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
   x.fillStyle=col;x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-ux*(7+w)+uy*(3+w/2),y2-uy*(7+w)-ux*(3+w/2));x.lineTo(x2-ux*(7+w)-uy*(3+w/2),y2-uy*(7+w)+ux*(3+w/2));x.fill();
   if(hot){var k=w>3?2:1;x.globalAlpha=1;x.fillStyle=cs.tx;for(var q=0;q<k;q++){var p=((ts/2600)+e.ph+q/k)%1;x.beginPath();x.arc(x1+(x2-x1)*p,y1+(y2-y1)*p,1.6+w/3,0,7);x.fill()}}});
  NS.forEach(function(n){var hot=!sn||n===sn||ES.some(function(e){return(e.a===sn&&e.b===n)||(e.b===sn&&e.a===n)});
-  x.globalAlpha=hot?.9:.2;x.fillStyle=cc(n);x.beginPath();x.arc(n.x,n.y,n.r,0,7);x.fill();
+  var bg=Math.min(1,(ts-(n.born||-1e9))/700),rr=n.r*(bg<1?bg*(2-bg):1);x.globalAlpha=hot?.9:.2;x.fillStyle=cc(n);x.beginPath();x.arc(n.x,n.y,rr,0,7);x.fill();
   x.lineWidth=n===sn?4:1.5;x.strokeStyle=n===sn?cs.tx:cs.bg;x.stroke();
+  var fa2=ts-(n.fl||-1e9);if(fa2<2500){var pp=fa2/2500;x.globalAlpha=(1-pp)*.8;x.strokeStyle=C.root;x.lineWidth=2;x.beginPath();x.arc(n.x,n.y,rr+4+pp*26,0,7);x.stroke()}
   if(hot&&(n.r>18||n===sn||n.id===root)){x.globalAlpha=1;x.fillStyle=cs.tx;x.font='600 11px system-ui';x.textAlign='center';x.fillText(sh(n.id),n.x,n.y+n.r+13)}});
  x.globalAlpha=1}
 function loop(ts){step();draw(ts);requestAnimationFrame(loop)}
