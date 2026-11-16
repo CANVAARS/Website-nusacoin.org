@@ -462,7 +462,8 @@ const CAT={
   wal:{id:'Dompet & Keamanan',en:'Wallet & Security'},
   com:{id:'Komunitas & Data',en:'Community & Data'},
   uti:{id:'Utilitas',en:'Utilities'},
-  fin:{id:'Keuangan & Transaksi',en:'Finance & Transactions'}
+  fin:{id:'Keuangan & Transaksi',en:'Finance & Transactions'},
+  aca:{id:'Academy',en:'Academy'}
 };
 
 /* [ikon, {nama id, nama en}, kategori, {deskripsi id, deskripsi en}, url] */
@@ -493,9 +494,22 @@ const T=[
 ['🤲',['Donasi','Donations'],'fin',['Donasi, zakat, dan infaq dengan penyaluran yang transparan.','Donations, zakat, and infaq with transparent distribution.'],B+'Donasi.html'],
 ['📐',['Jejak Revisi DED','DED Revision Trail'],'doc',['Catat dan telusuri riwayat revisi gambar DED (Detail Engineering Design) di blockchain.','Record and trace the revision history of DED (Detail Engineering Design) drawings on the blockchain.'],B+'Jejak-Revisi-DED.html'],
 ['🧾',['Kwitansi Nusachain','Nusachain Receipt'],'fin',['Terbitkan kwitansi yang bisa diverifikasi lewat blockchain.','Issue receipts that can be verified through the blockchain.'],B+'Kwitansi-Nusachain.html'],
-['📜',['Pencatatan Waris','Inheritance Records'],'com',['Catat data waris secara transparan dan tahan manipulasi di blockchain.','Record inheritance data transparently and tamper-resistantly on the blockchain.'],B+'Pencatatan-Waris-Nusachain.html']
+['📜',['Pencatatan Waris','Inheritance Records'],'com',['Catat data waris secara transparan dan tahan manipulasi di blockchain.','Record inheritance data transparently and tamper-resistantly on the blockchain.'],B+'Pencatatan-Waris-Nusachain.html'],
+['📊',['Tokenomics','Tokenomics'],'aca',['Pelajari pasokan, distribusi, dan ekonomi koin NUX.','Learn about the supply, distribution, and economics of the NUX coin.'],'https://www.nusacoin.site/Academy/Tokenomics.html'],
+['🔍',['Pelacak Transaksi','Transaction Tracker'],'aca',['Telusuri alur transaksi NUX dengan mudah.','Follow the flow of NUX transactions with ease.'],'https://www.nusacoin.site/Academy/Pelacak-Transaksi.html'],
+['⚙️',['Simulator Difficulty','Difficulty Simulator'],'aca',['Simulasikan perubahan tingkat kesulitan penambangan.','Simulate changes in mining difficulty.'],'https://www.nusacoin.site/Academy/Simulator-Difficulty.html'],
+['🧭',['Panduan Pemula','Beginner\u2019s Guide'],'aca',['Panduan langkah awal untuk mengenal dan memakai Nusacoin.','A first-steps guide to getting to know and using Nusacoin.'],'https://www.nusacoin.site/Academy/Panduan-Pemula.html'],
+['💰',['Rich List','Rich List'],'aca',['Daftar alamat dengan saldo NUX terbesar.','The list of addresses holding the most NUX.'],'https://www.nusacoin.site/Academy/Rich-List.html'],
+['📝',['Kuis Edukasi NUX','NUX Education Quiz'],'aca',['Jawab kuis dan unduh sertifikat skornya.','Answer the quiz and download your score certificate.'],'https://www.nusacoin.site/Academy/Kuis-Edukasi-NUX.html'],
+['⛏️',['Tambang NUX','NUX Mining Game'],'aca',['Bagaimana jika kamu seorang penambang NUX? Mainkan game simulasinya.','What if you were a NUX miner? Play the simulation game.'],'https://www.nusacoin.site/Academy/Tambang-NUX.html'],
+['🫧',['Bubble Maps Nusacoin','Nusacoin Bubble Maps'],'aca',['Peta gelembung untuk melihat sebaran kepemilikan Nusacoin.','Bubble map to visualize how Nusacoin holdings are distributed.'],'https://www.nusacoin.site/Academy/Bubble-Maps-Nusacoin.html'],
+['📚',['Belajar Nusachain','Learn Nusachain'],'aca',['Belajar bersama Nusachain.','Learn together with Nusachain.'],'https://www.nusacoin.site/Academy/Belajar-Nusachain.html'],
+['🪙',['Sejarah Uang Nusantara','History of Nusantara Money'],'aca',['Menelusuri sejarah uang di Nusantara.','Explore the history of money in the Nusantara archipelago.'],'https://sejarah-uang-nusantara.pages.dev/'],
+['🇮🇩',['Nusachain untuk Negeri','Nusachain for the Nation'],'aca',['Materi edukasi: Nusachain untuk negeri.','Educational material: Nusachain for the nation.'],'https://nusachain-untuk-negeri.pages.dev/'],
+['🤝',['Nusacoin untuk Kita','Nusacoin for Us All'],'aca',['Materi edukasi: Nusacoin untuk kita semua.','Educational material: Nusacoin for all of us.'],'https://nusacoin-untuk-kita.pages.dev/'],
+['🏗️',['Bangun di Nusachain','Build on Nusachain'],'aca',['Materi edukasi: mulai membangun di atas Nusachain.','Educational material: start building on Nusachain.'],'https://bangun-di-nusachain.pages.dev/']
 ];
-const catKeys=['all','doc','wal','com','uti','fin'];
+const catKeys=['all','doc','wal','com','uti','fin','aca'];
 
 /* Penyimpanan preferensi (aman bila diblokir browser) */
 function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
