@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Belajar NUX</title>
+<style>
+:root{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#b87400;--bd:#cfe3da;--er:#d63c3c}}
+:root[data-theme="light"]{--bg:#f1f8f5;--card:#fff;--tx:#10281f;--mut:#58766a;--ac:#0a9d6e;--gd:#b87400;--bd:#cfe3da;--er:#d63c3c}
+:root[data-theme="dark"]{--bg:#07130f;--card:#0f2019;--tx:#e6f7ef;--mut:#86a89a;--ac:#2ee6a6;--gd:#f5b942;--bd:#1d3a2e;--er:#ff6b6b}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:860px;margin:0 auto;padding:16px}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;line-height:1.2;margin:0}
+h1{font-size:1.7rem}h2{font-size:1.35rem;margin-bottom:6px}h3{font-size:1.05rem;margin:14px 0 4px}
+p{margin:6px 0;max-width:68ch}.mut{color:var(--mut);font-size:.88rem}
+header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.lg{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffe08a,var(--gd));display:inline-grid;place-items:center;color:#10281f;font:800 1.1rem Georgia,serif;margin-right:10px;vertical-align:middle;border:3px solid #1f6b43}
+button,select,input{font:inherit;font-size:.9rem;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 11px}
+button{cursor:pointer}button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.go{background:var(--ac);color:#06241a;border:0;font-weight:700}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:14px 0;padding-bottom:4px}
+.tabs button{white-space:nowrap}.tabs .on{border-color:var(--ac);color:var(--ac);font-weight:700}
+section{border-top:2px solid var(--gd);padding-top:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+label{display:block;font-size:.74rem;color:var(--mut);margin:7px 0 1px}
+code{display:block;font:.78rem ui-monospace,Consolas,monospace;word-break:break-all;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:4px 7px;min-height:26px}
+#chain{display:flex;gap:0;overflow-x:auto;padding:6px 0 12px;align-items:stretch}
+.blk{flex:0 0 220px;border:2px solid var(--ac);border-radius:10px;padding:10px;background:var(--card);position:relative;margin-right:26px}
+.blk:not(:last-child)::after{content:"";position:absolute;right:-26px;top:50%;width:26px;height:3px;background:var(--ac)}
+.blk.bad{border-color:var(--er)}.blk.bad:not(:last-child)::after{background:var(--er)}
+.blk h3{margin:0 0 4px;display:flex;justify-content:space-between;align-items:center}
+.blk input{width:100%}.blk button{width:100%;margin-top:8px}
+.chip{font:700 .72rem system-ui;padding:2px 8px;border-radius:99px}.chip.ok{background:var(--ac);color:#06241a}.chip.bad{background:var(--er);color:#fff}
+.res{border-left:4px solid var(--ac);padding:6px 12px;margin:10px 0;background:var(--card)}
+.res b{color:var(--ac)}.z{color:var(--ac);font-weight:700}
+table{border-collapse:collapse;width:100%;max-width:420px;font-size:.9rem}td,th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd)}td:last-child,th:last-child{text-align:right}
+ul.l{padding-left:20px;margin:6px 0}ul.l li{margin:3px 0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.two>div{border-left:3px solid var(--gd);padding-left:10px}
+.q button{display:block;width:100%;text-align:left;margin:6px 0}
+.q .r{border-color:var(--ac);color:var(--ac)}.q .w2{border-color:var(--er);color:var(--er)}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);width:0;transition:width .3s}
+a{color:var(--ac)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<header><div><h1><span class="lg">N</span>Belajar NUX</h1>
+<p class="mut">Pahami blockchain dengan mencoba langsung: ubah, tambang, kirim, lalu uji dirimu. Semua simulasi berjalan di browser, tanpa koin sungguhan.</p>
+<p class="mut" id="live">Pasokan maksimum NUX: 18.000.000.</p></div>
+<button onclick="T()" aria-label="Ganti tema">◐</button></header>
+<nav class="tabs" id="tabs">
+<button onclick="show(0)">1. Blockchain</button><button onclick="show(1)">2. Mining</button><button onclick="show(2)">3. Dompet dan transaksi</button><button onclick="show(3)">4. Kuis</button></nav>
+
+<section>
+<h2>Rantai blok yang saling mengunci</h2>
+<p>Blockchain adalah daftar blok. Setiap blok menyimpan data dan sidik jari (hash) blok sebelumnya. Coba ubah teks di blok mana saja.</p>
+<div id="chain"></div>
+<div class="row"><button class="go" onclick="init()">Kembalikan semua</button></div>
+<p class="mut">Blok dianggap sah jika hash-nya diawali “00” dan cocok dengan blok sebelumnya. Mengubah satu blok merusak blok berikutnya. “Tambang ulang” memperbaikinya, tetapi itu merusak blok sesudahnya lagi, dan seterusnya sampai ujung rantai. Di jaringan nyata, kamu juga harus mengalahkan kerja seluruh penambang.</p>
+</section>
+
+<section hidden>
+<h2>Mining: mencari nonce yang tepat</h2>
+<p>Penambang menebak angka (nonce) sampai hash dari data + nonce diawali sejumlah angka nol. Tidak ada jalan pintas, hanya mencoba berulang kali.</p>
+<div class="row"><input id="md" value="Ani kirim 10 NUX ke Budi" aria-label="Data blok" style="flex:1 1 200px">
+<select id="mz" aria-label="Tingkat kesulitan"><option value="1">Kesulitan 1</option><option value="2">Kesulitan 2</option><option value="3" selected>Kesulitan 3</option><option value="4">Kesulitan 4</option><option value="5">Kesulitan 5</option></select>
+<button class="go" id="mb" onclick="mgo()">Mulai mining</button></div>
+<div class="res"><div>Percobaan: <b id="mn">0</b> · Waktu: <b id="mt">0 dtk</b></div><code id="mh">-</code><div id="mr" class="mut">Tiap tingkat kesulitan menambah angka nol yang dibutuhkan, sehingga rata-rata percobaan dikali 16.</div></div>
+<p class="mut">Di jaringan NUX, penambang yang berhasil menemukan blok mendapat hadiah blok (saat ini 30 NUX). Pasokan maksimum NUX 18.000.000.</p>
+</section>
+
+<section hidden>
+<h2>Dompet dan transaksi</h2>
+<div class="two">
+<div><h3>Alamat</h3><p>Seperti nomor rekening. Aman dibagikan agar orang bisa mengirim NUX kepadamu.</p></div>
+<div><h3>Kunci privat</h3><p>Seperti PIN sekaligus tanda tangan. Siapa pun yang memegangnya menguasai koinmu.</p></div>
+<div><h3>Frasa pemulihan</h3><p>Cadangan kunci dalam bentuk kata. Tulis di kertas, simpan offline, jangan difoto atau dikirim lewat chat.</p></div>
+</div>
+<h3>Coba kirim koin (simulasi)</h3>
+<div class="row"><select id="tf" aria-label="Pengirim"></select><span>kirim</span><input id="ta" type="number" min="0" step="0.5" value="2" style="width:80px" aria-label="Jumlah"><span>NUX ke</span><select id="tt" aria-label="Penerima"></select><button class="go" onclick="snd()">Kirim</button></div>
+<div id="tm" class="mut"></div>
+<div class="row"><table id="tb"></table></div>
+<h3>Mempool (menunggu masuk blok)</h3><ul class="l" id="tp"></ul>
+<div class="row"><button class="go" onclick="mb()">Tambang blok</button></div>
+<h3>Riwayat blok</h3><ul class="l" id="tl"><li class="mut">Belum ada blok.</li></ul>
+<p class="mut">Transaksi baru masuk mempool dulu dan belum final. Saldo baru berubah setelah penambang memasukkannya ke blok.</p>
+<p>Ingin melihat transaksi sungguhan? Buka <a href="https://explorer.nusacoin.org" target="_blank" rel="noopener">explorer.nusacoin.org</a>.</p>
+</section>
+
+<section hidden>
+<h2>Kuis</h2>
+<div class="bar"><i id="qb"></i></div>
+<div class="q" id="qz"></div>
+</section>
+</div>
+<script>
+var $=function(i){return document.getElementById(i)};
+// SHA-256
+var K=[],H0=[];(function(){var p=2,n=0;function pr(x){for(var i=2;i*i<=x;i++)if(x%i<1)return 0;return 1}while(n<64){if(pr(p)){if(n<8)H0[n]=(Math.pow(p,.5)%1)*4294967296|0;K[n]=(Math.pow(p,1/3)%1)*4294967296|0;n++}p++}})();
+function sha(m){m=unescape(encodeURIComponent(m));var l=m.length,w=[],i,j,H=H0.slice();
+ for(i=0;i<l;i++)w[i>>2]|=m.charCodeAt(i)<<(24-(i%4)*8);
+ w[l>>2]|=128<<(24-(l%4)*8);w[(((l+8)>>6)<<4)+15]=l*8;
+ for(i=0;i<w.length;i+=16){var a=H.slice(),W=[];
+  for(j=0;j<64;j++){if(j<16)W[j]=w[i+j]|0;else{var x=W[j-15],y=W[j-2];W[j]=(W[j-16]+(((x>>>7)|(x<<25))^((x>>>18)|(x<<14))^(x>>>3))+W[j-7]+(((y>>>17)|(y<<15))^((y>>>19)|(y<<13))^(y>>>10)))|0}
+   var e=a[4],A=a[0],t1=(a[7]+(((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)))+((e&a[5])^(~e&a[6]))+K[j]+W[j])|0,t2=((((A>>>2)|(A<<30))^((A>>>13)|(A<<19))^((A>>>22)|(A<<10)))+((A&a[1])^(A&a[2])^(a[1]&a[2])))|0;
+   a=[(t1+t2)|0,a[0],a[1],a[2],(a[3]+t1)|0,a[4],a[5],a[6]]}
+  for(j=0;j<8;j++)H[j]=(H[j]+a[j])|0}
+ return H.map(function(v){return('0000000'+(v>>>0).toString(16)).slice(-8)}).join('')}
+function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
+function show(i){document.querySelectorAll('section').forEach(function(s,k){s.hidden=k!==i});document.querySelectorAll('#tabs button').forEach(function(b,k){b.className=k===i?'on':''})}
+function fm(n){return (+n).toLocaleString('id-ID')}
+// 1. chain
+var Z=new Array(65).join('0'),OK='00',B=[];
+function hh(i){var b=B[i];return sha(i+'|'+b.p+'|'+b.d+'|'+b.n)}
+function mine(i){var b=B[i];b.p=i?hh(i-1):Z;b.n=0;while(hh(i).indexOf(OK)!==0)b.n++}
+function sh(x){return x.slice(0,14)+'…'}
+function init(){B=['Awal rantai NUX','Ani kirim 5 NUX ke Budi','Budi kirim 2 NUX ke Citra','Citra kirim 1 NUX ke Dewi'].map(function(d){return{d:d,p:'',n:0}});B.forEach(function(b,i){mine(i)});rc()}
+function rc(){var c=$('chain');c.innerHTML='';B.forEach(function(b,i){var e=document.createElement('div');e.className='blk';e.id='b'+i;
+ e.innerHTML='<h3>Blok '+(i+1)+'<span class="chip" id="st'+i+'"></span></h3><label>Hash sebelumnya</label><code id="p'+i+'"></code><label>Data</label><input id="d'+i+'" aria-label="Data blok '+(i+1)+'"><label>Nonce</label><code id="n'+i+'"></code><label>Hash blok</label><code id="h'+i+'"></code><button id="m'+i+'">Tambang ulang</button>';
+ c.appendChild(e);$('d'+i).value=b.d;$('d'+i).oninput=function(){b.d=this.value;up()};$('m'+i).onclick=function(){mine(i);up()}});up()}
+function up(){var cur=B.map(function(b,i){return hh(i)});B.forEach(function(b,i){var ok=cur[i].indexOf(OK)===0&&(i===0?b.p===Z:b.p===cur[i-1]);
+ $('p'+i).textContent=sh(b.p||Z);$('n'+i).textContent=b.n;$('h'+i).textContent=sh(cur[i]);var s=$('st'+i);s.textContent=ok?'sah':'rusak';s.className='chip '+(ok?'ok':'bad');$('b'+i).className='blk'+(ok?'':' bad');$('m'+i).disabled=ok})}
+// 2. mining
+var mt=null;
+function mgo(){if(mt){clearTimeout(mt);mt=null;$('mb').textContent='Mulai mining';return}
+ var d=$('md').value,z=+$('mz').value,pre=new Array(z+1).join('0'),n=0,t0=Date.now();$('mb').textContent='Berhenti';$('mr').textContent='Mencari…';
+ (function ch(){var e=Date.now()+30,h;while(Date.now()<e){h=sha(d+n);if(h.indexOf(pre)===0){mt=null;$('mb').textContent='Mulai mining';$('mn').textContent=fm(n+1);$('mt').textContent=((Date.now()-t0)/1000).toFixed(1)+' dtk';$('mh').innerHTML='<span class="z">'+h.slice(0,z)+'</span>'+h.slice(z);$('mr').innerHTML='<b>Ditemukan!</b> Nonce '+fm(n)+' menghasilkan hash dengan '+z+' angka nol di depan. Penambang ini mendapat hadiah blok.';return}n++}
+  $('mn').textContent=fm(n);$('mt').textContent=((Date.now()-t0)/1000).toFixed(1)+' dtk';$('mh').textContent=h;mt=setTimeout(ch,0)})()}
+// 3. transaksi
+var N=['Ani','Budi','Citra','Penambang'],A={Ani:10,Budi:5,Citra:0,Penambang:0},P=[],bn=0;
+function r2(x){return Math.round(x*100)/100}
+function pend(n){return P.reduce(function(s,t){return s+(t.f===n?t.a:0)},0)}
+function rt(){$('tb').innerHTML='<tr><th>Akun</th><th>Saldo (NUX)</th></tr>'+N.map(function(n){return'<tr><td>'+n+'</td><td>'+fm(r2(A[n]))+'</td></tr>'}).join('');
+ $('tp').innerHTML=P.length?P.map(function(t){return'<li>'+t.f+' → '+t.t+': '+fm(t.a)+' NUX</li>'}).join(''):'<li class="mut">Kosong.</li>'}
+function snd(){var f=$('tf').value,t=$('tt').value,a=r2(+$('ta').value),m=$('tm');
+ if(!(a>0)){m.textContent='Masukkan jumlah lebih dari 0.';return}
+ if(f===t){m.textContent='Pilih penerima yang berbeda dari pengirim.';return}
+ if(A[f]-pend(f)<a){m.textContent='Saldo '+f+' tidak cukup. Tersedia '+fm(r2(A[f]-pend(f)))+' NUX.';return}
+ P.push({f:f,t:t,a:a});m.textContent='Transaksi masuk mempool. Belum final sampai ditambang.';rt()}
+function mb(){bn++;var k=P.length;P.forEach(function(t){A[t.f]=r2(A[t.f]-t.a);A[t.t]=r2(A[t.t]+t.a)});A.Penambang=r2(A.Penambang+30);P=[];
+ var l=$('tl');if(bn===1)l.innerHTML='';var li=document.createElement('li');li.textContent='Blok '+bn+': '+k+' transaksi dikonfirmasi, hadiah 30 NUX untuk Penambang.';l.insertBefore(li,l.firstChild);$('tm').textContent='';rt()}
+['tf','tt'].forEach(function(id,k){$(id).innerHTML=N.slice(0,3).map(function(n){return'<option>'+n+'</option>'}).join('');$(id).selectedIndex=k});
+// 4. kuis
+var Q=[
+['Apa yang membuat data lama di blockchain sulit diubah?',['Setiap blok memuat hash blok sebelumnya','Datanya disimpan di satu server pusat','Datanya selalu dienkripsi dengan sandi rahasia'],0,'Mengubah satu blok mengubah hash-nya, sehingga blok berikutnya tidak cocok lagi, dan seterusnya sampai ujung rantai.'],
+['Apa tugas utama penambang?',['Menyimpan kunci privat pengguna','Memasukkan transaksi ke blok dengan menemukan nonce yang memenuhi target','Menentukan harga koin'],1,'Itu disebut proof of work. Penambang yang berhasil mendapat hadiah blok.'],
+['Kamu kehilangan kunci privat dan frasa pemulihan. Apa yang terjadi?',['Admin jaringan bisa memulihkannya','Koin bisa dipulihkan lewat email','Tidak ada yang bisa memulihkannya'],2,'Tidak ada pihak pusat yang menyimpan kuncimu. Itu kekuatan sekaligus tanggung jawabnya.'],
+['Mana yang aman dibagikan agar orang bisa mengirim NUX kepadamu?',['Alamat dompet','Kunci privat','Frasa pemulihan'],0,'Alamat memang untuk dibagikan. Kunci privat dan frasa pemulihan tidak boleh diberikan kepada siapa pun.'],
+['Mengapa kesulitan yang lebih tinggi butuh lebih banyak percobaan?',['Komputer sengaja diperlambat','Target hash semakin sempit, jadi hash yang cocok makin jarang','Nonce-nya jadi lebih panjang'],1,'Setiap angka nol tambahan memperkecil peluang tiap tebakan, rata-rata 16 kali lebih sulit.'],
+['Berapa pasokan maksimum NUX?',['1.000.000 NUX','18.000.000 NUX','Tidak terbatas'],1,'Menurut dokumentasi API Nusacoin, pasokan maksimum NUX adalah 18.000.000.'],
+['Di mana transaksi yang belum masuk blok menunggu?',['Mempool','Genesis','Dompet penerima'],0,'Mempool adalah antrean transaksi yang belum dikonfirmasi.'],
+['Seseorang mengaku admin dan meminta frasa pemulihanmu untuk “verifikasi”. Apa yang kamu lakukan?',['Memberikannya lewat chat pribadi','Memberikannya jika dia terlihat meyakinkan','Menolak. Itu penipuan'],2,'Admin sungguhan tidak pernah membutuhkan frasa pemulihanmu.']];
+var qi=0,qs=0;
+function rq(){var c=$('qz');$('qb').style.width=(qi/Q.length*100)+'%';
+ if(qi>=Q.length){c.innerHTML='<h3>Skor kamu: '+qs+' dari '+Q.length+'</h3><p>'+(qs>=7?'Luar biasa, kamu sudah paham dasar-dasar NUX.':qs>=4?'Bagus. Ulangi pelajaran yang masih terasa membingungkan, lalu coba kuis lagi.':'Tidak apa-apa. Coba mainkan simulasinya sekali lagi, lalu ulangi kuis.')+'</p><button class="go" onclick="qi=0;qs=0;rq()">Ulangi kuis</button>';return}
+ var q=Q[qi];c.innerHTML='<h3>Pertanyaan '+(qi+1)+' dari '+Q.length+'</h3><p>'+q[0]+'</p>'+q[1].map(function(o,k){return'<button data-k="'+k+'">'+o+'</button>'}).join('')+'<p id="qe" class="mut"></p>';
+ c.querySelectorAll('button').forEach(function(b){b.onclick=function(){var k=+b.dataset.k;c.querySelectorAll('button').forEach(function(x){x.disabled=true;if(+x.dataset.k===q[2])x.className='r'});if(k===q[2])qs++;else b.className='w2';$('qe').textContent=(k===q[2]?'Benar. ':'Belum tepat. ')+q[3];var nx=document.createElement('button');nx.className='go';nx.textContent=qi+1<Q.length?'Pertanyaan berikutnya':'Lihat skor';nx.onclick=function(){qi++;rq()};c.appendChild(nx)}})}
+init();rt();rq();show(0);
+fetch('https://api.nusacoin.org/info',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var r=j&&j.result;if(r&&r.blocks)$('live').textContent='Jaringan NUX saat ini: blok '+fm(r.blocks)+(r.reward?', hadiah '+r.reward+' NUX per blok':'')+'. Pasokan maksimum 18.000.000.'}).catch(function(){});
+</script>
+</body>
+</html>
