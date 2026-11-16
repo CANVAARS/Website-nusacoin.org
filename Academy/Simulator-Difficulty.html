@@ -32,6 +32,7 @@ canvas{width:100%;display:block;border-radius:10px;background:var(--bg);border:1
 .pr{height:8px;background:var(--bd);border-radius:5px;overflow:hidden;margin:10px 0 4px}.pr i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--gd))}
 .fx{min-height:22px;font-size:.85rem;color:var(--gd);font-weight:700}
 .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:.74rem;color:var(--mut);margin-top:6px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
+.lg .gb{flex:1 1 100%;position:relative;margin:2px 0 18px}.lg .gb i{display:block;width:100%;height:10px;margin:0;border-radius:5px}.gb span{position:absolute;top:14px;font-size:.68rem;white-space:nowrap}.gb u{position:absolute;top:-3px;width:2px;height:16px;background:var(--tx);border-radius:1px;text-decoration:none}
 .ex{font-size:.82rem;color:var(--mut);margin-top:12px}
 @media(prefers-reduced-motion:reduce){.logo{animation:none}}
 </style>
@@ -63,11 +64,11 @@ canvas{width:100%;display:block;border-radius:10px;background:var(--bg);border:1
 var EX='https://explorer.nusacoin.org',TG=360,RW=30,TWO32=4294967296;
 var I={id:{ttl:"Simulator Difficulty & Blok NUX",lh:"Hashrate jaringan",ld:"Difficulty",ls:"Kecepatan simulasi",b1:"Hashrate ×2",b2:"Hashrate ÷2",b3:"Selaraskan ke target",b4:"Data jaringan",la:"Penyesuaian difficulty otomatis",pp:"Jeda",pl:"Lanjut",rs:"Reset",
 st:["Blok dihasilkan","Perkiraan waktu blok","Rata-rata aktual","Target","Blok/hari (perkiraan)","NUX/hari (perkiraan)"],
-adj:"Difficulty disesuaikan ×",lg:["≤ target","> target","> 2× target","garis putus: target 6 menit"],
+adj:"Difficulty disesuaikan ×",lg:["Warna blok = waktu produksi ÷ target: hijau (cepat) → kuning → merah → coklat (sangat lambat)","garis putus: target 6 menit"],
 ex:"Waktu blok rata-rata = difficulty × 2³² ÷ hashrate. Difficulty tinggi atau hashrate rendah membuat blok lambat; sebaliknya blok jadi cepat. Blok datang acak, jadi ada yang cepat dan ada yang lambat. Dengan penyesuaian aktif, difficulty dikoreksi tiap 10 blok agar rata-ratanya kembali ke target (batas ×0,25 sampai ×4). Ini model sederhana untuk penjelasan, bukan aturan resmi Nusacoin."},
 en:{ttl:"NUX Difficulty & Block Simulator",lh:"Network hashrate",ld:"Difficulty",ls:"Simulation speed",b1:"Hashrate ×2",b2:"Hashrate ÷2",b3:"Align to target",b4:"Network data",la:"Automatic difficulty adjustment",pp:"Pause",pl:"Resume",rs:"Reset",
 st:["Blocks produced","Expected block time","Actual average","Target","Blocks/day (est.)","NUX/day (est.)"],
-adj:"Difficulty adjusted ×",lg:["≤ target","> target","> 2× target","dashed line: 6-minute target"],
+adj:"Difficulty adjusted ×",lg:["Block colour = production time ÷ target: green (fast) → yellow → red → brown (very slow)","dashed line: 6-minute target"],
 ex:"Average block time = difficulty × 2³² ÷ hashrate. High difficulty or low hashrate slows blocks; the opposite speeds them up. Blocks arrive randomly, so some are quick and some slow. With adjustment on, difficulty is corrected every 10 blocks to bring the average back to target (limited to ×0.25 to ×4). This is a simplified explanatory model, not the official Nusacoin rule."}};
 var lang='id',S;
 try{if(localStorage.getItem('sd_l'))lang=localStorage.getItem('sd_l');else if((navigator.language||'').slice(0,2)==='en')lang='en'}catch(e){}
@@ -90,19 +91,24 @@ function L(l){lang=l;try{localStorage.setItem('sd_l',l)}catch(e){}ui()}
 function T(){var r=document.documentElement,d=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.setAttribute('data-theme',d==='dark'?'light':'dark')}
 function ui(){var t=I[lang];document.documentElement.lang=lang;document.title=t.ttl;$('ttl').textContent=t.ttl;$('bi').className=lang==='id'?'on':'';$('be').className=lang==='en'?'on':'';
  ['lh','ld','ls','b1','b2','b3','b4','la','rs','ex'].forEach(function(k){$(k).textContent=t[k]});$('pp').textContent=t[S&&!S.run?'pl':'pp'];
- $('lg').innerHTML='<span><i style="background:var(--ac)"></i>'+t.lg[0]+'</span><span><i style="background:var(--gd)"></i>'+t.lg[1]+'</span><span><i style="background:var(--er)"></i>'+t.lg[2]+'</span><span>'+t.lg[3]+'</span>'}
+ var tk=[0,1,2,3,4,5],lb=['0','1× target','2×','3×','4×','≥5×'];
+ $('lg').innerHTML='<span style="flex:1 1 100%">'+t.lg[0]+'</span><div class="gb"><i style="background:'+GR+'"></i><u style="left:20%"></u>'+tk.map(function(q,i){var st=i===0?'left:0':i===5?'right:0':'left:'+(q*20)+'%;transform:translateX(-50%)';return '<span style="'+st+'">'+lb[i]+'</span>'}).join('')+'</div><span>'+t.lg[1]+'</span>'}
 function mint(at){var iv=at-S.last;S.last=at;S.iv.push(iv);S.n++;S.born=performance.now();S.win.push(iv);
  if($('ad').checked&&S.win.length>=10){var a=S.win.reduce(function(x,y){return x+y},0),f=Math.max(.25,Math.min(4,TG*S.win.length/a));setD(D()*f);S.fx=I[lang].adj+f.toFixed(2);S.fxT=performance.now();S.win=[]}
  S.next=at+-Math.log(1-Math.random())*mean()}
 function C(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 function sz(c){var r=c.getBoundingClientRect(),d=devicePixelRatio||1;if(c.width!==Math.round(r.width*d)){c.width=Math.round(r.width*d);c.height=Math.round(c.clientHeight*d)}var x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return[x,r.width,c.clientHeight]}
-function bc(iv){return iv>2*TG?C('--er'):iv>TG?C('--gd'):C('--ac')}
+var ST=[[0,[34,197,94]],[.7,[34,197,94]],[1.5,[250,204,21]],[2.5,[239,68,68]],[4.5,[122,62,29]],[5,[122,62,29]]];
+var GR='linear-gradient(90deg,'+ST.map(function(q){return 'rgb('+q[1].join(',')+') '+(q[0]/5*100)+'%'}).join(',')+')';
+function cl(iv){var r=Math.max(0,Math.min(5,iv/TG));for(var i=1;i<ST.length;i++){if(r<=ST[i][0]){var a=ST[i-1],b=ST[i],f=b[0]===a[0]?1:(r-a[0])/(b[0]-a[0]);return a[1].map(function(c,k){return Math.round(c+(b[1][k]-c)*f)})}}return ST[ST.length-1][1]}
+function bc(iv){return 'rgb('+cl(iv).join(',')+')'}
+function tc(iv){var c=cl(iv);return (.299*c[0]+.587*c[1]+.114*c[2])>150?'rgba(0,0,0,.7)':'rgba(255,255,255,.95)'}
 function draw(){var a=sz($('cv')),x=a[0],w=a[1],h=a[2],PER=10,ROWS=9,bw=w/PER,bh=(h-10)/ROWS,n=S.n;x.clearRect(0,0,w,h);
  var base=Math.max(0,(Math.floor((n-1)/PER)-(ROWS-1))*PER);
  for(var k=Math.max(base,0);k<n;k++){var j=k-base,col=j%PER,row=Math.floor(j/PER),px=col*bw,py=h-5-(row+1)*bh,fall=0;
   if(k===n-1){var p=Math.min(1,(performance.now()-S.born)/450);fall=(1-p*p)*-(h);if(p<1)py+=fall}
   var gl=Math.max(0,1-(n-1-k)/3);x.fillStyle=bc(S.iv[k]);x.globalAlpha=.9;x.fillRect(px+2,py+2,bw-4,bh-4);x.globalAlpha=1;
-  x.fillStyle='rgba(0,0,0,.55)';x.font='600 '+Math.min(11,bh*.45)+'px system-ui';x.textAlign='center';x.fillText(fd(S.iv[k]),px+bw/2,py+bh/2+3)}
+  x.fillStyle=tc(S.iv[k]);x.font='600 '+Math.min(11,bh*.45)+'px system-ui';x.textAlign='center';x.fillText(fd(S.iv[k]),px+bw/2,py+bh/2+3)}
  x.fillStyle=C('--mut');x.textAlign='left';x.font='11px system-ui';x.fillText('#'+n,6,12);
  var b=sz($('c2')),y=b[0],W=b[1],Hh=b[2];y.clearRect(0,0,W,Hh);var v=S.iv.slice(-40),mx=Math.max(TG*2.5,Math.max.apply(null,v.concat([1]))),bw2=W/40;
  v.forEach(function(q,i){var bh2=q/mx*(Hh-8);y.fillStyle=bc(q);y.fillRect(i*bw2+1,Hh-bh2,bw2-2,bh2)});
