@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inject Gambar ke Blockchain Nusachain</title>
+<style>
+:root{--b:#007bff;--bd:#0056b3;--bg:#f4f9ff;--t:#10243e;--m:#5b6f8a;--l:#d5e3f5;--ok:#0f7a43;--er:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--m);margin:0 0 14px}
+.card{background:#fff;border:1px solid var(--l);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 6px}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--l);border-radius:8px;background:#fff;color:var(--t)}
+textarea{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+button{background:var(--b);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;margin-top:10px}
+button:hover{background:var(--bd)}button:disabled{opacity:.5;cursor:not-allowed}
+button.g{background:#e8f1fd;color:var(--bd)}
+:focus-visible{outline:3px solid #7fb5ff;outline-offset:2px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{margin:0;background:#e8f1fd;color:var(--bd)}.tabs button[aria-selected=true]{background:var(--b);color:#fff}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+.mut{color:var(--m);font-size:13px;margin:6px 0 0}.ok{color:var(--ok)}.er{color:var(--er)}
+.bar{height:10px;background:var(--l);border-radius:6px;overflow:hidden;margin:12px 0 6px}.bar i{display:block;height:100%;width:0;background:var(--b)}
+pre{background:#0d2340;color:#cfe3ff;padding:10px;border-radius:8px;max-height:170px;overflow:auto;font-size:12px;white-space:pre-wrap;word-break:break-all;margin:10px 0 0}
+img.pv{max-width:100%;border-radius:8px;border:1px solid var(--l);margin-top:10px}
+.warn{background:#fff7e0;border:1px solid #f0d58a;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+[hidden]{display:none!important}
+.or{display:flex;align-items:center;gap:10px;color:var(--m);font-size:13px;margin:14px 0 2px}.or:before,.or:after{content:"";flex:1;height:1px;background:var(--l)}
+button.w{width:100%}
+</style>
+</head>
+<body>
+<main>
+<h1>Inject Gambar ke Blockchain Nusachain</h1>
+<p class="sub">Gambar dipotong menjadi potongan kecil, lalu tiap potongan ditulis ke OP_RETURN satu transaksi.</p>
+<div class="warn">Private key (jika dimasukkan langsung) hanya dipakai di browser ini dan tidak dikirim ke mana pun. Dengan ekstensi, kunci tetap di ekstensi. Gunakan wallet khusus dengan saldo kecil. Data di blockchain bersifat permanen, jadi pastikan gambarnya boleh dipublikasikan.</div>
+
+<div class="tabs" role="tablist">
+<button role="tab" id="t1" aria-selected="true">Kirim gambar</button>
+<button role="tab" id="t2" aria-selected="false">Baca gambar</button>
+</div>
+
+<section id="p1">
+<div class="card">
+<h2>1. Masuk dengan wallet</h2>
+<button id="ext" class="w">Hubungkan Nusa Wallet / Nux Connect</button>
+<p class="mut">Kunci privat tetap di ekstensi. Tiap transaksi perlu Anda setujui di jendela ekstensi.</p>
+<div class="or">atau masuk dengan Private Key</div>
+<label for="wif">Private key (WIF)</label>
+<input id="wif" type="password" autocomplete="off" spellcheck="false">
+<button id="login">Masuk</button>
+<button id="logout" class="g" hidden>Keluar</button>
+<p class="mut" id="acct"></p>
+</div>
+
+<div class="card">
+<h2>2. Pilih gambar</h2>
+<input id="file" type="file" accept="image/*">
+<div class="row">
+<div><label for="fmt">Format</label><select id="fmt"><option value="image/webp">WebP</option><option value="image/jpeg">JPEG</option></select></div>
+<div><label for="dim">Sisi terpanjang (px)</label><input id="dim" type="number" value="256" min="32" max="1024"></div>
+<div><label for="q">Kualitas (0.1 - 0.95)</label><input id="q" type="number" value="0.6" min="0.1" max="0.95" step="0.05"></div>
+</div>
+<img class="pv" id="pv" alt="Pratinjau gambar" hidden>
+<p class="mut" id="est"></p>
+</div>
+
+<div class="card">
+<h2>3. Inject ke blockchain</h2>
+<button id="go" disabled>Inject sekarang</button>
+<button id="resume" class="g" hidden>Lanjutkan</button>
+<div class="bar"><i id="bar"></i></div>
+<p class="mut" id="st"></p>
+<div id="mf" hidden>
+<button id="cp" class="g">Salin manifest TXID</button>
+<button id="dl" class="g">Unduh manifest</button>
+</div>
+<pre id="log" hidden></pre>
+</div>
+
+<details class="card"><summary><b>Pengaturan jaringan dan API</b></summary>
+<p class="mut">Sesuaikan dengan jaringan Nusacoin dan dokumentasi API yang Anda pakai. Pengaturan tersimpan di browser.</p>
+<div id="cfg"></div>
+</details>
+</section>
+
+<section id="p2" hidden>
+<div class="card">
+<h2>Baca gambar dari blockchain</h2>
+<label for="tx">Manifest JSON atau daftar TXID (satu per baris)</label>
+<textarea id="tx"></textarea>
+<button id="read">Baca gambar</button>
+<p class="mut" id="rs"></p>
+<img class="pv" id="rv" alt="Gambar hasil pembacaan" hidden>
+</div>
+</section>
+</main>
+
+<script>
+/*CORE*/
+const enc=new TextEncoder();
+const hex=b=>[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+const unhex=h=>Uint8Array.from(h.match(/../g)||[],x=>parseInt(x,16));
+const cat=(...a)=>{const o=new Uint8Array(a.reduce((s,x)=>s+x.length,0));let p=0;for(const x of a){o.set(x,p);p+=x.length}return o};
+const sha=async b=>new Uint8Array(await crypto.subtle.digest('SHA-256',b));
+const sha2=async b=>sha(await sha(b));
+const B58='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const b58d=s=>{let n=0n;for(const c of s){const i=B58.indexOf(c);if(i<0)throw Error('Karakter base58 tidak valid');n=n*58n+BigInt(i)}let h=n.toString(16);if(h.length%2)h='0'+h;const z=s.match(/^1*/)[0].length;return cat(new Uint8Array(z),n?unhex(h):new Uint8Array())};
+const b58e=b=>{let n=BigInt('0x0'+hex(b)),s='',z=0;while(n>0n){s=B58[Number(n%58n)]+s;n/=58n}while(z<b.length&&b[z]===0)z++;return '1'.repeat(z)+s};
+const b58check=async b=>b58e(cat(b,(await sha2(b)).slice(0,4)));
+async function wifDecode(w){const b=b58d(w.trim()),p=b.slice(0,-4);if(hex((await sha2(p)).slice(0,4))!==hex(b.slice(-4)))throw Error('Checksum WIF salah');if(p.length!==33&&p.length!==34)throw Error('Format WIF tidak dikenal');return{key:BigInt('0x'+hex(p.slice(1,33))),comp:p.length===34}}
+/* secp256k1 */
+const P=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn;
+const N=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
+const G=[0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n,0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8n,1n];
+const INF=[0n,1n,0n];
+const mod=(a,m=P)=>{const r=a%m;return r>=0n?r:r+m};
+function inv(n,m=P){let a=mod(n,m),b=m,x=0n,y=1n,u=1n,v=0n;while(a){const q=b/a,r=b%a,t=x-u*q,w=y-v*q;b=a;a=r;x=u;y=v;u=t;v=w}return mod(x,m)}
+function dbl([X,Y,Z]){if(!Z||!Y)return INF;const A=mod(X*X),B=mod(Y*Y),C=mod(B*B),D=mod(2n*((X+B)**2n-A-C)),E=3n*A,F=mod(E*E),X3=mod(F-2n*D);return[X3,mod(E*(D-X3)-8n*C),mod(2n*Y*Z)]}
+function add(p,q){if(!p[2])return q;if(!q[2])return p;const[X1,Y1,Z1]=p,[X2,Y2,Z2]=q,a=mod(Z1*Z1),b=mod(Z2*Z2),U1=mod(X1*b),U2=mod(X2*a),S1=mod(Y1*Z2*b),S2=mod(Y2*Z1*a);if(U1===U2)return S1===S2?dbl(p):INF;const H=mod(U2-U1),I=mod(4n*H*H),J=mod(H*I),r=mod(2n*(S2-S1)),V=mod(U1*I),X3=mod(r*r-J-2n*V);return[X3,mod(r*(V-X3)-2n*S1*J),mod(((Z1+Z2)**2n-a-b)*H)]}
+function mul(k,pt){let r=INF,q=pt;while(k>0n){if(k&1n)r=add(r,q);q=dbl(q);k>>=1n}return r}
+const aff=([X,Y,Z])=>{const zi=inv(Z),z2=mod(zi*zi);return[mod(X*z2),mod(Y*z2*zi)]};
+const h32=n=>unhex(n.toString(16).padStart(64,'0'));
+const pubBytes=(d,comp)=>{const[x,y]=aff(mul(d,G));return comp?cat(Uint8Array.of(y&1n?3:2),h32(x)):cat(Uint8Array.of(4),h32(x),h32(y))};
+const i2b=n=>{let h=n.toString(16);if(h.length%2)h='0'+h;let b=unhex(h);return b[0]&128?cat(Uint8Array.of(0),b):b};
+const der=(r,s)=>{const R=i2b(r),S=i2b(s);return cat(Uint8Array.of(0x30,4+R.length+S.length,2,R.length),R,Uint8Array.of(2,S.length),S)};
+async function sign(d,h){const z=BigInt('0x'+hex(h));for(;;){const k=BigInt('0x'+hex(crypto.getRandomValues(new Uint8Array(32))))%N;if(!k)continue;const r=mod(aff(mul(k,G))[0],N);if(!r)continue;let s=mod(inv(k,N)*(z+r*d),N);if(!s)continue;if(s>N>>1n)s=N-s;return der(r,s)}}
+/* ripemd160 */
+const T=s=>s.split(' ').map(Number);
+const RL=T('0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 7 4 13 1 10 6 15 3 12 0 9 5 2 14 11 8 3 10 14 4 9 15 8 1 2 7 0 6 13 11 5 12 1 9 11 10 0 8 12 4 13 3 7 15 14 5 6 2 4 0 5 9 7 12 2 10 14 1 3 8 11 6 15 13');
+const RR=T('5 14 7 0 9 2 11 4 13 6 15 8 1 10 3 12 6 11 3 7 0 13 5 10 14 15 8 12 4 9 1 2 15 5 1 3 7 14 6 9 11 8 12 2 10 0 4 13 8 6 4 1 3 11 15 0 5 12 2 13 9 7 10 14 12 15 10 4 1 5 8 7 6 2 13 14 0 3 9 11');
+const SL=T('11 14 15 12 5 8 7 9 11 13 14 15 6 7 9 8 7 6 8 13 11 9 7 15 7 12 15 9 11 7 13 12 11 13 6 7 14 9 13 15 14 8 13 6 5 12 7 5 11 12 14 15 14 15 9 8 9 14 5 6 8 6 5 12 9 15 5 11 6 8 13 12 5 12 13 14 11 8 5 6');
+const SR=T('8 9 9 11 13 15 15 5 7 7 8 11 14 14 12 6 9 13 15 7 12 8 9 11 7 7 12 7 6 15 13 11 9 7 15 11 8 6 6 14 12 13 5 14 13 13 7 5 15 5 8 11 14 14 6 14 6 9 12 9 12 5 15 8 8 5 12 9 12 5 14 6 8 13 6 5 15 13 11 11');
+const KL=[0,0x5A827999,0x6ED9EBA1,0x8F1BBCDC,0xA953FD4E],KR=[0x50A28BE6,0x5C4DD124,0x6D703EF3,0x7A6D76E9,0];
+const rol=(x,n)=>(x<<n)|(x>>>(32-n));
+const F=(j,x,y,z)=>j===0?x^y^z:j===1?(x&y)|(~x&z):j===2?(x|~y)^z:j===3?(x&z)|(y&~z):x^(y|~z);
+function rmd160(m){const l=m.length,n=((l+8)>>6)+1,b=new Uint8Array(n*64);b.set(m);b[l]=0x80;new DataView(b.buffer).setUint32(n*64-8,l*8>>>0,true);new DataView(b.buffer).setUint32(n*64-4,Math.floor(l/0x20000000),true);
+let H=[0x67452301,0xEFCDAB89,0x98BADCFE,0x10325476,0xC3D2E1F0];const dv=new DataView(b.buffer);
+for(let o=0;o<n*64;o+=64){const X=[];for(let i=0;i<16;i++)X.push(dv.getUint32(o+i*4,true));let[al,bl,cl,dl,el]=H,[ar,br,cr,dr,er]=H;
+for(let j=0;j<80;j++){const r=j>>4;let t=(rol((al+F(r,bl,cl,dl)+X[RL[j]]+KL[r])|0,SL[j])+el)|0;al=el;el=dl;dl=rol(cl,10);cl=bl;bl=t;
+t=(rol((ar+F(4-r,br,cr,dr)+X[RR[j]]+KR[r])|0,SR[j])+er)|0;ar=er;er=dr;dr=rol(cr,10);cr=br;br=t}
+const t=(H[1]+cl+dr)|0;H=[t,(H[2]+dl+er)|0,(H[3]+el+ar)|0,(H[4]+al+br)|0,(H[0]+bl+cr)|0]}
+const out=new Uint8Array(20),ov=new DataView(out.buffer);H.forEach((v,i)=>ov.setUint32(i*4,v>>>0,true));return out}
+const hash160=async b=>rmd160(await sha(b));
+/* transaksi */
+const u32=n=>Uint8Array.of(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255);
+const u64=n=>{const b=new Uint8Array(8);new DataView(b.buffer).setBigUint64(0,BigInt(n),true);return b};
+const vi=n=>n<253?Uint8Array.of(n):Uint8Array.of(253,n&255,n>>8);
+const push=b=>b.length<76?cat(Uint8Array.of(b.length),b):cat(Uint8Array.of(0x4c,b.length),b);
+const p2pkh=h=>cat(Uint8Array.of(0x76,0xa9,20),h,Uint8Array.of(0x88,0xac));
+const opret=b=>cat(Uint8Array.of(0x6a),push(b));
+const rev=b=>Uint8Array.from(b).reverse();
+function ser(ins,outs,sigs){return cat(u32(1),vi(ins.length),...ins.map((i,k)=>{const sc=sigs?sigs[k]:i.sc;return cat(rev(unhex(i.txid)),u32(i.vout),vi(sc.length),sc,u32(0xffffffff))}),vi(outs.length),...outs.map(o=>cat(u64(o.v),vi(o.s.length),o.s)),u32(0))}
+async function buildTx(ins,outs,d,comp,spk){const pk=pubBytes(d,comp),sigs=[];for(let k=0;k<ins.length;k++){const t=ser(ins.map((x,j)=>({...x,sc:j===k?spk:new Uint8Array()})),outs),sg=cat(await sign(d,await sha2(cat(t,u32(1)))),Uint8Array.of(1));sigs.push(cat(push(sg),push(pk)))}return ser(ins,outs,sigs)}
+/* gambar <-> potongan */
+function chunkImg(bytes,id,max){const per=max-12,n=Math.ceil(bytes.length/per),out=[];for(let i=0;i<n;i++)out.push(cat(enc.encode('NIMG'),id,Uint8Array.of(i>>8,i&255,n>>8,n&255),bytes.slice(i*per,(i+1)*per)));return out}
+function opretsOf(raw){let p=4;const rd=()=>{let n=raw[p++];if(n===253){n=raw[p]|raw[p+1]<<8;p+=2}else if(n===254){n=raw[p]|raw[p+1]<<8|raw[p+2]<<16|raw[p+3]<<24;p+=4}return n};const ni=rd();for(let i=0;i<ni;i++){p+=36;const l=rd();p+=l+4}const no=rd(),res=[];for(let i=0;i<no;i++){p+=8;const l=rd(),s=raw.slice(p,p+l);p+=l;if(s[0]===0x6a){let o=1,len=s[o];if(len===0x4c)len=s[++o];o++;res.push(s.slice(o,o+len))}}return res}
+function assemble(pl){const g={};for(const p of pl){if(hex(p.slice(0,4))!=='4e494d47')continue;const id=hex(p.slice(4,8));(g[id]??={n:p[10]<<8|p[11],c:{}}).c[p[8]<<8|p[9]]=p.slice(12)}const ids=Object.keys(g);if(!ids.length)throw Error('Tidak ada data gambar (NIMG) pada TXID tersebut');const x=g[ids[0]],miss=[];for(let i=0;i<x.n;i++)if(!x.c[i])miss.push(i);if(miss.length)throw Error('Potongan hilang: '+miss.slice(0,10).join(', ')+' (total '+x.n+')');return cat(...Array.from({length:x.n},(_,i)=>x.c[i]))}
+const mime=b=>b[0]===0xff&&b[1]===0xd8?'image/jpeg':b[0]===0x89&&b[1]===0x50?'image/png':hex(b.slice(8,12))==='57454250'?'image/webp':'application/octet-stream';
+/*ENDCORE*/
+
+const $=id=>document.getElementById(id);
+const DEF={utxo:['URL daftar UTXO ({addr})','https://apinusa.taobot.org/utxo/{addr}'],send:['URL broadcast ({hex} jika metode GET)','https://apinusa.taobot.org/tx'],raw:['URL raw transaksi ({txid})','https://apinusa.taobot.org/rawtx/{txid}'],conf:['URL status transaksi untuk cek konfirmasi ({txid}), dipakai mode Nusa Wallet','https://explorer.nusacoin.org/api/getrawtransaction?txid={txid}&decrypt=1'],mode:['Metode broadcast','post-text'],ver:['Version byte alamat (desimal)','0'],fee:['Fee per transaksi (nusan)','1000'],max:['Maks. byte OP_RETURN','80'],lim:['Maks. transaksi berantai sebelum jeda','20']};
+const ls={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+for(const[k,[lb,df]]of Object.entries(DEF)){const w=document.createElement('div');w.innerHTML=`<label for="c_${k}">${lb}</label>`+(k==='mode'?`<select id="c_${k}"><option value="post-text">POST isi hex</option><option value="post-json">POST JSON {rawtx, hex}</option><option value="get">GET</option></select>`:`<input id="c_${k}">`);$('cfg').append(w);const e=$('c_'+k);e.value=ls.get('nimg_'+k)??df;e.onchange=()=>ls.set('nimg_'+k,e.value)}
+const cfg=k=>$('c_'+k).value.trim();
+const fmt=n=>n.toLocaleString('id-ID');
+const say=(m,c='')=>{$('st').className='mut '+c;$('st').textContent=m};
+const log=m=>{$('log').hidden=false;$('log').textContent+=m+'\n';$('log').scrollTop=1e9};
+$('t1').onclick=$('t2').onclick=e=>{const a=e.target.id==='t1';$('t1').ariaSelected=a;$('t2').ariaSelected=!a;$('p1').hidden=!a;$('p2').hidden=a};
+
+let W=null,IMG=null,S=null;
+async function getUtxos(){const r=await fetch(cfg('utxo').replace('{addr}',W.addr));if(!r.ok)throw Error('API UTXO error '+r.status);const j=await r.json(),a=Array.isArray(j)?j:(j.utxos||j.unspent||j.data||j.result||[]);return a.map(x=>{const v=x.value??x.satoshis??x.amount;return{txid:x.txid||x.tx_hash||x.hash,vout:x.vout??x.n??x.tx_pos??x.output_n,v:Number.isInteger(v)?v:Math.round(Number(v)*1e8)}}).filter(x=>x.txid&&x.vout!=null&&x.v>0)}
+async function bcast(h){const m=cfg('mode'),u=cfg('send');const r=m==='get'?await fetch(u.replace('{hex}',h)):await fetch(u,m==='post-json'?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rawtx:h,hex:h})}:{method:'POST',body:h});if(!r.ok)throw Error('Broadcast ditolak: '+(await r.text()).slice(0,200))}
+
+$('login').onclick=async()=>{try{const{key,comp}=await wifDecode($('wif').value),h=await hash160(pubBytes(key,comp));W={d:key,comp,h,addr:await b58check(cat(Uint8Array.of(+cfg('ver')),h))};$('acct').textContent='Alamat: '+W.addr+' (memeriksa saldo...)';const us=await getUtxos();$('acct').className='mut ok';$('acct').textContent=`Alamat: ${W.addr} - ${us.length} UTXO, saldo ${fmt(us.reduce((s,x)=>s+x.v,0))} nusan`;$('logout').hidden=false;ready()}catch(e){W=null;$('acct').className='mut er';$('acct').textContent=e.message;ready()}};
+let IMGDIM='';
+function updEst(){if(!IMG){return}const n=Math.ceil(IMG.length/(+cfg('max')-12));$('est').textContent=IMGDIM+` Butuh ${fmt(n)} transaksi, `+(W&&W.ext==='nusa'?`fee diatur ekstensi Nusa Wallet (bawaan 0.0001 NUX per transaksi). Tiap potongan perlu persetujuan dan menunggu 1 konfirmasi, jadi cocok untuk gambar sangat kecil saja.`:W&&W.ext==='nux'?`total fee sekitar ${fmt(n*+cfg('fee'))} nusan. Tiap transaksi perlu persetujuan di ekstensi (${fmt(n)} kali), jadi perkecil gambar bila perlu.`:`total fee sekitar ${fmt(n*+cfg('fee'))} nusan.`)}
+const ready=()=>{$('go').disabled=!(W&&IMG);updEst()};
+async function prep(){const f=$('file').files[0];if(!f)return;try{const bm=await createImageBitmap(f),s=Math.min(1,+$('dim').value/Math.max(bm.width,bm.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(bm.width*s));c.height=Math.max(1,Math.round(bm.height*s));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);const bl=await new Promise(r=>c.toBlob(r,$('fmt').value,+$('q').value));IMG=new Uint8Array(await bl.arrayBuffer());$('pv').src=URL.createObjectURL(bl);$('pv').hidden=false;const n=Math.ceil(IMG.length/(+cfg('max')-12));IMGDIM=`${c.width}x${c.height} px, ${fmt(IMG.length)} byte.`;ready()}catch(e){IMG=null;$('est').textContent='Gambar tidak bisa diproses: '+e.message}}
+$('file').onchange=$('fmt').onchange=$('dim').onchange=$('q').onchange=prep;
+
+/* ===== Nusa Wallet + Nux Connect ===== */
+const BC32='qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+function bech32prog(a){a=a.toLowerCase();const i=a.lastIndexOf('1'),hrp=a.slice(0,i),d=[...a.slice(i+1)].map(c=>BC32.indexOf(c));if(hrp!=='nu'||d.length<7||d.some(x=>x<0))throw Error('Alamat bech32 Nusacoin tidak valid');
+const G=[0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3],pm=v=>{let c=1;for(const x of v){const t=c>>25;c=((c&0x1ffffff)<<5)^x;for(let j=0;j<5;j++)if((t>>j)&1)c^=G[j]}return c};
+if(pm([...hrp].map(c=>c.charCodeAt(0)>>5).concat([0],[...hrp].map(c=>c.charCodeAt(0)&31),d))!==1)throw Error('Checksum alamat salah');
+if(d[0]!==0)throw Error('Alamat bukan SegWit v0');let acc=0,bits=0;const out=[];for(const v of d.slice(1,-6)){acc=(acc<<5)|v;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}
+if(out.length!==20)throw Error('Alamat bukan P2WPKH (20 byte)');return Uint8Array.from(out)}
+const isNux=p=>!!p&&(p.isNuxConnect===true||(typeof p.request==='function'&&typeof p.connect!=='function'));
+const getProv=()=>window.nux||window.nusa||null;
+const waitProv=(ms=1500)=>new Promise(res=>{const p=getProv();if(p)return res(p);const f=()=>{clearTimeout(t);removeEventListener('nux#initialized',f);removeEventListener('nusa#initialized',f);res(getProv())},t=setTimeout(f,ms);addEventListener('nux#initialized',f);addEventListener('nusa#initialized',f)});
+const NXNAME={nux:'Nux Connect',nusa:'Nusa Wallet'};
+async function showAcct(){const tag=W.ext?` (${NXNAME[W.ext]})`:'';$('acct').className='mut';$('acct').textContent='Alamat: '+W.addr+tag+' (memeriksa saldo...)';try{const us=await getUtxos();$('acct').className='mut ok';$('acct').textContent=`Alamat: ${W.addr}${tag} - ${us.length} UTXO, saldo ${fmt(us.reduce((s,x)=>s+x.v,0))} nusan`}catch(e){$('acct').className='mut ok';$('acct').textContent=`Alamat: ${W.addr}${tag} (saldo tidak terbaca: ${e.message})`}$('logout').hidden=false;ready()}
+let extBound=false;
+$('ext').onclick=async()=>{const b=$('ext');b.disabled=true;$('acct').className='mut';$('acct').textContent='Menunggu persetujuan di ekstensi...';
+try{const p=await waitProv();if(!p)throw Error('Ekstensi Nusa Wallet / Nux Connect tidak terdeteksi. Pasang/aktifkan ekstensi lalu muat ulang halaman ini. Halaman harus dibuka lewat http(s) atau localhost, bukan file://.');
+let addr,kind,spk=null;
+if(isNux(p)){if(await p.request({method:'nux_getNetwork'})!=='mainnet')throw Error('Nux Connect sedang di Testnet. Pindah ke Mainnet di ekstensi lalu coba lagi.');const a=await p.request({method:'nux_requestAccounts'});addr=Array.isArray(a)?a[0]:null;kind='nux';if(addr)spk=cat(Uint8Array.of(0,20),bech32prog(addr))}
+else{const r=await p.connect();addr=r&&r.address;kind='nusa'}
+if(!addr)throw Error('Ekstensi tidak mengembalikan alamat.');
+W={ext:kind,prov:p,addr,spk};
+if(!extBound&&typeof p.on==='function'){extBound=true;const drop=()=>{if(W&&W.ext){W=null;$('logout').hidden=true;$('acct').className='mut er';$('acct').textContent='Akun atau jaringan di ekstensi berubah. Hubungkan ulang.';ready()}};p.on('accountsChanged',a=>{if(W&&W.ext&&(!Array.isArray(a)||a[0]!==W.addr))drop()});p.on('networkChanged',n=>{if(n!=='mainnet')drop()})}
+await showAcct()}catch(e){W=null;$('acct').className='mut er';$('acct').textContent=e.code===4001?'Koneksi ditolak di ekstensi.':(e.message||String(e));ready()}finally{b.disabled=false}};
+$('logout').onclick=async()=>{try{if(W&&W.ext==='nusa'&&W.prov.disconnect)await W.prov.disconnect()}catch{}W=null;$('logout').hidden=true;$('acct').className='mut';$('acct').textContent='';ready()};
+// PSBT v0 (BIP174) satu input SegWit untuk nux_sendPsbt: ekstensi menandatangani dan menyiarkan sendiri.
+function psbtOf(ins,outs,spk,value){const unsigned=ser(ins,outs,ins.map(()=>new Uint8Array())),wu=cat(u64(value),vi(spk.length),spk);
+const b=cat(Uint8Array.of(0x70,0x73,0x62,0x74,0xff),Uint8Array.of(1,0),vi(unsigned.length),unsigned,Uint8Array.of(0),Uint8Array.of(1,1),vi(wu.length),wu,Uint8Array.of(0),...outs.map(()=>Uint8Array.of(0)));
+let bin='';for(let i=0;i<b.length;i++)bin+=String.fromCharCode(b[i]);return{b64:btoa(bin),unsigned}}
+async function nuxStep(cur,fee,spk,chunk){const ins=[{txid:cur.txid,vout:cur.vout}],outs=[{v:cur.v-fee,s:spk},{v:0,s:opret(chunk)}];
+const{b64,unsigned}=psbtOf(ins,outs,spk,cur.v),want=hex(rev(await sha2(unsigned)));
+const got=await W.prov.request({method:'nux_sendPsbt',params:{psbt:b64}});
+if(typeof got!=='string'||got.toLowerCase()!==want)throw Error('TXID dari ekstensi tidak cocok dengan transaksi yang disusun');return want}
+// Nusa Wallet 0.1.0 hanya punya sendData (OP_RETURN) dan hanya membelanjakan UTXO terkonfirmasi: kirim satu potongan, tunggu 1 konfirmasi, lanjut.
+async function confirmedTx(txid){const r=await fetch(cfg('conf').replace('{txid}',txid));if(!r.ok)return false;const j=await r.json();return +((j&&j.confirmations)||0)>0}
+async function waitConf(txid){for(let k=0;;k++){let ok=false;try{ok=await confirmedTx(txid)}catch{}if(ok)return;say(`Menunggu 1 konfirmasi transaksi ${S.i} dari ${S.ch.length} (Nusa Wallet hanya memakai UTXO terkonfirmasi)... ${k*15} dtk`);if(k>=120)throw Error('Konfirmasi belum terlihat setelah 30 menit. Tekan Coba lagi untuk menunggu lagi.');await new Promise(r=>setTimeout(r,15000))}}
+async function nusaStep(){if(S.pend){await waitConf(S.pend);S.pend=null}const c=S.ch[S.i];if(c.length>80)throw Error('Potongan '+c.length+' byte melebihi batas 80 byte Nusa Wallet. Atur "Maks. byte OP_RETURN" ke 80.');
+if(typeof W.prov.sendData!=='function')throw Error('Versi Nusa Wallet ini tidak mendukung sendData.');
+const r=await W.prov.sendData({data:hex(c),encoding:'hex'}),txid=String((r&&r.txid)||r||'').toLowerCase();if(!/^[0-9a-f]{64}$/.test(txid))throw Error('Ekstensi tidak mengembalikan TXID');S.pend=txid;return txid}
+
+$('go').onclick=()=>{const id=crypto.getRandomValues(new Uint8Array(4));S={ch:chunkImg(IMG,id,+cfg('max')),i:0,ids:[],cur:null,since:0,pend:null,id:hex(id)};$('log').textContent='';$('mf').hidden=true;run()};
+$('resume').onclick=()=>{if(S.since>=+cfg('lim')){S.since=0;S.cur=null}run()};
+async function run(){$('go').disabled=true;$('resume').hidden=true;const fee=+cfg('fee'),lim=+cfg('lim'),spk=W.spk||(W.h?p2pkh(W.h):null);try{
+while(S.i<S.ch.length){
+if(W.ext==='nusa'){const txid=await nusaStep();S.ids.push(txid);S.i++;$('bar').style.width=(S.i/S.ch.length*100)+'%';say(`Terkirim ${S.i} dari ${S.ch.length} potongan`);log(`${S.i}/${S.ch.length} ${txid}`);continue}
+if(S.since>=lim){say(`Jeda setelah ${lim} transaksi berantai. Tunggu transaksi terakhir terkonfirmasi, lalu tekan Lanjutkan.`);$('resume').textContent='Lanjutkan';$('resume').hidden=false;return}
+if(!S.cur){const us=(await getUtxos()).sort((a,b)=>b.v-a.v);if(!us.length)throw Error('Tidak ada UTXO yang bisa dipakai. Tunggu konfirmasi atau isi saldo.');S.cur=us[0]}
+if(S.cur.v<fee+546)throw Error('Saldo UTXO tidak cukup untuk fee dan kembalian.');
+let txid;if(W.ext==='nux')txid=await nuxStep(S.cur,fee,spk,S.ch[S.i]);else{const raw=await buildTx([{txid:S.cur.txid,vout:S.cur.vout}],[{v:S.cur.v-fee,s:spk},{v:0,s:opret(S.ch[S.i])}],W.d,W.comp,spk);txid=hex(rev(await sha2(raw)));await bcast(hex(raw))}
+S.ids.push(txid);S.cur={txid,vout:0,v:S.cur.v-fee};S.i++;S.since++;$('bar').style.width=(S.i/S.ch.length*100)+'%';say(`Terkirim ${S.i} dari ${S.ch.length} potongan`);log(`${S.i}/${S.ch.length} ${txid}`)}
+say('Selesai. Simpan manifest TXID untuk membaca gambar ini kembali.','ok');$('mf').hidden=false;$('go').disabled=false;
+}catch(e){const m=e&&e.code===4001?'Ditolak di ekstensi: '+e.message:(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m);$('resume').textContent='Coba lagi';$('resume').hidden=false}}
+const mani=()=>JSON.stringify({type:'NIMG',id:S.id,txids:S.ids});
+$('cp').onclick=async()=>{try{await navigator.clipboard.writeText(mani());say('Manifest disalin','ok')}catch{say('Gagal menyalin. Gunakan tombol Unduh.','er')}};
+$('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([mani()],{type:'application/json'}));a.download='nimg-'+S.id+'.json';a.click()};
+
+$('read').onclick=async()=>{try{const t=$('tx').value.trim();let ids;try{const j=JSON.parse(t);ids=j.txids||j}catch{ids=t.split(/[\s,]+/).filter(Boolean)}if(!ids.length)throw Error('Isi TXID dulu');const pl=[];$('rv').hidden=true;
+for(let i=0;i<ids.length;i+=8){$('rs').className='mut';$('rs').textContent=`Membaca ${Math.min(i+8,ids.length)} dari ${ids.length} transaksi...`;await Promise.all(ids.slice(i,i+8).map(async id=>{const r=await fetch(cfg('raw').replace('{txid}',id));if(!r.ok)throw Error('Gagal mengambil '+id+' ('+r.status+')');const x=await r.text();let h=x.trim();try{const j=JSON.parse(x);h=j.hex||j.rawtx||j.result||j.data||h}catch{}pl.push(...opretsOf(unhex(h)))}))}
+const b=assemble(pl);$('rv').src=URL.createObjectURL(new Blob([b],{type:mime(b)}));$('rv').hidden=false;$('rs').className='mut ok';$('rs').textContent=`Berhasil: ${fmt(b.length)} byte dari ${ids.length} transaksi`}catch(e){$('rs').className='mut er';$('rs').textContent=e.message}};
+</script>
+</body>
+</html>
