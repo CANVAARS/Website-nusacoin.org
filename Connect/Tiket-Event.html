@@ -426,6 +426,8 @@ NX.T = { wait:['Menunggu persetujuan di ekstensi wallet...','Waiting for approva
   badsign:['Ekstensi tidak mengembalikan transaksi bertanda tangan.','The extension did not return a signed transaction.'],
   net:['Nux Connect sedang memakai jaringan Testnet. Buka ekstensi, pindah ke Mainnet, lalu coba lagi.','Nux Connect is on Testnet. Open the extension, switch to Mainnet, then try again.'],
   seg:['Alamat wallet bukan SegWit (nu1q...). Nux Connect hanya menandatangani input SegWit.','The wallet address is not SegWit (nu1q...). Nux Connect only signs SegWit inputs.'],
+  nosign:['Nusa Wallet tidak mendukung penandatanganan transaksi kustom (signTransaction). Untuk aksi ini gunakan ekstensi Nux Connect atau login dengan Private Key WIF.','Nusa Wallet does not support custom transaction signing (signTransaction). For this action use the Nux Connect extension or log in with a WIF private key.'],
+  feeNote:['Nusa Wallet terhubung, tetapi pendanaan tiket massal butuh transaksi multi-output yang tidak didukung Nusa Wallet. Gunakan Nux Connect atau login dengan Private Key WIF.','Nusa Wallet connected, but bulk ticket funding needs multi-output transactions that Nusa Wallet does not support. Use Nux Connect or log in with a WIF private key.'],
   chg:['Akun atau jaringan di ekstensi berubah, sesi wallet diputus. Hubungkan ulang.','The account or network changed in the extension; the wallet session was closed. Please reconnect.'] };
 NX.t = function(k){ return NX.T[k][NX.en() ? 1 : 0]; };
 // Nux Connect: window.nux dengan request({method}) dan isNuxConnect. Nusa Wallet lama: window.nusa / window.nux dengan connect().
@@ -439,6 +441,16 @@ NX.wait = function(ms){ return new Promise(function(res){
   window.addEventListener('nux#initialized', done); window.addEventListener('nusa#initialized', done); }); };
 NX.msg = function(t, bad){ var e = document.getElementById('msgExt'); if(!e) return; e.textContent = t || '';
   e.style.cssText = t ? ('margin-top:8px;padding:8px 10px;border:1px solid ' + (bad ? '#c62828' : 'currentColor') + ';border-radius:8px;white-space:pre-wrap;word-break:break-word;font-size:.9em;' + (bad ? 'color:#c62828;' : '')) : ''; };
+// Nusa Wallet 0.1.0 (window.nux dengan connect(), tanpa signTransaction): OP_RETURN lewat sendData.
+NX.viaData = function(){ if(!NX.st().ext) return false; var p = NX.p(); return !!p && !NX.isConnect(p); };
+NX.sendData = async function(dataHex){
+  var p = NX.p(); if(!p) throw new Error(NX.t('nop'));
+  if(typeof p.sendData !== 'function') throw new Error(NX.t('nosign'));
+  var r = await p.sendData({ data: dataHex, encoding: 'hex' });       // -> { txid }
+  var txid = r && (r.txid || r);
+  if(typeof txid !== 'string' || !/^[0-9a-fA-F]{64}$/.test(txid)) throw new Error(NX.t('badsign'));
+  return txid.toLowerCase();
+};
 NX.needMainnet = async function(p){
   var net = await p.request({ method:'nux_getNetwork' });
   if(net !== 'mainnet') throw new Error(NX.t('net'));
@@ -466,7 +478,7 @@ async function walletConnectExt(){
     var s = NX.st(); s.pkey = null; s.address = addr; s.ext = true;
     document.getElementById('walletLogin').classList.add('hide'); document.getElementById('walletActive').classList.remove('hide');
     document.getElementById('wAddr').textContent = addr + '  (' + NX.label(p) + ')';
-    NX.msg(''); NX.listen(p);
+    NX.msg(NX.isConnect(p) ? '' : NX.t('feeNote')); NX.listen(p);
     if(typeof refreshBalance === 'function') refreshBalance();
     if(NX.after) NX.after();
   }catch(e){ NX.msg(e && e.code === 4001 ? NX.t('rej') : ((e && e.message) || String(e)), true); }
@@ -500,6 +512,7 @@ async function NXsign(utxos, outputs, pkey, ownScript){
     if(typeof txid !== 'string' || !/^[0-9a-fA-F]{64}$/.test(txid)) throw new Error(NX.t('badsign'));
     return { raw:null, txid:txid.toLowerCase(), sent:true };
   }
+  if(typeof p.signTransaction !== 'function') throw new Error(NX.t('nosign'));
   var r = await p.signTransaction({
     inputs: utxos.map(function(u){ return { txid:u.txid, vout:u.vout }; }),
     outputs: outputs.map(function(o){ return { script:o.script, value:Number(o.value) }; }) });
