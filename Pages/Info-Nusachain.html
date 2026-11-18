@@ -90,7 +90,7 @@ button.item:hover,a.item:hover{background:#FAFCFF}
 .wx-now .ico{font-size:64px;line-height:1}
 .wx-now .t{font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1}
 .wx-now .d{font-size:15px;font-weight:700}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}
 .stats div{background:rgba(255,255,255,.16);border-radius:12px;padding:8px 10px;font-size:12px}
 .stats b{display:block;font-size:15px}
 .strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px}
@@ -330,7 +330,8 @@ const adm4Of = id => `${id.slice(0,2)}.${id.slice(2,4)}.${id.slice(4,6)}.${id.sl
 let loc = store.get('loc', {adm4:'31.71.03.1001', label:''});
 
 function wxIcon(desc){
-  const d = String(desc || '').toLowerCase();
+  const d = String(desc || '').toLowerCase()
+    .replace('thunderstorm','petir').replace('light rain','hujan ringan').replace('rain','hujan').replace('mostly cloudy','berawan').replace('partly cloudy','cerah berawan').replace('overcast','tebal').replace('clear skies','cerah').replace('fog','kabut');
   if(d.includes('petir')) return '⛈️';
   if(d.includes('hujan')) return d.includes('ringan') ? '🌦️' : '🌧️';
   if(d.includes('kabut') || d.includes('asap') || d.includes('kabur')) return '🌫️';
@@ -348,6 +349,7 @@ function cuacaPage(){
   const firstTime = !store.get('loc', null);
   $('#app').innerHTML = `
     <div class="bar"><h2>Prakiraan Cuaca<small id="wxloc">${esc(loc.label || loc.adm4)}</small></h2></div>
+    <button class="btn ghost" id="gps" style="width:100%;margin-top:12px" onclick="detectLocation()">&#128205; Gunakan lokasi saya</button>
     <details class="pick" id="pk" ${firstTime ? 'open' : ''}><summary>Ubah lokasi</summary>
       <div class="picker">
         <select id="sp" aria-label="Provinsi"><option value="">Memuat provinsi…</option></select>
@@ -360,6 +362,67 @@ function cuacaPage(){
     <div id="wx"></div>`;
   initPicker();
   loadWeather();
+  if(firstTime) detectLocation(true);
+}
+
+
+/* ---------- Lokasi otomatis (GPS HP -> nama wilayah -> kode BMKG) ---------- */
+const normWil = s => String(s || '').toLowerCase()
+  .replace(/daerah khusus ibu ?kota|special capital region of/g, 'dki')
+  .replace(/daerah istimewa|special region of/g, 'di')
+  .replace(/\b(?:kota administrasi|kabupaten administrasi|kota adm|kabupaten|kab|kota|kecamatan|kec|kelurahan|kel|desa|regency|city|district|subdistrict|province|provinsi)\b\.?/g, ' ')
+  .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+function bestWil(list, cands){
+  const cs = cands.filter(Boolean).map(normWil).filter(Boolean);
+  let best = null, bs = 0;
+  list.forEach(x => {
+    const n = normWil(x.name), nt = new Set(n.split(' '));
+    cs.forEach(c => {
+      const ct = c.split(' ');
+      const sc = n === c ? 2 : ct.filter(t => nt.has(t)).length / Math.max(nt.size, ct.length);
+      if(sc > bs){ bs = sc; best = x; }
+    });
+  });
+  return bs >= 0.5 ? best : null;
+}
+let gpsBusy = false;
+async function detectLocation(silent){
+  if(gpsBusy) return;
+  const btn = $('#gps'), msg = $('#pkmsg');
+  const say = t => { if(silent) return; toast(t); };
+  if(!navigator.geolocation){ say('Perangkat tidak mendukung GPS/lokasi'); return; }
+  gpsBusy = true; const my = RT;
+  if(btn){ btn.disabled = true; btn.textContent = 'Mencari lokasi…'; }
+  const done = () => { gpsBusy = false; const b = $('#gps'); if(b){ b.disabled = false; b.innerHTML = '&#128205; Gunakan lokasi saya'; } };
+  try{
+    const pos = await new Promise((ok, no) => navigator.geolocation.getCurrentPosition(ok, no, {enableHighAccuracy:false, timeout:15000, maximumAge:300000}));
+    const {latitude:la, longitude:lo} = pos.coords;
+    const g = await getJson(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=id&lat=${la.toFixed(5)}&lon=${lo.toFixed(5)}`, 300000);
+    const a = g.address || {};
+    if(a.country_code && a.country_code !== 'id'){ say('Lokasi Anda di luar Indonesia; BMKG hanya melayani wilayah Indonesia'); return done(); }
+    const prov = bestWil(await wilList('provinces'), [a.state, a.region]);
+    if(!prov) throw new Error('Provinsi tidak dikenali dari lokasi Anda');
+    const reg = bestWil(await wilList('regencies', prov.id), [a.city, a.county, a.regency, a.state_district, a.municipality]);
+    if(!reg) throw new Error('Kabupaten/Kota tidak dikenali dari lokasi Anda');
+    const dis = bestWil(await wilList('districts', reg.id), [a.city_district, a.municipality, a.suburb, a.town, a.county]);
+    if(!dis) throw new Error('Kecamatan tidak dikenali dari lokasi Anda');
+    const vils = await wilList('villages', dis.id);
+    let vil = bestWil(vils, [a.village, a.suburb, a.neighbourhood, a.quarter, a.hamlet]);
+    const approx = !vil; if(!vil) vil = vils[0];
+    if(!vil) throw new Error('Desa/Kelurahan tidak ditemukan');
+    loc = {adm4: adm4Of(vil.id), label: [vil.name, dis.name, reg.name, prov.name].map(title).join(', ')};
+    store.set('loc', loc);
+    if(my === RT && $('#wxloc')){ $('#wxloc').textContent = loc.label; const pk = $('#pk'); if(pk) pk.open = false; loadWeather(); }
+    if(approx) say('Kelurahan persis tidak terdeteksi, memakai kelurahan lain di kecamatan yang sama');
+    else say('Lokasi diperbarui');
+  }catch(e){
+    const m = e && e.code === 1 ? 'Izin lokasi ditolak. Aktifkan izin lokasi untuk browser/aplikasi ini.'
+      : e && e.code === 2 ? 'Lokasi tidak tersedia. Pastikan GPS aktif.'
+      : e && e.code === 3 ? 'Waktu pencarian lokasi habis. Coba lagi.'
+      : (e && e.message) || 'Gagal mendeteksi lokasi';
+    if(!silent){ toast(m); if(my === RT && msg) msg.textContent = m; }
+  }
+  done();
 }
 
 function initPicker(){
@@ -442,23 +505,26 @@ async function loadWeather(){
     const lbl = dayKey(now) === k ? 'Hari ini' : `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]}`;
     return `<details class="day" ${idx === 0 ? 'open' : ''}><summary><span class="e">${wxIcon(dom)}</span>
       <span class="s"><b>${lbl}</b><span>${esc(dom)}</span></span><span class="r">${Math.min(...ts)}° / ${Math.max(...ts)}°</span></summary>
-      <div class="tbl-wrap"><table><thead><tr><th>Jam</th><th>Cuaca</th><th>Suhu</th><th>Lembap</th><th>Angin</th></tr></thead><tbody>
-      ${list.map(e => { const t = pdt(e); return `<tr><td>${pad(t.getHours())}:${pad(t.getMinutes())}</td><td class="l">${wxIcon(e.weather_desc)} ${esc(e.weather_desc)}</td><td>${esc(e.t)}°C</td><td>${esc(e.hu)}%</td><td>${esc(e.ws)} km/j ${esc(e.wd)}</td></tr>`; }).join('')}
+      <div class="tbl-wrap"><table><thead><tr><th>Jam</th><th>Cuaca</th><th>Suhu</th><th>Lembap</th><th>Awan</th><th>Angin (dari)</th></tr></thead><tbody>
+      ${list.map(e => { const t = pdt(e); return `<tr><td>${pad(t.getHours())}:${pad(t.getMinutes())}</td><td class="l">${wxIcon(e.weather_desc)} ${esc(e.weather_desc)}</td><td>${esc(e.t)}°C</td><td>${esc(e.hu)}%</td><td>${e.tcc != null ? esc(e.tcc) + '%' : '-'}</td><td>${esc(e.ws)} km/j ${esc(e.wd)}</td></tr>`; }).join('')}
       </tbody></table></div></details>`;
   }).join('');
 
+  const ad = entries.map(e => e.analysis_date).find(Boolean);
+  let adTxt = '';
+  if(ad){ const x = new Date(/Z$|[+-]\d\d:?\d\d$/.test(ad) ? ad : ad + 'Z'); if(!isNaN(x)) adTxt = ` Data dihasilkan BMKG pada ${x.getDate()} ${BLN[x.getMonth()]} ${x.getFullYear()} pukul ${pad(x.getHours())}:${pad(x.getMinutes())} (waktu perangkat).`; }
   $('#wx').innerHTML = `
     <div class="two"><div>
       <div class="hero"><small>${esc(place)}</small>
         <div class="wx-now" style="margin-top:8px"><div class="ico">${wxIcon(c.weather_desc)}</div>
           <div><div class="t">${esc(c.t)}°C</div><div class="d">${esc(c.weather_desc)}</div></div></div>
-        <div class="stats"><div>Kelembapan<b>${esc(c.hu)}%</b></div><div>Angin<b>${esc(c.ws)} km/j ${esc(c.wd)}</b></div><div>Jarak pandang<b>${esc(c.vs_text || (c.vs ? c.vs + ' m' : '-'))}</b></div></div>
+        <div class="stats"><div>Kelembapan<b>${esc(c.hu)}%</b></div><div>Angin<b>${esc(c.ws)} km/j</b>dari ${esc(c.wd)}</div><div>Tutupan awan<b>${c.tcc != null ? esc(c.tcc) + '%' : '-'}</b></div><div>Jarak pandang<b>${esc(c.vs_text || (c.vs ? c.vs + ' m' : '-'))}</b></div></div>
         <div class="dt"><span>${esc(HARI[pdt(c).getDay()])}, ${pdt(c).getDate()} ${BLN[pdt(c).getMonth()]} ${pdt(c).getFullYear()}</span><span>Zona waktu ${esc(lk.timezone || '')}</span></div></div>
       <h3 class="sec">24 jam ke depan</h3><div class="strip">${hours}</div>
     </div><div>
       <h3 class="sec">Prakiraan harian</h3>${daysHTML}
     </div></div>
-    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam). Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Daftar wilayah: Emsifa API Wilayah Indonesia (dengan sumber cadangan).</p>`;
+    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam).${adTxt} Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Daftar wilayah: Emsifa API Wilayah Indonesia (dengan sumber cadangan).</p>`;
 }
 
 buildNav();
