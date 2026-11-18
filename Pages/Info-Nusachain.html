@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gempa, Cuaca & Wilayah - Nusachain</title>
+<title>Gempa & Cuaca - Nusachain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -156,10 +156,10 @@ details.pick .picker{padding-bottom:14px}
 <div>
   <header class="top"><div class="brand">
     <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
-    <div><h1>Info Nusachain</h1><p>Gempa, Cuaca & Wilayah</p></div>
+    <div><h1>Info Nusachain</h1><p>Gempa & Cuaca</p></div>
   </div></header>
   <main><div class="wrap" id="app"></div>
-    <div class="foot m">Sumber data: BMKG · Emsifa API Wilayah Indonesia</div>
+    <div class="foot m">Sumber data: BMKG · Emsifa (daftar wilayah)</div>
   </main>
 </div>
 <nav class="bottom" id="bottom" aria-label="Menu utama"></nav>
@@ -223,26 +223,24 @@ function failed(retry, testUrl){
 const S_ = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 const NAV = [
   {id:'gempa', label:'Gempa', svg:`<svg viewBox="0 0 24 24" ${S_}><path d="M2 12h4l3-8 4 16 3-8h6"/></svg>`},
-  {id:'cuaca', label:'Cuaca', svg:`<svg viewBox="0 0 24 24" ${S_}><path d="M17.5 19a4.5 4.5 0 100-9h-1.8A7 7 0 104 14.9"/><path d="M8 19h9.5"/></svg>`},
-  {id:'wilayah', label:'Wilayah', svg:`<svg viewBox="0 0 24 24" ${S_}><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>`}
+  {id:'cuaca', label:'Cuaca', svg:`<svg viewBox="0 0 24 24" ${S_}><path d="M17.5 19a4.5 4.5 0 100-9h-1.8A7 7 0 104 14.9"/><path d="M8 19h9.5"/></svg>`}
 ];
 function buildNav(){
   const links = NAV.map(n => `<a class="nav" data-s="${n.id}" href="#${n.id}">${n.svg}<span>${n.label}</span></a>`).join('');
   $('#bottom').innerHTML = links;
   $('#side').innerHTML = `<div class="brand"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
     <div><h1>Info Nusachain</h1><p>Mobile DApp</p></div></div>${links}
-    <div class="src">Sumber data:<br>BMKG (gempa & cuaca)<br>Emsifa (wilayah)</div>`;
+    <div class="src">Sumber data:<br>BMKG (gempa & cuaca)<br>Emsifa (daftar wilayah)</div>`;
 }
 let RT = 0;
 function go(h){ location.hash = h; }
 function route(){
   RT++;
   const p = (location.hash.replace('#','') || 'gempa').split('/');
-  const sec = ['gempa','cuaca','wilayah'].includes(p[0]) ? p[0] : 'gempa';
+  const sec = ['gempa','cuaca'].includes(p[0]) ? p[0] : 'gempa';
   document.querySelectorAll('.nav').forEach(a => a.classList.toggle('on', a.dataset.s === sec));
   window.scrollTo(0, 0);
   if(sec === 'cuaca') cuacaPage();
-  else if(sec === 'wilayah') wilayahPage(p.slice(1));
   else gempaPage();
 }
 window.addEventListener('hashchange', route);
@@ -305,63 +303,11 @@ async function gempaPage(){
     <p class="note">Sumber: BMKG. Data dapat diperbarui sewaktu-waktu. Untuk peringatan dini resmi, ikuti kanal BMKG.</p>`;
 }
 
-/* ================= WILAYAH (Emsifa) ================= */
-const wilList = async (kind, id) => getJson(WIL + (kind === 'provinces' ? 'provinces.json' : `${kind}/${id}.json`), 86400000);
+/* ================= CUACA (BMKG) + pilihan wilayah (Emsifa) ================= */
+const wilList = (kind, id) => getJson(WIL + (kind === 'provinces' ? 'provinces.json' : `${kind}/${id}.json`), 86400000);
 const adm4Of = id => `${id.slice(0,2)}.${id.slice(2,4)}.${id.slice(4,6)}.${id.slice(6)}`;
-
-async function wilayahPage(p){
-  const my = RT; loading();
-  const [pv, rg, ds] = p;
-  try{
-    const provs = await wilList('provinces');
-    const prov = pv ? provs.find(x => x.id === pv) : null;
-    const regs = pv ? await wilList('regencies', pv) : null;
-    const reg = rg && regs ? regs.find(x => x.id === rg) : null;
-    const dists = rg ? await wilList('districts', rg) : null;
-    const dist = ds && dists ? dists.find(x => x.id === ds) : null;
-    const vills = ds ? await wilList('villages', ds) : null;
-    if(my !== RT) return;
-
-    let items, next, label, kind;
-    if(vills){ items = vills; kind = 'Desa/Kelurahan'; }
-    else if(dists){ items = dists; kind = 'Kecamatan'; }
-    else if(regs){ items = regs; kind = 'Kabupaten/Kota'; }
-    else { items = provs; kind = 'Provinsi'; }
-    const base = '#wilayah' + (pv ? '/' + pv : '') + (rg ? '/' + rg : '') + (ds ? '/' + ds : '');
-
-    const crumbs = [`<a href="#wilayah">Indonesia</a>`];
-    if(prov) crumbs.push(`<a href="#wilayah/${pv}">${esc(title(prov.name))}</a>`);
-    if(reg) crumbs.push(`<a href="#wilayah/${pv}/${rg}">${esc(title(reg.name))}</a>`);
-    if(dist) crumbs.push(`<a href="#wilayah/${pv}/${rg}/${ds}">${esc(title(dist.name))}</a>`);
-
-    $('#app').innerHTML = `
-      <div class="bar"><h2>Wilayah Indonesia<small>${kind} · ${items.length.toLocaleString('id-ID')} data</small></h2></div>
-      <div class="crumbs">${crumbs.join('<span>›</span>')}</div>
-      <input class="field" id="wq" type="search" placeholder="Cari ${kind.toLowerCase()}" autocomplete="off">
-      <div class="sp"></div>
-      <div class="list w" id="wl"></div>
-      <p class="note">Sumber: Emsifa API Wilayah Indonesia. Kode desa/kelurahan dipakai untuk membaca prakiraan cuaca BMKG.</p>`;
-    const draw = () => {
-      const k = $('#wq').value.trim().toLowerCase();
-      const rows = items.filter(x => !k || x.name.toLowerCase().includes(k) || x.id.startsWith(k));
-      $('#wl').innerHTML = rows.length ? rows.map(x => vills
-        ? `<button class="item" data-v="${esc(x.id)}" data-n="${esc(x.name)}"><span class="num">${esc(x.id.slice(6))}</span><span class="mid"><b>${esc(title(x.name))}</b><span>Kode ${esc(adm4Of(x.id))} · Lihat cuaca</span></span></button>`
-        : `<a class="item" href="${base}/${esc(x.id)}"><span class="num">${esc(x.id.slice(-2))}</span><span class="mid"><b>${esc(title(x.name))}</b><span>Kode ${esc(x.id)}</span></span></a>`
-      ).join('') : '<div class="state" style="grid-column:1/-1">Tidak ditemukan.</div>';
-    };
-    draw();
-    $('#wq').addEventListener('input', draw);
-    $('#wl').addEventListener('click', e => {
-      const b = e.target.closest('button[data-v]'); if(!b) return;
-      const label = [title(b.dataset.n), title(dist.name), title(reg.name), title(prov.name)].join(', ');
-      store.set('loc', {adm4:adm4Of(b.dataset.v), label});
-      go('cuaca');
-    });
-  }catch(e){ if(my === RT) failed('route()', WIL + 'provinces.json'); }
-}
-
-/* ================= CUACA (BMKG) ================= */
 let loc = store.get('loc', {adm4:'31.71.03.1001', label:''});
+
 function wxIcon(desc){
   const d = String(desc || '').toLowerCase();
   if(d.includes('petir')) return '⛈️';
@@ -376,22 +322,89 @@ function wxIcon(desc){
 const pdt = e => new Date(String(e.local_datetime || e.datetime || '').replace(' ', 'T').replace(/Z$/, ''));
 const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-async function cuacaPage(){
-  const my = RT; loading();
+// Kerangka halaman (pilihan wilayah) selalu tampil, walau data cuaca gagal dimuat
+function cuacaPage(){
+  const firstTime = !store.get('loc', null);
+  $('#app').innerHTML = `
+    <div class="bar"><h2>Prakiraan Cuaca<small id="wxloc">${esc(loc.label || loc.adm4)}</small></h2></div>
+    <details class="pick" id="pk" ${firstTime ? 'open' : ''}><summary>Ubah lokasi</summary>
+      <div class="picker">
+        <select id="sp" aria-label="Provinsi"><option value="">Memuat provinsi…</option></select>
+        <select id="sr" aria-label="Kabupaten/Kota" disabled><option value="">Kabupaten/Kota</option></select>
+        <select id="sd" aria-label="Kecamatan" disabled><option value="">Kecamatan</option></select>
+        <select id="sv" aria-label="Desa/Kelurahan" disabled><option value="">Desa/Kelurahan</option></select>
+      </div>
+      <p class="note" id="pkmsg" style="margin:0 0 12px"></p>
+    </details>
+    <div id="wx"></div>`;
+  initPicker();
+  loadWeather();
+}
+
+function initPicker(){
+  const sp = $('#sp'), sr = $('#sr'), sd = $('#sd'), sv = $('#sv'); if(!sp) return;
+  const names = {};
+  const fill = (el, list, ph) => {
+    el.innerHTML = `<option value="">${ph}</option>` + list.map(x => `<option value="${esc(x.id)}">${esc(title(x.name))}</option>`).join('');
+    el.disabled = !list.length;
+  };
+  const reset = (...els) => els.forEach(el => { el.innerHTML = `<option value="">${el.getAttribute('aria-label')}</option>`; el.disabled = true; });
+  const link = (el, kind, target, ph, rest, key) => el.addEventListener('change', async () => {
+    reset(target, ...rest); if(!el.value) return;
+    names[key] = el.options[el.selectedIndex].text;
+    try{ fill(target, await wilList(kind, el.value), ph); }catch(e){ toast('Data wilayah gagal dimuat'); }
+  });
+  link(sp, 'regencies', sr, 'Kabupaten/Kota', [sd, sv], 'p');
+  link(sr, 'districts', sd, 'Kecamatan', [sv], 'r');
+  link(sd, 'villages', sv, 'Desa/Kelurahan', [], 'd');
+  sv.addEventListener('change', () => {
+    if(!sv.value) return;
+    loc = {adm4:adm4Of(sv.value), label:[sv.options[sv.selectedIndex].text, names.d, names.r, names.p].join(', ')};
+    store.set('loc', loc);
+    $('#wxloc').textContent = loc.label; $('#pk').open = false;
+    loadWeather();
+  });
+  window.loadProvinces = async () => {
+    const my = RT, msg = $('#pkmsg'); if(!msg) return;
+    sp.innerHTML = '<option value="">Memuat provinsi…</option>'; msg.textContent = '';
+    try{
+      const list = await wilList('provinces');
+      if(my !== RT || !$('#sp')) return;
+      fill(sp, list, 'Provinsi');
+    }catch(e){
+      if(my !== RT || !$('#pkmsg')) return;
+      sp.innerHTML = '<option value="">Provinsi gagal dimuat</option>';
+      msg.innerHTML = `${esc(lastErr)} <button class="link" style="border:0;background:none;cursor:pointer" onclick="loadProvinces()">Coba lagi</button>`;
+    }
+  };
+  loadProvinces();
+}
+
+async function loadWeather(){
+  const my = RT; if(!$('#wx')) return;
+  $('#wx').innerHTML = '<div class="state"><div class="spin"></div>Memuat prakiraan…</div>';
   const url = BMKG_WX + encodeURIComponent(loc.adm4);
   let j;
-  try{ j = await getJson(url, 900000); }catch(e){ if(my === RT) failed('cuacaPage()', url); return; }
-  if(my !== RT) return;
+  try{ j = await getJson(url, 900000); }
+  catch(e){
+    if(my !== RT || !$('#wx')) return;
+    $('#wx').innerHTML = `<div class="state"><b>Prakiraan cuaca tidak bisa dimuat</b><br>${esc(lastErr)}<br>
+      <button class="btn" onclick="loadWeather()">Coba lagi</button><br>
+      <a href="${esc(url)}" target="_blank" rel="noopener" class="link" style="display:inline-block;margin-top:12px">Tes alamat API di browser</a></div>`;
+    return;
+  }
+  if(my !== RT || !$('#wx')) return;
   const lk = j.lokasi || (j.data && j.data[0] && j.data[0].lokasi) || {};
   const entries = [];
   ((j.data && j.data[0] && j.data[0].cuaca) || []).forEach(day => (Array.isArray(day) ? day : [day]).forEach(e => entries.push(e)));
   entries.sort((a, b) => pdt(a) - pdt(b));
-  if(!entries.length){ $('#app').innerHTML = pickerShell('<div class="state">Prakiraan untuk lokasi ini belum tersedia. Coba pilih desa/kelurahan lain.</div>'); initPicker(); return; }
+  if(!entries.length){ $('#wx').innerHTML = '<div class="state">Prakiraan untuk lokasi ini belum tersedia. Coba pilih desa/kelurahan lain.</div>'; return; }
   const now = new Date();
   let ci = 0, best = Infinity;
   entries.forEach((e, i) => { const d = Math.abs(pdt(e) - now); if(d < best){ best = d; ci = i; } });
   const c = entries[ci];
   const place = loc.label || [lk.desa, lk.kecamatan, lk.kotkab, lk.provinsi].filter(Boolean).map(title).join(', ') || loc.adm4;
+  $('#wxloc').textContent = place;
 
   const hours = entries.slice(ci, ci + 8).map((e, i) => {
     const d = pdt(e);
@@ -399,7 +412,7 @@ async function cuacaPage(){
   }).join('');
 
   const days = {};
-  entries.forEach(e => { (days[dayKey(pdt(e))] = days[dayKey(pdt(e))] || []).push(e); });
+  entries.forEach(e => { const k = dayKey(pdt(e)); (days[k] = days[k] || []).push(e); });
   const daysHTML = Object.keys(days).map((k, idx) => {
     const list = days[k], d = pdt(list[0]);
     const ts = list.map(e => +e.t), cnt = {};
@@ -413,7 +426,7 @@ async function cuacaPage(){
       </tbody></table></div></details>`;
   }).join('');
 
-  $('#app').innerHTML = pickerShell(`
+  $('#wx').innerHTML = `
     <div class="two"><div>
       <div class="hero"><small>${esc(place)}</small>
         <div class="wx-now" style="margin-top:8px"><div class="ico">${wxIcon(c.weather_desc)}</div>
@@ -424,46 +437,7 @@ async function cuacaPage(){
     </div><div>
       <h3 class="sec">Prakiraan harian</h3>${daysHTML}
     </div></div>
-    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam). Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Waktu mengikuti zona waktu lokasi.</p>`);
-  initPicker();
-}
-
-function pickerShell(inner){
-  return `<div class="bar"><h2>Prakiraan Cuaca<small>${esc(loc.label || loc.adm4)}</small></h2></div>
-    <details class="pick" id="pk"><summary>Ubah lokasi</summary>
-      <div class="picker">
-        <select id="sp" aria-label="Provinsi"><option value="">Provinsi</option></select>
-        <select id="sr" aria-label="Kabupaten/Kota" disabled><option value="">Kabupaten/Kota</option></select>
-        <select id="sd" aria-label="Kecamatan" disabled><option value="">Kecamatan</option></select>
-        <select id="sv" aria-label="Desa/Kelurahan" disabled><option value="">Desa/Kelurahan</option></select>
-      </div></details>${inner}`;
-}
-async function initPicker(){
-  const fill = (el, list, ph) => { el.innerHTML = `<option value="">${ph}</option>` + list.map(x => `<option value="${esc(x.id)}">${esc(title(x.name))}</option>`).join(''); el.disabled = !list.length; };
-  const names = {};
-  const reset = (...els) => els.forEach(el => { el.innerHTML = `<option value="">${el.getAttribute('aria-label')}</option>`; el.disabled = true; });
-  const sp = $('#sp'), sr = $('#sr'), sd = $('#sd'), sv = $('#sv');
-  if(!sp) return;
-  $('#pk').addEventListener('toggle', async function load(){
-    if(!$('#pk').open || sp.options.length > 1) return;
-    try{ fill(sp, await wilList('provinces'), 'Provinsi'); }catch(e){ toast('Daftar wilayah gagal dimuat'); }
-  });
-  const pick = async (el, kind, parent, target, ph, nxt) => {
-    el.addEventListener('change', async () => {
-      reset(...nxt); if(!el.value) return;
-      names[kind] = el.options[el.selectedIndex].text;
-      try{ fill(target, await wilList(kind === 'p' ? 'regencies' : kind === 'r' ? 'districts' : 'villages', el.value), ph); }
-      catch(e){ toast('Data wilayah gagal dimuat'); }
-    });
-  };
-  pick(sp, 'p', null, sr, 'Kabupaten/Kota', [sr, sd, sv]);
-  pick(sr, 'r', null, sd, 'Kecamatan', [sd, sv]);
-  pick(sd, 'd', null, sv, 'Desa/Kelurahan', [sv]);
-  sv.addEventListener('change', () => {
-    if(!sv.value) return;
-    loc = {adm4:adm4Of(sv.value), label:[sv.options[sv.selectedIndex].text, names.d, names.r, names.p].join(', ')};
-    store.set('loc', loc); cuacaPage();
-  });
+    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam). Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Daftar wilayah: Emsifa API Wilayah Indonesia.</p>`;
 }
 
 buildNav();
