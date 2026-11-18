@@ -170,6 +170,8 @@ const BMKG_EQ = 'https://data.bmkg.go.id/DataMKG/TEWS/';
 const BMKG_WX = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=';
 const WIL_SRC = [
   'https://emsifa.github.io/api-wilayah-indonesia/api/',
+  'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@gh-pages/api/',
+  'https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/gh-pages/api/',
   'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api/',
   'https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/master/static/api/'
 ];
@@ -309,19 +311,19 @@ async function gempaPage(){
 
 /* ================= CUACA (BMKG) + pilihan wilayah (Emsifa) ================= */
 // Coba sumber utama, lalu cadangan (jsDelivr, GitHub raw) bila diblokir/tidak terjangkau
-let wilIdx = store.get('wilIdx', 0);
+let wilIdx = store.get('wilIdx2', 0);
 async function wilList(kind, id){
   const path = kind === 'provinces' ? 'provinces.json' : `${kind}/${id}.json`;
-  let err;
+  let err; const fails = [];
   for(let n = 0; n < WIL_SRC.length; n++){
     const i = (wilIdx + n) % WIL_SRC.length;
     try{
       const v = await getJson(WIL_SRC[i] + path, 86400000, 1, 8000);
-      if(i !== wilIdx){ wilIdx = i; store.set('wilIdx', i); }
+      if(i !== wilIdx){ wilIdx = i; store.set('wilIdx2', i); }
       return v;
-    }catch(e){ err = e; }
+    }catch(e){ err = e; fails.push(new URL(WIL_SRC[i]).host + ': ' + e.message); }
   }
-  lastErr = 'Daftar wilayah tidak dapat dimuat dari semua sumber. ' + err.message;
+  lastErr = 'Daftar wilayah tidak dapat dimuat. ' + fails.join(' | ');
   throw err;
 }
 const adm4Of = id => `${id.slice(0,2)}.${id.slice(2,4)}.${id.slice(4,6)}.${id.slice(6)}`;
