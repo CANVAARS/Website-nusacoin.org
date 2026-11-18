@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Al-Qur'an & Hadis - Nusachain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F9FF; --top:#E3F0FF; --card:#FFFFFF;
+  --p1:#007BFF; --p2:#0056B3; --muted:#6C757D; --chip:#F1F3F5; --tag:#F8F9FA;
+  --text:#1B2B3F; --line:#DCE9F7; --ok:#7C9A7E;
+  --shadow:0 2px 10px rgba(0,86,179,.08);
+  --arab:30px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.55;padding-bottom:env(safe-area-inset-bottom,0)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid rgba(0,123,255,.45);outline-offset:2px}
+
+.top{background:linear-gradient(180deg,var(--top),var(--bg));padding:calc(14px + env(safe-area-inset-top,0)) 16px 10px}
+.wrap{max-width:760px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--p1),var(--p2));display:grid;place-items:center;box-shadow:var(--shadow)}
+.brand h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.brand p{margin:0;font-size:12.5px;color:var(--muted)}
+
+.tabs{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:14px;box-shadow:var(--shadow);margin-top:14px}
+.tab{flex:1;border:0;background:transparent;padding:10px;border-radius:10px;font-weight:700;color:var(--muted);transition:background .2s,color .2s}
+.tab.on{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
+
+main{padding:6px 16px 90px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+.field{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;outline:none}
+.field:focus{border-color:var(--p1)}
+.row{display:flex;gap:10px;align-items:center}
+.sp{height:12px}
+
+.last{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0;cursor:pointer;border:0;width:100%;text-align:left}
+.last small{color:var(--muted);display:block}
+.last b{font-size:15px}
+.pill{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;white-space:nowrap}
+
+.list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px}
+.item:hover{background:#FAFCFF}
+.num{flex:none;width:40px;height:40px;border-radius:12px;background:var(--top);color:var(--p2);font-weight:800;display:grid;place-items:center;font-size:14px}
+.item .mid{flex:1;min-width:0}
+.item .mid b{display:block;font-size:15px}
+.item .mid span{font-size:12.5px;color:var(--muted)}
+.ar{font-family:'Amiri','Traditional Arabic','Noto Naskh Arabic',serif;direction:rtl}
+.item .ar{font-size:22px;color:var(--p2)}
+.badge{display:inline-block;background:var(--chip);color:var(--muted);border-radius:999px;padding:2px 9px;font-size:11.5px;font-weight:600;margin-right:4px}
+
+.bar{display:flex;align-items:center;gap:10px;margin:8px 0 12px}
+.icon-btn{border:0;background:var(--card);box-shadow:var(--shadow);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--p2);flex:none}
+.bar h2{margin:0;font-size:17px;flex:1;min-width:0}
+.bar h2 small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+
+.hero{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-radius:18px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+.hero .ar{font-size:34px;line-height:1.5}
+.hero h3{margin:4px 0 2px;font-size:18px}
+.hero p{margin:0;font-size:13px;opacity:.9}
+.bismillah{font-size:28px;text-align:center;margin:18px 0 6px;color:var(--p2)}
+
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--top);border-color:var(--p1);color:var(--p2)}
+.size{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);width:100%}
+.size input{flex:1;accent-color:var(--p1)}
+
+.ayat{margin-top:12px;scroll-margin-top:12px}
+.ayat.hl{outline:2px solid var(--p1)}
+.ayat.playing{background:#F0F7FF;outline:2px solid var(--p1)}
+.ahead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.acts{display:flex;gap:6px}
+.sm{border:0;background:var(--tag);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--p2)}
+.sm.on{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
+.sm.saved{background:var(--ok);color:#fff}
+.arab-text{font-size:var(--arab);line-height:2.1;text-align:right}
+.latin{color:var(--p2);font-style:italic;font-size:14px;margin:8px 0 0}
+.trans{margin:8px 0 0;font-size:15px}
+details.tafsir{margin-top:10px;background:var(--tag);border-radius:10px;padding:8px 12px;font-size:14px}
+details.tafsir summary{cursor:pointer;font-weight:600;color:var(--p2)}
+.hadith-text{font-size:26px;line-height:2.1;text-align:right}
+
+.pager{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;border:0;border-radius:12px;padding:12px;font-weight:700;background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;box-shadow:var(--shadow)}
+.btn.ghost{background:var(--card);color:var(--p2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.books{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.book{border:0;text-align:left;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+.book b{display:block;font-size:15px}
+.book span{font-size:12.5px;color:var(--muted)}
+.book .num{margin-bottom:10px}
+
+.state{text-align:center;color:var(--muted);padding:36px 12px}
+.state button{margin-top:12px}
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--p1);border-radius:50%;margin:0 auto 10px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0));transform:translateX(-50%);background:var(--p2);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin-top:28px}
+@media(min-width:620px){.books{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z"/><path d="M12 6.5v13"/></svg>
+      </div>
+      <div>
+        <h1>Al-Qur'an & Hadis</h1>
+        <p>Nusachain Mobile DApp</p>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-quran" role="tab" onclick="go('quran')">Al-Qur'an</button>
+      <button class="tab" id="tab-hadis" role="tab" onclick="go('hadis')">Hadis</button>
+    </div>
+  </div>
+</header>
+
+<main><div class="wrap" id="app"></div></main>
+<div class="toast" id="toast" role="status"></div>
+<audio id="player" preload="none"></audio>
+
+<script>
+const Q_API = 'https://api.quran.gading.dev';
+const H_API = 'https://api.hadith.gading.dev';
+const PAGE = 20;
+const HADITH_FALLBACK = [
+  {id:'bukhari',name:'HR. Bukhari',available:6638},{id:'muslim',name:'HR. Muslim',available:4930},
+  {id:'abu-daud',name:'HR. Abu Daud',available:4419},{id:'tirmidzi',name:'HR. Tirmidzi',available:3625},
+  {id:'nasai',name:"HR. Nasa'i",available:5364},{id:'ibnu-majah',name:'HR. Ibnu Majah',available:4285},
+  {id:'ahmad',name:'HR. Ahmad',available:4305},{id:'darimi',name:'HR. Darimi',available:2949},
+  {id:'malik',name:'Muwatha Malik',available:1587}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('nq_'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('nq_'+k, JSON.stringify(v)); }catch(e){} }
+};
+const cache = {};
+async function api(url){
+  if(cache[url]) return cache[url];
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  cache[url] = j.data;
+  return j.data;
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+const ICON = {
+  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  play:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  copy:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>',
+  mark:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'
+};
+
+/* ---------- Router ---------- */
+function go(h){ location.hash = h; }
+function route(){
+  const parts = (location.hash.replace('#','') || 'quran').split('/');
+  const [section, arg] = parts;
+  $('#tab-quran').classList.toggle('on', section !== 'hadis');
+  $('#tab-hadis').classList.toggle('on', section === 'hadis');
+  stopAudio();
+  window.scrollTo(0,0);
+  if(section === 'hadis') arg ? hadithBook(arg, parseInt(parts[2]) || 1) : hadithHome();
+  else arg ? surahDetail(parseInt(arg), parseInt(parts[2]) || 0) : quranHome();
+}
+window.addEventListener('hashchange', route);
+
+function loading(){ $('#app').innerHTML = '<div class="state"><div class="spin"></div>Memuat…</div>'; }
+function failed(retry){
+  $('#app').innerHTML = `<div class="state"><b>Data tidak bisa dimuat</b><br>Periksa koneksi internet lalu coba lagi.<br><button class="btn" style="max-width:200px" onclick="${retry}">Coba lagi</button></div>`;
+}
+
+/* ---------- Al-Qur'an: daftar surah ---------- */
+let surahs = [];
+async function quranHome(){
+  loading();
+  try{ surahs = await api(Q_API + '/surah'); }catch(e){ return failed('quranHome()'); }
+  const last = store.get('last', null);
+  $('#app').innerHTML = `
+    <input class="field" id="q" type="search" placeholder="Cari surah (nama atau nomor)" autocomplete="off">
+    ${last ? `<button class="card last" onclick="go('quran/${last.s}/${last.v}')"><span><small>Terakhir dibaca</small><b>${esc(last.name)}, ayat ${last.v}</b></span><span class="pill">Lanjutkan</span></button>` : ''}
+    <div class="list" id="slist"></div>
+    <div class="foot">Sumber data: api.quran.gading.dev</div>`;
+  const draw = () => {
+    const k = $('#q').value.trim().toLowerCase();
+    const rows = surahs.filter(s => !k || String(s.number) === k ||
+      s.name.transliteration.id.toLowerCase().includes(k) ||
+      s.name.translation.id.toLowerCase().includes(k));
+    $('#slist').innerHTML = rows.length ? rows.map(s => `
+      <button class="item" onclick="go('quran/${s.number}')">
+        <span class="num">${s.number}</span>
+        <span class="mid"><b>${esc(s.name.transliteration.id)}</b>
+          <span>${esc(s.name.translation.id)}</span><br>
+          <span class="badge">${esc(s.revelation.id)}</span><span class="badge">${s.numberOfVerses} ayat</span></span>
+        <span class="ar">${esc(s.name.short)}</span>
+      </button>`).join('') : '<div class="state">Surah tidak ditemukan.</div>';
+  };
+  $('#q').addEventListener('input', draw); draw();
+}
+
+/* ---------- Al-Qur'an: detail surah ---------- */
+const prefs = Object.assign({latin:true, trans:true, tafsir:false, size:30, auto:true}, store.get('prefs', {}));
+let cur = null, playing = null;
+
+async function surahDetail(n, focus){
+  if(!(n >= 1 && n <= 114)) return go('quran');
+  loading();
+  try{ cur = await api(`${Q_API}/surah/${n}`); }catch(e){ return failed(`surahDetail(${n},${focus})`); }
+  const s = cur;
+  const bism = s.preBismillah ? `<div class="ar bismillah">${esc(s.preBismillah.text.arab)}</div>` : '';
+  $('#app').innerHTML = `
+    <div class="bar">
+      <button class="icon-btn" aria-label="Kembali" onclick="go('quran')">${ICON.back}</button>
+      <h2>${esc(s.name.transliteration.id)}<small>${esc(s.name.translation.id)} · ${s.numberOfVerses} ayat · ${esc(s.revelation.id)}</small></h2>
+    </div>
+    <div class="hero"><div class="ar">${esc(s.name.long)}</div><h3>${esc(s.name.transliteration.id)}</h3><p>${esc(s.name.translation.id)}</p></div>
+    <div class="opts" id="opts">
+      <button class="chip" data-k="latin">Latin</button>
+      <button class="chip" data-k="trans">Terjemahan</button>
+      <button class="chip" data-k="tafsir">Tafsir</button>
+      <button class="chip" data-k="auto">Putar berurutan</button>
+      <label class="size">Ukuran Arab <input type="range" id="size" min="22" max="48" value="${prefs.size}"></label>
+    </div>
+    ${bism}
+    <div id="verses"></div>
+    <div class="pager">
+      <button class="btn ghost" ${n===1?'disabled':''} onclick="go('quran/${n-1}')">Surah sebelumnya</button>
+      <button class="btn" ${n===114?'disabled':''} onclick="go('quran/${n+1}')">Surah berikutnya</button>
+    </div>`;
+  document.documentElement.style.setProperty('--arab', prefs.size + 'px');
+  $('#size').addEventListener('input', e => { prefs.size = +e.target.value; document.documentElement.style.setProperty('--arab', prefs.size + 'px'); store.set('prefs', prefs); });
+  $('#opts').addEventListener('click', e => {
+    const k = e.target.dataset.k; if(!k) return;
+    prefs[k] = !prefs[k]; store.set('prefs', prefs); syncChips(); drawVerses();
+  });
+  syncChips(); drawVerses();
+  if(focus){
+    const el = document.getElementById('v' + focus);
+    if(el){ el.classList.add('hl'); el.scrollIntoView({block:'start'}); }
+  }
+}
+function syncChips(){ document.querySelectorAll('#opts .chip').forEach(c => c.classList.toggle('on', !!prefs[c.dataset.k])); }
+
+function drawVerses(){
+  const last = store.get('last', null);
+  $('#verses').innerHTML = cur.verses.map((v, i) => {
+    const no = v.number.inSurah;
+    const saved = last && last.s === cur.number && last.v === no;
+    const tf = v.tafsir && v.tafsir.id ? (v.tafsir.id.long || v.tafsir.id.short) : '';
+    return `
+    <article class="card ayat" id="v${no}">
+      <div class="ahead">
+        <span class="num">${no}</span>
+        <div class="acts">
+          <button class="sm" id="pb${i}" aria-label="Putar ayat ${no}" onclick="playVerse(${i})">${ICON.play}</button>
+          <button class="sm" aria-label="Salin ayat ${no}" onclick="copyVerse(${i})">${ICON.copy}</button>
+          <button class="sm ${saved?'saved':''}" aria-label="Tandai terakhir dibaca" onclick="markVerse(${i})">${ICON.mark}</button>
+        </div>
+      </div>
+      <div class="ar arab-text">${esc(v.text.arab)}</div>
+      ${prefs.latin ? `<p class="latin">${esc(v.text.transliteration.en)}</p>` : ''}
+      ${prefs.trans ? `<p class="trans">${esc(v.translation.id)}</p>` : ''}
+      ${prefs.tafsir && tf ? `<details class="tafsir"><summary>Tafsir ayat ${no}</summary><p>${esc(tf)}</p></details>` : ''}
+    </article>`;
+  }).join('');
+  if(playing !== null) markPlaying(playing, true);
+}
+
+/* ---------- Audio ---------- */
+const player = $('#player');
+function playVerse(i){
+  if(playing === i && !player.paused){ player.pause(); markPlaying(i, false); return; }
+  const v = cur.verses[i];
+  if(playing !== null) markPlaying(playing, false);
+  playing = i;
+  player.src = v.audio.primary;
+  player.play().then(() => markPlaying(i, true)).catch(() => { playing = null; toast('Audio tidak bisa diputar'); });
+}
+function markPlaying(i, on){
+  const b = document.getElementById('pb' + i), a = b && b.closest('.ayat');
+  if(!b) return;
+  b.innerHTML = on ? ICON.pause : ICON.play; b.classList.toggle('on', on);
+  a.classList.toggle('playing', on);
+  if(on) a.scrollIntoView({block:'center', behavior:'smooth'});
+}
+player.addEventListener('ended', () => {
+  const i = playing; markPlaying(i, false);
+  if(prefs.auto && cur && i + 1 < cur.verses.length) playVerse(i + 1); else playing = null;
+});
+function stopAudio(){ try{ player.pause(); }catch(e){} playing = null; }
+
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast('Tersalin'); }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('Tersalin'); }catch(_){ toast('Gagal menyalin'); }
+    ta.remove();
+  }
+}
+function copyVerse(i){
+  const v = cur.verses[i];
+  copyText(`${v.text.arab}\n\n${v.translation.id}\n\n(QS. ${cur.name.transliteration.id}: ${v.number.inSurah})`);
+}
+function markVerse(i){
+  const v = cur.verses[i];
+  store.set('last', {s:cur.number, v:v.number.inSurah, name:cur.name.transliteration.id});
+  drawVerses(); toast('Ditandai sebagai terakhir dibaca');
+}
+
+/* ---------- Hadis: daftar kitab ---------- */
+async function hadithHome(){
+  loading();
+  let books;
+  try{ books = await api(H_API + '/books'); }catch(e){ books = HADITH_FALLBACK; }
+  $('#app').innerHTML = `
+    <div class="card" style="margin-top:12px"><b>Kitab Hadis</b><br><span style="font-size:13px;color:var(--muted)">Pilih kitab untuk mulai membaca. Teks Arab dengan terjemahan Indonesia.</span></div>
+    <div class="books">${books.map((b, i) => `
+      <button class="book" onclick="go('hadis/${esc(b.id)}')">
+        <span class="num">${i + 1}</span><b>${esc(b.name)}</b><span>${Number(b.available).toLocaleString('id-ID')} hadis</span>
+      </button>`).join('')}</div>
+    <div class="foot">Sumber data: api.hadith.gading.dev</div>`;
+}
+
+/* ---------- Hadis: isi kitab ---------- */
+async function hadithBook(id, start){
+  loading();
+  start = Math.max(1, start);
+  start = Math.floor((start - 1) / PAGE) * PAGE + 1;
+  const goto = parseInt(location.hash.split('/')[2]) || 0;
+  let d;
+  try{ d = await api(`${H_API}/books/${encodeURIComponent(id)}?range=${start}-${start + PAGE - 1}`); }
+  catch(e){ return failed(`hadithBook('${id}',${start})`); }
+  const list = d.contents || d.hadiths || [];
+  const total = d.available || list.length;
+  const end = Math.min(start + PAGE - 1, total);
+  $('#app').innerHTML = `
+    <div class="bar">
+      <button class="icon-btn" aria-label="Kembali" onclick="go('hadis')">${ICON.back}</button>
+      <h2>${esc(d.name)}<small>Hadis ${start}–${end} dari ${Number(total).toLocaleString('id-ID')}</small></h2>
+    </div>
+    <div class="row">
+      <input class="field" id="hq" type="search" placeholder="Cari di halaman ini" autocomplete="off">
+      <input class="field" id="hn" type="number" min="1" max="${total}" placeholder="No." style="width:92px" inputmode="numeric">
+    </div>
+    <div id="hlist"></div>
+    <div class="pager">
+      <button class="btn ghost" ${start<=1?'disabled':''} onclick="go('hadis/${esc(id)}/${Math.max(1,start-PAGE)}')">Sebelumnya</button>
+      <button class="btn" ${end>=total?'disabled':''} onclick="go('hadis/${esc(id)}/${start+PAGE}')">Berikutnya</button>
+    </div>`;
+  const draw = () => {
+    const k = $('#hq').value.trim().toLowerCase();
+    const rows = list.filter(h => !k || String(h.id).toLowerCase().includes(k) || String(h.number) === k);
+    $('#hlist').innerHTML = rows.length ? rows.map(h => `
+      <article class="card ayat" id="h${h.number}">
+        <div class="ahead"><span class="badge" style="font-size:12.5px">${esc(d.name)} No. ${h.number}</span>
+          <div class="acts"><button class="sm" aria-label="Salin hadis ${h.number}" data-n="${h.number}">${ICON.copy}</button></div></div>
+        <div class="ar hadith-text">${esc(h.arab)}</div>
+        <p class="trans">${esc(h.id)}</p>
+      </article>`).join('') : '<div class="state">Tidak ada hadis yang cocok di halaman ini.</div>';
+  };
+  draw();
+  $('#hq').addEventListener('input', draw);
+  $('#hlist').addEventListener('click', e => {
+    const b = e.target.closest('button[data-n]'); if(!b) return;
+    const h = list.find(x => String(x.number) === b.dataset.n);
+    if(h) copyText(`${h.arab}\n\n${h.id}\n\n(${d.name} No. ${h.number})`);
+  });
+  $('#hn').addEventListener('keydown', e => {
+    if(e.key !== 'Enter') return;
+    const n = parseInt(e.target.value);
+    if(n >= 1 && n <= total) go(`hadis/${id}/${n}`); else toast('Nomor hadis tidak valid');
+  });
+  if(goto && goto !== start){ const el = document.getElementById('h' + goto); if(el){ el.classList.add('hl'); el.scrollIntoView({block:'start'}); } }
+}
+
+route();
+</script>
+</body>
+</html>
