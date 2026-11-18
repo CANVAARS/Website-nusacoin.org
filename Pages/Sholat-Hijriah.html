@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jadwal Sholat & Kalender Hijriah - Nusachain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F9FF; --top:#E3F0FF; --card:#FFFFFF;
+  --p1:#007BFF; --p2:#0056B3; --muted:#6C757D; --chip:#F1F3F5; --tag:#F8F9FA;
+  --text:#1B2B3F; --line:#DCE9F7; --ok:#7C9A7E;
+  --shadow:0 2px 10px rgba(0,86,179,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid rgba(0,123,255,.45);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto}
+.top{background:linear-gradient(180deg,var(--top),var(--bg));padding:calc(14px + env(safe-area-inset-top,0)) 16px 10px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--p1),var(--p2));display:grid;place-items:center;box-shadow:var(--shadow)}
+.brand h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.brand p{margin:0;font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:6px;background:var(--card);padding:5px;border-radius:14px;box-shadow:var(--shadow);margin-top:14px}
+.tab{flex:1;border:0;background:transparent;padding:10px;border-radius:10px;font-weight:700;color:var(--muted);transition:background .2s,color .2s}
+.tab.on{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
+main{padding:6px 16px calc(60px + env(safe-area-inset-bottom,0))}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+.sp{height:12px}
+.field{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;outline:none}
+.field:focus{border-color:var(--p1)}
+.row{display:flex;gap:10px;align-items:center}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:700;background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;box-shadow:var(--shadow)}
+.btn.ghost{background:var(--card);color:var(--p2)}
+.icon-btn{border:0;background:var(--card);box-shadow:var(--shadow);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--p2);flex:none}
+
+.city{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}
+.city b{font-size:15px}
+.city small{display:block;color:var(--muted)}
+.link{border:0;background:var(--top);color:var(--p2);font-weight:700;border-radius:999px;padding:7px 14px;font-size:13px}
+.results{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.results button{text-align:left;border:0;background:var(--card);box-shadow:var(--shadow);border-radius:12px;padding:11px 14px;font-weight:600}
+
+.hero{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-radius:18px;padding:22px 20px;box-shadow:var(--shadow)}
+.hero small{opacity:.9;font-size:13px}
+.hero .big{font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.hero .nm{font-size:16px;font-weight:700}
+.hero .dt{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.3);font-size:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+.times{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.t{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;border:2px solid transparent}
+.t span{font-weight:600}
+.t b{font-size:18px;font-variant-numeric:tabular-nums}
+.t.minor{background:var(--tag);box-shadow:none}
+.t.minor span,.t.minor b{color:var(--muted);font-size:14px}
+.t.next{border-color:var(--p1);background:#F0F7FF}
+.t.next span,.t.next b{color:var(--p2)}
+.t.done b{color:var(--muted)}
+
+h3.sec{font-size:15px;margin:22px 0 8px}
+.bar{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+.bar h3{margin:0;flex:1;font-size:16px;text-align:center}
+.tbl-wrap{overflow-x:auto;border-radius:14px;box-shadow:var(--shadow);background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;min-width:440px}
+th,td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line)}
+th{background:var(--top);color:var(--p2);position:sticky;top:0}
+td:first-child,th:first-child{text-align:left;padding-left:12px;white-space:nowrap}
+tr.today td{background:#F0F7FF;font-weight:700;color:var(--p2)}
+
+.hj{text-align:center}
+.hj .big{font-size:30px;font-weight:800;line-height:1.2}
+.hj p{margin:4px 0 0;font-size:13.5px;opacity:.92}
+.adj{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:13px;color:var(--muted)}
+.adj select{border:1.5px solid var(--line);border-radius:10px;background:var(--card);padding:7px 10px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.dow{font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.dow.fri{color:var(--ok)}
+.cell{aspect-ratio:1/1.05;background:var(--card);border-radius:11px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.cell .g{font-weight:700;font-size:15px}
+.cell .h{font-size:10.5px;color:var(--muted)}
+.cell.empty{background:transparent;box-shadow:none}
+.cell.today{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff}
+.cell.today .h{color:#fff;opacity:.85}
+.cell.ev::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.ev-list{display:flex;flex-direction:column;gap:8px}
+.ev{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px}
+.ev .d{flex:none;width:40px;height:40px;border-radius:12px;background:var(--top);color:var(--p2);font-weight:800;display:grid;place-items:center}
+.ev small{display:block;color:var(--muted)}
+.state{text-align:center;color:var(--muted);padding:30px 12px}
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--p1);border-radius:50%;margin:0 auto 10px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin-top:26px}
+.hide{display:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>
+    </div>
+    <div><h1>Sholat & Hijriah</h1><p>Nusachain Mobile DApp</p></div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tab-sholat" role="tab" onclick="showTab('sholat')">Jadwal Sholat</button>
+    <button class="tab" id="tab-hijriah" role="tab" onclick="showTab('hijriah')">Kalender Hijriah</button>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <section id="sholat"></section>
+  <section id="hijriah" class="hide"></section>
+  <div class="foot">Sumber data: api.myquran.com</div>
+</div></main>
+
+<script>
+const API = 'https://api.myquran.com/v2';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('ns_'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('ns_'+k, JSON.stringify(v)); }catch(e){} }
+};
+const cache = {};
+async function api(path){
+  if(cache[path]) return cache[path];
+  const r = await fetch(API + path);
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  if(j.status === false) throw new Error('API');
+  cache[path] = j.data;
+  return j.data;
+}
+
+const HARI = ['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BLN_H = ['Muharram','Safar','Rabiul Awal','Rabiul Akhir','Jumadil Awal','Jumadil Akhir','Rajab','Syaban','Ramadan','Syawal','Dzulqaidah','Dzulhijjah'];
+const EVENTS = [
+  [1,1,'Tahun Baru Hijriah'],[1,10,'Hari Asyura'],[3,12,'Maulid Nabi Muhammad'],
+  [7,27,"Isra Mi'raj"],[8,15,'Nisfu Syaban'],[9,1,'Awal Ramadan'],[9,17,'Nuzulul Qur\'an'],
+  [10,1,'Idul Fitri'],[12,9,'Hari Arafah'],[12,10,'Idul Adha']
+];
+
+function showTab(t){
+  $('#sholat').classList.toggle('hide', t !== 'sholat');
+  $('#hijriah').classList.toggle('hide', t !== 'hijriah');
+  $('#tab-sholat').classList.toggle('on', t === 'sholat');
+  $('#tab-hijriah').classList.toggle('on', t === 'hijriah');
+  if(t === 'hijriah') renderHijriah();
+}
+
+/* ================= HIJRIAH (hitungan Umm al-Qura di browser + koreksi hari) ================= */
+let adj = store.get('adj', 0);
+const fmtH = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {day:'numeric', month:'numeric', year:'numeric'});
+function hijri(date, a = adj){
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate() + a, 12);
+  const p = {}; fmtH.formatToParts(d).forEach(x => { if(x.type !== 'literal') p[x.type] = parseInt(x.value); });
+  return {d:p.day, m:p.month, y:p.year};
+}
+const hText = h => `${h.d} ${BLN_H[h.m-1]} ${h.y} H`;
+const fmtG = d => `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+let viewDate = new Date(); viewDate.setDate(1);
+
+function eventOf(h){ const e = EVENTS.find(x => x[0] === h.m && x[1] === h.d); return e ? e[2] : null; }
+
+function renderHijriah(){
+  const today = new Date();
+  const ht = hijri(today);
+  const y = viewDate.getFullYear(), m = viewDate.getMonth();
+  const first = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+  let cells = '';
+  for(let i = 0; i < first; i++) cells += '<div class="cell empty"></div>';
+  const evs = [];
+  for(let d = 1; d <= days; d++){
+    const dt = new Date(y, m, d), h = hijri(dt), ev = eventOf(h);
+    const isToday = ymd(dt) === ymd(today);
+    if(ev) evs.push({g:d, h, name:ev, dt});
+    cells += `<div class="cell ${isToday?'today':''} ${ev?'ev':''}"><span class="g">${d}</span><span class="h">${h.d}</span></div>`;
+  }
+  $('#hijriah').innerHTML = `
+    <div class="sp"></div>
+    <div class="hero hj">
+      <small>Hari ini</small>
+      <div class="big">${esc(hText(ht))}</div>
+      <p>${esc(fmtG(today))}</p>
+      <p id="myq" class="hide"></p>
+    </div>
+    <div class="adj"><span>Koreksi tanggal (sesuaikan dengan penetapan Kemenag)</span>
+      <select id="adjsel" aria-label="Koreksi tanggal Hijriah">
+        ${[-2,-1,0,1,2].map(v => `<option value="${v}" ${v===adj?'selected':''}>${v>0?'+':''}${v} hari</option>`).join('')}
+      </select></div>
+    <div class="bar">
+      <button class="icon-btn" aria-label="Bulan sebelumnya" onclick="moveMonth(-1)">&#8249;</button>
+      <h3>${BULAN[m]} ${y}</h3>
+      <button class="icon-btn" aria-label="Bulan berikutnya" onclick="moveMonth(1)">&#8250;</button>
+    </div>
+    <div class="grid">
+      ${HARI.map((h, i) => `<div class="dow ${i===5?'fri':''}">${h.slice(0,3)}</div>`).join('')}
+      ${cells}
+    </div>
+    <h3 class="sec">Hari besar Islam bulan ini</h3>
+    <div class="ev-list">${evs.length ? evs.map(e => `
+      <div class="ev"><span class="d">${e.g}</span><div><b>${esc(e.name)}</b><small>${esc(hText(e.h))}</small></div></div>`).join('')
+      : '<div class="state">Tidak ada hari besar di bulan ini.</div>'}</div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">Angka kecil di tiap tanggal adalah tanggal Hijriah. Titik hijau menandai hari besar. Tanggal bisa berbeda satu hari dari penetapan resmi pemerintah.</p>`;
+  $('#adjsel').addEventListener('change', e => { adj = +e.target.value; store.set('adj', adj); renderHijriah(); });
+  myquranHijri(today);
+}
+function moveMonth(n){ viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + n, 1); renderHijriah(); }
+
+// Tanggal Hijriah dari api.myquran.com (ditampilkan bila respons dapat dibaca)
+async function myquranHijri(today){
+  try{
+    const d = await api(`/cal/hijr/${ymd(today)}?adj=${adj}`);
+    const arr = Array.isArray(d && d.date) ? d.date : [];
+    const s = arr.find(x => typeof x === 'string' && /\bH\b|\d{4}/.test(x) && /[A-Za-z]/.test(x) && x.length < 40);
+    const el = $('#myq');
+    if(s && el){ el.textContent = 'Menurut myquran: ' + s; el.classList.remove('hide'); }
+  }catch(e){ /* diabaikan, hitungan lokal tetap tampil */ }
+}
+
+/* ================= SHOLAT ================= */
+const DEFAULT_CITY = {id:'1301', lokasi:'Kota Jakarta'};
+let city = store.get('city', DEFAULT_CITY);
+let S = {today:null, tomorrow:null, date:'', timer:null, mY:0, mM:0};
+const MAIN = [['subuh','Subuh'],['dzuhur','Dzuhur'],['ashar','Ashar'],['maghrib','Maghrib'],['isya','Isya']];
+const MINOR = [['imsak','Imsak'],['terbit','Terbit'],['dhuha','Dhuha']];
+
+const loadMonth = (id, y, m) => api(`/sholat/jadwal/${id}/${y}/${pad(m)}`);
+async function rowFor(date){
+  const d = await loadMonth(city.id, date.getFullYear(), date.getMonth() + 1);
+  return {info:d, row:(d.jadwal || []).find(r => r.date === ymd(date))};
+}
+
+async function initSholat(){
+  const now = new Date();
+  S.mY = now.getFullYear(); S.mM = now.getMonth() + 1; S.date = ymd(now);
+  $('#sholat').innerHTML = `<div class="state"><div class="spin"></div>Memuat jadwal…</div>`;
+  try{
+    const t = await rowFor(now);
+    const tm = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const nx = await rowFor(tm).catch(() => null);
+    if(!t.row) throw new Error('no row');
+    S.today = t; S.tomorrow = nx && nx.row ? nx.row : null;
+    city.lokasi = t.info.lokasi || city.lokasi; store.set('city', city);
+    drawSholat();
+    drawMonth();
+    clearInterval(S.timer); S.timer = setInterval(tick, 1000); tick();
+  }catch(e){
+    clearInterval(S.timer);
+    $('#sholat').innerHTML = `<div class="state"><b>Jadwal tidak bisa dimuat</b><br>Periksa koneksi internet atau pilih kota lain.<br><br>
+      <button class="btn" onclick="initSholat()">Coba lagi</button> <button class="btn ghost" onclick="openSearch()">Ganti kota</button></div>`;
+  }
+}
+
+function drawSholat(){
+  const r = S.today.row, info = S.today.info, now = new Date(), h = hijri(now);
+  const line = (k, n, cls = '') => `<div class="t ${cls}" id="t-${k}"><span>${n}</span><b>${esc(r[k])}</b></div>`;
+  $('#sholat').innerHTML = `
+    <div class="city">
+      <div><b>${esc(info.lokasi)}</b><small>${esc(info.daerah || '')}</small></div>
+      <button class="link" onclick="openSearch()">Ganti kota</button>
+    </div>
+    <div id="search" class="hide" style="margin-bottom:12px">
+      <input class="field" id="cq" type="search" placeholder="Ketik nama kota atau kabupaten (min. 3 huruf)" autocomplete="off">
+      <div class="results" id="cres"></div>
+    </div>
+    <div class="hero">
+      <small id="nlabel">Sholat berikutnya</small>
+      <div class="nm" id="nname">-</div>
+      <div class="big" id="ncount">--:--:--</div>
+      <div class="dt"><span>${esc(fmtG(now))}</span><span>${esc(hText(h))}</span></div>
+    </div>
+    <div class="times">
+      ${MINOR.slice(0,1).map(([k,n]) => line(k, n, 'minor')).join('')}
+      ${line('subuh','Subuh')}
+      ${MINOR.slice(1).map(([k,n]) => line(k, n, 'minor')).join('')}
+      ${line('dzuhur','Dzuhur')}${line('ashar','Ashar')}${line('maghrib','Maghrib')}${line('isya','Isya')}
+    </div>
+    <h3 class="sec">Jadwal sebulan</h3>
+    <div class="bar" style="margin-top:0">
+      <button class="icon-btn" aria-label="Bulan sebelumnya" onclick="monthMove(-1)">&#8249;</button>
+      <h3 id="mtitle"></h3>
+      <button class="icon-btn" aria-label="Bulan berikutnya" onclick="monthMove(1)">&#8250;</button>
+    </div>
+    <div class="tbl-wrap" id="mtable"></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">Waktu mengikuti zona waktu perangkat. Pastikan sama dengan zona waktu kota yang dipilih (WIB, WITA, atau WIT).</p>`;
+  let tmr;
+  $('#cq').addEventListener('input', e => {
+    clearTimeout(tmr); const q = e.target.value.trim();
+    if(q.length < 3){ $('#cres').innerHTML = ''; return; }
+    tmr = setTimeout(() => searchCity(q), 400);
+  });
+}
+
+function openSearch(){
+  if(!$('#search')){ initSholat().then(openSearch); return; }
+  $('#search').classList.toggle('hide'); const i = $('#cq'); if(i) i.focus();
+}
+async function searchCity(q){
+  const box = $('#cres'); box.innerHTML = '<div class="state" style="padding:12px">Mencari…</div>';
+  try{
+    const list = await api('/sholat/kota/cari/' + encodeURIComponent(q.toLowerCase()));
+    box.innerHTML = (list && list.length)
+      ? list.map(c => `<button data-id="${esc(c.id)}" data-n="${esc(c.lokasi)}">${esc(c.lokasi)}</button>`).join('')
+      : '<div class="state" style="padding:12px">Kota tidak ditemukan.</div>';
+    box.querySelectorAll('button').forEach(b => b.onclick = () => {
+      city = {id:b.dataset.id, lokasi:b.dataset.n}; store.set('city', city); initSholat();
+    });
+  }catch(e){ box.innerHTML = '<div class="state" style="padding:12px">Pencarian gagal. Coba lagi.</div>'; }
+}
+
+function at(row, key, base){
+  const [h, m] = String(row[key]).split(':').map(Number);
+  return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m, 0);
+}
+function tick(){
+  const now = new Date();
+  if(ymd(now) !== S.date){ initSholat(); return; }
+  const row = S.today.row;
+  let next = null;
+  for(const [k, n] of MAIN){ const t = at(row, k, now); if(t > now){ next = {k, n, t}; break; } }
+  if(!next){
+    const tm = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    next = S.tomorrow ? {k:null, n:'Subuh (besok)', t:at(S.tomorrow, 'subuh', tm)} : null;
+  }
+  MAIN.concat(MINOR).forEach(([k]) => {
+    const el = document.getElementById('t-' + k); if(!el) return;
+    el.classList.toggle('next', !!next && next.k === k);
+    el.classList.toggle('done', at(row, k, now) <= now && !(next && next.k === k));
+  });
+  if(!next){ $('#nname').textContent = 'Jadwal besok belum tersedia'; $('#ncount').textContent = '--:--:--'; return; }
+  const s = Math.max(0, Math.floor((next.t - now) / 1000));
+  $('#nname').textContent = `${next.n} pukul ${next.k ? row[next.k] : S.tomorrow.subuh}`;
+  $('#ncount').textContent = `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`;
+}
+
+async function drawMonth(){
+  const box = $('#mtable'); if(!box) return;
+  $('#mtitle').textContent = `${BULAN[S.mM-1]} ${S.mY}`;
+  box.innerHTML = '<div class="state"><div class="spin"></div></div>';
+  try{
+    const d = await loadMonth(city.id, S.mY, S.mM);
+    const todayStr = ymd(new Date());
+    box.innerHTML = `<table><thead><tr><th>Tanggal</th><th>Imsak</th><th>Subuh</th><th>Dzuhur</th><th>Ashar</th><th>Maghrib</th><th>Isya</th></tr></thead><tbody>
+      ${(d.jadwal || []).map(r => `<tr class="${r.date === todayStr ? 'today' : ''}">
+        <td>${esc(String(r.tanggal).replace(/^[A-Za-z]+,\s*/, ''))}</td><td>${esc(r.imsak)}</td><td>${esc(r.subuh)}</td><td>${esc(r.dzuhur)}</td><td>${esc(r.ashar)}</td><td>${esc(r.maghrib)}</td><td>${esc(r.isya)}</td></tr>`).join('')}
+      </tbody></table>`;
+  }catch(e){ box.innerHTML = '<div class="state">Jadwal bulan ini tidak bisa dimuat.</div>'; }
+}
+function monthMove(n){
+  let m = S.mM + n, y = S.mY;
+  if(m < 1){ m = 12; y--; } if(m > 12){ m = 1; y++; }
+  S.mM = m; S.mY = y; drawMonth();
+}
+
+initSholat();
+</script>
+</body>
+</html>
