@@ -203,7 +203,7 @@ tr.today td{background:#F0F7FF;font-weight:700;color:var(--p2)}
     </div>
   </header>
   <main><div class="wrap" id="app"></div>
-    <div class="foot m">Sumber data: api.quran.gading.dev · api.hadith.gading.dev · api.myquran.com</div>
+    <div class="foot m">Sumber data: api.quran.gading.dev · hadis-api-id.vercel.app · api.myquran.com</div>
   </main>
 </div>
 
@@ -213,7 +213,10 @@ tr.today td{background:#F0F7FF;font-weight:700;color:var(--p2)}
 
 <script>
 const Q_API = 'https://api.quran.gading.dev';
-const H_API = 'https://api.hadith.gading.dev';
+const H_API = 'https://api.hadith.gading.dev'; // cadangan
+const H2_API = 'https://hadis-api-id.vercel.app'; // sumber utama hadis
+const H2_SLUG = {'abu-daud':'abu-dawud'}; // slug internal (gading) -> slug hadis-api-id
+const H2_BACK = {'abu-dawud':'abu-daud'};
 const M_API = 'https://api.myquran.com/v2';
 const PAGE = 20;
 let HADITH_BOOKS = [];
@@ -237,24 +240,25 @@ const store = {
 /* ---------- Jaringan: batas waktu, coba ulang, pesan error jelas ---------- */
 const cache = {};
 let lastErr = '';
-async function api(url){
+async function api(url, raw, ms){
   if(cache[url]) return cache[url];
   let err;
   for(let i = 0; i < 2; i++){
     const ctl = new AbortController();
-    const tm = setTimeout(() => ctl.abort(), 20000);
+    const tm = setTimeout(() => ctl.abort(), ms || 20000);
     try{
       const r = await fetch(url, {signal: ctl.signal});
       clearTimeout(tm);
       if(!r.ok) throw new Error('Server membalas HTTP ' + r.status);
       const j = await r.json();
+      if(raw){ cache[url] = j; return j; }
       if(j.status === false) throw new Error(j.message || 'API menolak permintaan');
       if(j.data === undefined || j.data === null) throw new Error('Respons tidak berisi data (' + (j.message || 'tanpa pesan') + ')');
       cache[url] = j.data;
       return j.data;
     }catch(e){
       clearTimeout(tm);
-      err = e.name === 'AbortError' ? new Error('Server tidak merespons (waktu habis 20 detik)')
+      err = e.name === 'AbortError' ? new Error('Server tidak merespons (waktu habis ' + ((ms || 20000) / 1000) + ' detik)')
           : (e instanceof TypeError ? new Error('Permintaan diblokir atau tidak ada koneksi ke ' + new URL(url).host) : e);
       await new Promise(res => setTimeout(res, 800));
     }
@@ -302,7 +306,7 @@ function buildNav(){
     <div class="brand"><div class="logo" aria-hidden="true">${NAV[0].svg.replace('currentColor','#fff').replace('currentColor','#fff')}</div>
       <div><h1>Islami Nusachain</h1><p>Mobile DApp</p></div></div>
     ${links}
-    <div class="src">Sumber data:<br>api.quran.gading.dev<br>api.hadith.gading.dev<br>api.myquran.com</div>`;
+    <div class="src">Sumber data:<br>api.quran.gading.dev<br>hadis-api-id.vercel.app<br>api.myquran.com</div>`;
 }
 function setNav(sec){ document.querySelectorAll('.nav').forEach(a => a.classList.toggle('on', a.dataset.s === sec)); }
 
@@ -453,7 +457,15 @@ function markVerse(i){
 async function hadithHome(){
   const my = RT; loading();
   let books;
-  try{ books = await api(H_API + '/books'); }catch(e){ books = HADITH_FALLBACK; }
+  try{
+    const l = await api(H2_API + '/hadith', true, 8000);
+    if(!Array.isArray(l) || !l.length) throw new Error('Daftar perawi kosong');
+    const ord = id => { const i = HADITH_FALLBACK.findIndex(b => b.id === id); return i < 0 ? 99 : i; };
+    books = l.map(b => { const id = H2_BACK[b.slug] || b.slug; return {id, name: (HADITH_FALLBACK.find(x => x.id === id) || {}).name || ('HR. ' + b.name), available: b.total}; })
+             .sort((a, b) => ord(a.id) - ord(b.id));
+  }catch(e){
+    try{ books = await api(H_API + '/books'); }catch(e2){ books = HADITH_FALLBACK; }
+  }
   if(my !== RT) return;
   HADITH_BOOKS = books;
   $('#app').innerHTML = `
@@ -471,12 +483,25 @@ async function hadithBook(id, start){
   const goto = parseInt(location.hash.split('/')[2]) || 0;
   const known = (HADITH_BOOKS.find(b => b.id === id) || {}).available;
   const rEnd = known ? Math.min(start + PAGE - 1, known) : start + PAGE - 1;
-  const url = `${H_API}/books/${encodeURIComponent(id)}?range=${start}-${rEnd}`;
-  let d;
-  try{ d = await api(url); }catch(e){ if(my === RT) failed(`hadithBook('${id}',${start})`, url); return; }
+  const page = Math.floor((start - 1) / PAGE) + 1;
+  let url = `${H2_API}/hadith/${encodeURIComponent(H2_SLUG[id] || id)}?page=${page}&limit=${PAGE}`;
+  let d, list, total;
+  try{
+    const j = await api(url, true, 8000);
+    if(!j || !Array.isArray(j.items)) throw new Error('Format respons tidak dikenal');
+    list = j.items;
+    total = j.total || (j.pagination || {}).totalItems || list.length;
+    d = {name: (HADITH_FALLBACK.find(b => b.id === id) || {}).name || ('HR. ' + j.name)};
+  }catch(e){
+    url = `${H_API}/books/${encodeURIComponent(id)}?range=${start}-${rEnd}`;
+    try{
+      const g = await api(url);
+      list = g.contents || g.hadiths || [];
+      total = g.available || list.length;
+      d = {name: g.name};
+    }catch(e2){ if(my === RT) failed(`hadithBook('${id}',${start})`, url); return; }
+  }
   if(my !== RT) return;
-  const list = d.contents || d.hadiths || [];
-  const total = d.available || list.length;
   const end = Math.min(start + PAGE - 1, total);
   $('#app').innerHTML = `<div class="col">
     <div class="bar">
