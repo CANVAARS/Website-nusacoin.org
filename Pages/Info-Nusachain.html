@@ -268,16 +268,30 @@ function ago(iso){
 }
 const osm = g => { const [la, lo] = String(g.Coordinates || '').split(',').map(x => x.trim()); return la && lo ? `https://www.openstreetmap.org/?mlat=${la}&mlon=${lo}#map=7/${la}/${lo}` : ''; };
 
-async function gempaPage(){
-  const my = RT; loading();
+// Parameter menit mencegah data lama dari cache browser/CDN
+const eqUrl = f => BMKG_EQ + f + '?t=' + Math.floor(Date.now() / 60000);
+const eqRows = d => { const r = d && d.Infogempa && d.Infogempa.gempa; return Array.isArray(r) ? r : (r ? [r] : []); };
+function refreshEq(){ Object.keys(cache).forEach(k => { if(k.startsWith(BMKG_EQ)) delete cache[k]; }); gempaPage(true); }
+async function gempaPage(silent){
+  const my = RT; if(silent !== true) loading();
   const tab = EQ_TABS.find(t => t.id === eqTab);
   let data;
-  try{ data = await getJson(BMKG_EQ + tab.file, 60000); }catch(e){ if(my === RT) failed('gempaPage()', BMKG_EQ + tab.file); return; }
+  try{ data = await getJson(eqUrl(tab.file), 50000); }catch(e){ if(my === RT && silent !== true) failed('gempaPage()', BMKG_EQ + tab.file); return; }
   if(my !== RT) return;
+  // Feed "Terbaru" hanya memuat gempa M5+; cek apakah ada gempa dirasakan yang lebih baru
+  let newer = null;
+  if(eqTab === 'terbaru'){
+    try{
+      const f = eqRows(await getJson(eqUrl('gempadirasakan.json'), 50000))[0], t0 = eqRows(data)[0];
+      if(f && t0 && Date.parse(f.DateTime) > Date.parse(t0.DateTime)) newer = f;
+      else if(f && !t0) newer = f;
+    }catch(e){}
+    if(my !== RT) return;
+  }
   const raw = data && data.Infogempa && data.Infogempa.gempa;
   const rows = Array.isArray(raw) ? raw : (raw ? [raw] : []);
   const tabs = `<div class="chips">${EQ_TABS.map(t => `<button class="chip ${t.id===eqTab?'on':''}" onclick="eqTab='${t.id}';gempaPage()">${t.label}</button>`).join('')}
-    <button class="icon-btn" style="width:34px;height:34px;margin-left:auto" aria-label="Muat ulang" onclick="delete cache['${BMKG_EQ + tab.file}'];gempaPage()">&#8635;</button></div>`;
+    <button class="icon-btn" style="width:34px;height:34px;margin-left:auto" aria-label="Muat ulang" onclick="refreshEq()">&#8635;</button></div>`;
   const listHTML = list => `<div class="list w">${list.map(g => {
     const m = parseFloat(g.Magnitude), link = osm(g);
     return `<${link?`a href="${esc(link)}" target="_blank" rel="noopener"`:'div'} class="item">
@@ -305,9 +319,15 @@ async function gempaPage(){
       </div><div>${shake ? `<img class="shake" src="${esc(shake)}" alt="Peta guncangan (shakemap) BMKG" onerror="this.outerHTML='<div class=&quot;state&quot;>Peta guncangan tidak tersedia.</div>'">` : ''}</div></div>`;
   }else body = listHTML(rows);
 
-  $('#app').innerHTML = `<div class="bar"><h2>Informasi Gempa Bumi<small>Data resmi BMKG</small></h2></div>${tabs}${body}
-    <p class="note">Sumber: BMKG. Data dapat diperbarui sewaktu-waktu. Untuk peringatan dini resmi, ikuti kanal BMKG.</p>`;
+  const nw = new Date();
+  const newerHTML = newer ? `<h3 class="sec">Gempa dirasakan yang lebih baru · ${esc(ago(newer.DateTime))}</h3>${listHTML([newer])}` : '';
+  $('#app').innerHTML = `<div class="bar"><h2>Informasi Gempa Bumi<small>Data resmi BMKG · diperbarui ${pad(nw.getHours())}:${pad(nw.getMinutes())}</small></h2></div>${tabs}${newerHTML}${body}
+    <p class="note">Sumber: BMKG. "Terbaru" dan "M 5.0+" hanya memuat gempa magnitudo 5 ke atas; gempa lebih kecil yang dirasakan ada di tab "Dirasakan". Halaman memeriksa data baru tiap 1 menit. Untuk peringatan dini resmi, ikuti kanal BMKG.</p>`;
 }
+// Muat ulang otomatis saat halaman gempa terbuka
+const onGempa = () => (location.hash.replace('#','') || 'gempa').split('/')[0] === 'gempa';
+setInterval(() => { if(document.visibilityState === 'visible' && onGempa()) gempaPage(true); }, 60000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && onGempa()) refreshEq(); });
 
 /* ================= CUACA (BMKG) + pilihan wilayah (Emsifa) ================= */
 // Coba sumber utama, lalu cadangan (jsDelivr, GitHub raw) bila diblokir/tidak terjangkau
