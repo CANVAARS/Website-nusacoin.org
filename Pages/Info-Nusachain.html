@@ -168,7 +168,11 @@ details.pick .picker{padding-bottom:14px}
 <script>
 const BMKG_EQ = 'https://data.bmkg.go.id/DataMKG/TEWS/';
 const BMKG_WX = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=';
-const WIL = 'https://emsifa.github.io/api-wilayah-indonesia/api/';
+const WIL_SRC = [
+  'https://emsifa.github.io/api-wilayah-indonesia/api/',
+  'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api/',
+  'https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/master/static/api/'
+];
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -185,13 +189,13 @@ const title = s => String(s).toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g, (m, 
 /* ---------- Jaringan: cache TTL, batas waktu, coba ulang, pesan error jelas ---------- */
 const cache = {};
 let lastErr = '';
-async function getJson(url, ttl = 600000){
+async function getJson(url, ttl = 600000, tries = 2, timeout = 20000){
   const c = cache[url];
   if(c && Date.now() - c.t < ttl) return c.v;
   let err;
-  for(let i = 0; i < 2; i++){
+  for(let i = 0; i < tries; i++){
     const ctl = new AbortController();
-    const tm = setTimeout(() => ctl.abort(), 20000);
+    const tm = setTimeout(() => ctl.abort(), timeout);
     try{
       const r = await fetch(url, {signal: ctl.signal});
       clearTimeout(tm);
@@ -201,7 +205,7 @@ async function getJson(url, ttl = 600000){
       return v;
     }catch(e){
       clearTimeout(tm);
-      err = e.name === 'AbortError' ? new Error('Server tidak merespons (waktu habis 20 detik)')
+      err = e.name === 'AbortError' ? new Error('Server tidak merespons (waktu habis ' + (timeout/1000) + ' detik)')
           : (e instanceof TypeError ? new Error('Permintaan diblokir (kemungkinan CORS) atau tidak ada koneksi ke ' + new URL(url).host) : e);
       await new Promise(res => setTimeout(res, 700));
     }
@@ -304,7 +308,22 @@ async function gempaPage(){
 }
 
 /* ================= CUACA (BMKG) + pilihan wilayah (Emsifa) ================= */
-const wilList = (kind, id) => getJson(WIL + (kind === 'provinces' ? 'provinces.json' : `${kind}/${id}.json`), 86400000);
+// Coba sumber utama, lalu cadangan (jsDelivr, GitHub raw) bila diblokir/tidak terjangkau
+let wilIdx = store.get('wilIdx', 0);
+async function wilList(kind, id){
+  const path = kind === 'provinces' ? 'provinces.json' : `${kind}/${id}.json`;
+  let err;
+  for(let n = 0; n < WIL_SRC.length; n++){
+    const i = (wilIdx + n) % WIL_SRC.length;
+    try{
+      const v = await getJson(WIL_SRC[i] + path, 86400000, 1, 8000);
+      if(i !== wilIdx){ wilIdx = i; store.set('wilIdx', i); }
+      return v;
+    }catch(e){ err = e; }
+  }
+  lastErr = 'Daftar wilayah tidak dapat dimuat dari semua sumber. ' + err.message;
+  throw err;
+}
 const adm4Of = id => `${id.slice(0,2)}.${id.slice(2,4)}.${id.slice(4,6)}.${id.slice(6)}`;
 let loc = store.get('loc', {adm4:'31.71.03.1001', label:''});
 
@@ -437,7 +456,7 @@ async function loadWeather(){
     </div><div>
       <h3 class="sec">Prakiraan harian</h3>${daysHTML}
     </div></div>
-    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam). Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Daftar wilayah: Emsifa API Wilayah Indonesia.</p>`;
+    <p class="note">Sumber: BMKG (prakiraan cuaca per 3 jam). Data di-cache 15 menit untuk menghemat batas permintaan (60 per menit per IP). Daftar wilayah: Emsifa API Wilayah Indonesia (dengan sumber cadangan).</p>`;
 }
 
 buildNav();
