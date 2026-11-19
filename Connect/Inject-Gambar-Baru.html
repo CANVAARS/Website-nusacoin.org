@@ -16,12 +16,7 @@ pre{max-height:180px;overflow:auto;font-size:12px;background:var(--bg);padding:8
 </style></head><body><main>
 <h1>Inject Gambar ke Galeri NUX</h1>
 <p class="mut">Gambar dipecah ke OP_RETURN lalu semua potongan dikirim sekaligus dari UTXO terpilih (rantai maks 24 transaksi per UTXO), sehingga masuk dalam satu block.</p>
-<section class="card"><h2>1. Masuk wallet</h2>
-<button id="btnExt" type="button">Hubungkan Wallet Extension (Nusa Wallet / NUX Connect)</button>
-<p id="msgExt" class="mut"></p>
-<p class="mut">Lewat extension, kunci privat tetap di extension dan setiap transaksi disetujui di popup-nya.
-
-atau masuk manual dengan kunci:</p>
+<section class="card"><h2>1. Masuk dengan WIF</h2>
 <label for="wif">Private key (WIF) atau teks ENC</label><input id="wif" type="password" autocomplete="off" spellcheck="false">
 <div class="row"><div><label for="pin">PIN (jika terenkripsi)</label><input id="pin" type="password" autocomplete="off"></div>
 <div><label for="atype">Tipe alamat</label><select id="atype"><option value="bech32">Bech32 (nu1q...)</option><option value="p2pkh">P2PKH (N...)</option></select></div></div>
@@ -177,80 +172,6 @@ for(let k=0;k<n;k++)o.push(F.tpl.replace(/\{id\}/g,sid).replace(/\{i\}/g,ne(k,F.
 const KEY='nxg_job',save=j=>{try{localStorage.setItem(KEY,JSON.stringify(j))}catch{}},load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
 async function txInfo(id){try{const r=await fetch(`${EXPL}/api/getrawtransaction?txid=${id}&decrypt=1`);if(!r.ok)return null;const j=await r.json(),t=j.result||j;return{c:t.confirmations||0,bh:t.blockhash||null}}catch{return null}}
 function showJob(){const j=load();$('js').textContent=j?`Proses tersimpan: ${j.n} potongan, ID ${j.sid}, ${j.phase==='done'?'selesai dikirim':'pengiriman belum selesai'}.`:'';$('rs').hidden=!j||j.phase==='done';$('chk').hidden=!j;$('del').hidden=!j}
-/* ===== Wallet extension (Nusa Wallet / NUX Connect) ===== */
-const NXT={wait:'Menunggu persetujuan di extension wallet...',
-nop:'Ekstensi wallet (Nusa Wallet / NUX Connect) tidak terdeteksi. Pasang/aktifkan ekstensi lalu muat ulang halaman ini.',
-noaddr:'Ekstensi tidak mengembalikan alamat.',addr:'Alamat dari ekstensi tidak dikenali.',
-rej:'Koneksi ditolak di ekstensi.',badsign:'Ekstensi tidak mengembalikan transaksi bertanda tangan.',
-net:'NUX Connect sedang di jaringan {n}. Pindahkan ke Mainnet di popup extension lalu coba lagi.',
-badpsbt:'PSBT dari NUX Connect tidak valid atau berbeda dari yang diminta. Transaksi dibatalkan.',
-segwit:'NUX Connect hanya memakai alamat Bech32 (nu1q...).'};
-const NXP=()=>window.nusa||window.nux||null;
-/* 'nusa' = punya connect()/signTransaction() (Nusa Wallet); 'nux' = gaya EIP-1193 request() (NUX Connect) */
-const NXK=p=>!p?null:typeof p.connect==='function'?'nusa':typeof p.request==='function'?'nux':null;
-const waitProv=ms=>new Promise(res=>{const p=NXP();if(p)return res(p);
-const done=()=>{clearTimeout(t);window.removeEventListener('nux#initialized',done);window.removeEventListener('nusa#initialized',done);res(NXP())},t=setTimeout(done,ms||1500);
-window.addEventListener('nux#initialized',done);window.addEventListener('nusa#initialized',done)});
-const BC32REV={};[...BC32C].forEach((c,i)=>BC32REV[c]=i);
-function bech32dec(a){a=a.toLowerCase();const p=a.lastIndexOf('1');if(p<1||a.slice(0,p)!==NET.hrp)throw Error(NXT.addr);
-const hrp=a.slice(0,p),d=[...a.slice(p+1)].map(c=>{const v=BC32REV[c];if(v===undefined)throw Error(NXT.addr);return v});
-if(d.length<7||d[0]!==0||b32poly([...[...hrp].map(c=>c.charCodeAt(0)>>5),0,...[...hrp].map(c=>c.charCodeAt(0)&31),...d])!==1)throw Error(NXT.addr);
-let acc=0,bits=0;const out=[];for(const v of d.slice(1,-6)){acc=((acc<<5)|v)&0xffff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}
-if(out.length!==20)throw Error(NXT.segwit);return Uint8Array.from(out)}
-async function addrInfo(a){a=String(a).trim();
-if(/^nu1/i.test(a)){const h=bech32dec(a);return{h,type:'bech32',spk:cat(Uint8Array.of(0,20),h)}}
-let b;try{b=b58d(a)}catch{throw Error(NXT.addr)}const p=b.slice(0,-4);
-if(p.length!==21||p[0]!==NET.pkh||hex((await sha2(p)).slice(0,4))!==hex(b.slice(-4)))throw Error(NXT.addr);
-const h=p.slice(1);return{h,type:'p2pkh',spk:p2pkh(h)}}
-const b64e=b=>{let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)};
-const b64d=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
-const kv=(k,v)=>cat(vi(k.length),k,vi(v.length),v);
-/* PSBT v0 minimal: transaksi belum bertanda tangan + witness_utxo tiap input (semua input milik alamat wallet, P2WPKH) */
-function buildPsbt(ins,outs,spk){
-const inSer=cat(vi(ins.length),...ins.map(i=>cat(rev(unhex(i.txid)),u32(i.vout),Uint8Array.of(0),u32(0xffffffff))));
-const outSer=cat(vi(outs.length),...outs.map(o=>cat(u64(o.v),vi(o.s.length),o.s)));
-const unsigned=cat(u32(1),inSer,outSer,u32(0));
-let ps=cat(unhex('70736274ff'),kv(Uint8Array.of(0),unsigned),Uint8Array.of(0));
-ins.forEach(i=>{ps=cat(ps,kv(Uint8Array.of(1),cat(u64(i.v),vi(spk.length),spk)),Uint8Array.of(0))});
-outs.forEach(()=>{ps=cat(ps,Uint8Array.of(0))});
-return{b64:b64e(ps),unsigned:hex(unsigned),inSer,outSer}}
-function readMaps(b,nIn){let p=0;
-const rv=()=>{const f=b[p++];if(f<253)return f;if(f===253){const v=b[p]|b[p+1]<<8;p+=2;return v}const v=(b[p]|b[p+1]<<8|b[p+2]<<16|b[p+3]<<24)>>>0;p+=4;return v};
-if(hex(b.slice(0,5))!=='70736274ff')throw Error(NXT.badpsbt);p=5;
-const map=()=>{const m=[];while(p<b.length){const kl=rv();if(!kl)break;const k=hex(b.slice(p,p+kl));p+=kl;const vl=rv();m.push({k,v:hex(b.slice(p,p+vl))});p+=vl}return m};
-const g=map(),ins=[];for(let i=0;i<nIn;i++)ins.push(map());return{g,ins}}
-/* ambil tanda tangan dari PSBT yang dikembalikan extension, susun transaksi SegWit final */
-async function finalizePsbt(b64,built,nIn,h20){
-const m=readMaps(b64d(b64),nIn),ut=m.g.find(e=>e.k==='00');
-if(!ut||ut.v!==built.unsigned)throw Error(NXT.badpsbt);/* extension tidak boleh mengubah transaksi */
-let wit='';
-for(let i=0;i<nIn;i++){const mp=m.ins[i],fin=mp.find(e=>e.k==='08');if(fin){wit+=fin.v;continue}
-const ps=mp.find(e=>e.k.length===68&&e.k.slice(0,2)==='02');if(!ps)throw Error(NXT.badpsbt);
-const pub=ps.k.slice(2),sig=ps.v;if(hex(await hash160(unhex(pub)))!==hex(h20))throw Error(NXT.badpsbt);
-wit+='02'+hex(vi(sig.length/2))+sig+hex(vi(pub.length/2))+pub}
-return{raw:unhex('01000000'+'0001'+hex(built.inSer)+hex(built.outSer)+wit+'00000000'),txid:hex(rev(await sha2(unhex(built.unsigned))))}}
-/* tanda tangan lewat extension: kunci privat tidak pernah keluar dari extension */
-async function extSign(ins,outs,idx,n){const p=NXP();if(!p)throw Error(NXT.nop);
-say(n?`Menunggu persetujuan di extension (${idx+1} dari ${n})...`:NXT.wait);
-if(W.kind==='nux'){if(W.type!=='bech32')throw Error(NXT.segwit);
-const built=buildPsbt(ins,outs,W.spk),s=await p.request({method:'nux_signPsbt',params:[built.b64]});
-if(typeof s!=='string'||!s)throw Error(NXT.badsign);return finalizePsbt(s,built,ins.length,W.h)}
-const r=await p.signTransaction({inputs:ins.map(i=>({txid:i.txid,vout:i.vout})),outputs:outs.map(o=>({script:hex(o.s),value:Number(o.v)}))});
-if(!r||!r.raw||!r.txid||!/^([0-9a-f]{2})+$/i.test(r.raw))throw Error(NXT.badsign);return{raw:unhex(r.raw),txid:r.txid}}
-const signTx=(ins,outs,idx,n)=>W.ext?extSign(ins,outs,idx,n):buildTx2(ins,outs,W.d,W.spk,W.type==='bech32');
-function extOff(){try{if(W&&W.ext){const p=NXP();if(p&&typeof p.disconnect==='function')Promise.resolve(p.disconnect()).catch(()=>{})}}catch{}$('msgExt').textContent='';$('msgExt').className='mut'}
-async function connectExt(){const b=$('btnExt'),msg=(t,bad)=>{const e=$('msgExt');e.className='mut'+(bad?' er':'');e.textContent=t||''};
-b.disabled=true;msg(NXT.wait);
-try{const p=await waitProv();if(!p)throw Error(NXT.nop);const kind=NXK(p);let r;
-if(kind==='nux'){const net=await p.request({method:'nux_getNetwork'});if(net!=='mainnet')throw Error(NXT.net.replace('{n}',String(net)));
-const acc=await p.request({method:'nux_requestAccounts'});r={address:Array.isArray(acc)?acc[0]:(acc&&acc.address)}}
-else if(kind==='nusa')r=await p.connect();else throw Error(NXT.nop);
-if(!r||!r.address)throw Error(NXT.noaddr);
-const ai=await addrInfo(r.address);
-W={ext:true,kind,d:null,addr:String(r.address).trim(),h:ai.h,spk:ai.spk,type:ai.type};
-msg('');await showAcct()}
-catch(e){msg(e&&e.code===4001?NXT.rej:((e&&e.message)||String(e)),true)}finally{b.disabled=false}}
-$('btnExt').onclick=connectExt;
 /* login */
 async function showAcct(){const w=W,el=$('acct');el.className='mut';el.textContent='Memeriksa saldo...';let bal,us;try{bal=NUX(Math.round(await getBalance(w.addr)*1e8))+' NUX'}catch(e){bal='gagal dimuat'}try{const u=await probeFilter(await getUtxos(),(d,n)=>{if(W===w)el.textContent=`Memeriksa UTXO di mempool ${d} dari ${n}...`}),c=u.filter(x=>x.c);UT=u;SEL=new Set([...SEL].filter(k=>u.some(x=>ukey(x)===k)));us=`${u.length} UTXO, ${c.length} terkonfirmasi (${NUX(c.reduce((s,x)=>s+x.v,0))} NUX siap dipakai)`+(SKIPPED?`\n${SKIPPED} UTXO disembunyikan karena sudah dipakai transaksi yang menunggu block`:'')+(PROBE_UNK?`\n${PROBE_UNK} UTXO tidak bisa dipastikan (respon node tidak jelas)`:'')}catch(e){us='UTXO tidak terbaca: '+e.message}
 if(W!==w)return;renderUtxos();el.className='mut ok';el.textContent=`Alamat: ${w.addr}\nSaldo: ${bal}\n${us}`;$('logout').hidden=false;$('rb').hidden=false;ready()}
@@ -259,7 +180,7 @@ if(/^(ENC:|U2FsdGVkX1)/.test(raw)){const pin=$('pin').value.trim();if(!pin)throw
 const{key}=await wifDecode(raw),type=$('atype').value,h=await hash160(pubBytes(key,true)),addr=type==='bech32'?bech32enc(NET.hrp,h):await b58check(cat(Uint8Array.of(NET.pkh),h)),spk=type==='bech32'?cat(Uint8Array.of(0,20),h):p2pkh(h);
 W={d:key,comp:true,h,addr,spk,type};$('wif').value='';$('pin').value='';await showAcct()}catch(e){W=null;$('acct').className='mut er';$('acct').textContent=e.message;ready()}finally{b.disabled=false}};
 $('rb').onclick=()=>{if(W)showAcct()};
-$('logout').onclick=()=>{extOff();W=null;UT=[];SEL.clear();renderUtxos();$('acct').textContent='';$('logout').hidden=true;$('rb').hidden=true;ready()};
+$('logout').onclick=()=>{W=null;UT=[];SEL.clear();renderUtxos();$('acct').textContent='';$('logout').hidden=true;$('rb').hidden=true;ready()};
 /* gambar */
 const ready=()=>{$('go').disabled=!(W&&IMG)};
 function est(){if(!IMG)return;let F;try{F=cfgFmt()}catch(e){$('est').textContent=e.message;return}const n=Math.ceil(Math.ceil(IMG.length/3)*4/F.dc),lim=+$('lim').value||24;if($('mode').value==='raw'){const b=Math.ceil(IMG.length/3)*4,need=Math.ceil(b/lim/4)*4,ok=n<=lim;$('est').textContent=`${IMG.length} byte (${fmt(b)} karakter base64). Dengan OP_RETURN ${F.maxb} byte jadi ${fmt(n)} transaksi dalam satu rantai (maks ${lim}), fee sekitar ${fmt(n*+$('fee').value)} nusan.`+(ok?'':` Terlalu banyak: isi Maks. byte OP_RETURN minimal ${need} agar muat ${lim} transaksi.`);return}
@@ -288,13 +209,13 @@ j.phase='done';save(j);say(`Semua ${j.n} potongan terkirim. Tunggu 1 blok, lalu 
 async function runJob(j){$('go').disabled=true;$('rs').hidden=true;try{await sendAll(j)}catch(e){const m=(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m)}finally{showJob();ready()}}
 $('go').onclick=async()=>{const old=load();if(old&&old.phase!=='done'&&!confirm('Ada proses tersimpan yang belum selesai. Memulai yang baru akan melupakannya. Lanjut?'))return;$('log').textContent='';$('go').disabled=true;
 try{if(!W)throw Error('Masuk dulu.');if(!IMG)throw Error('Pilih gambar dulu.');
-const F=cfgFmt(),sid=Array.from(crypto.getRandomValues(new Uint8Array(F.idl)),x=>B62[x%62]).join(''),chunks=mkChunks(IMG,sid,F),n=chunks.length;if(n>2500)throw Error(`Gambar butuh ${fmt(n)} potongan, melebihi batas 2500. Perkecil ukuran.`);if(W.ext&&!confirm(`Extension akan meminta ${n} kali persetujuan tanda tangan (satu per potongan). Lanjutkan?`))throw Error('Dibatalkan.');
+const F=cfgFmt(),sid=Array.from(crypto.getRandomValues(new Uint8Array(F.idl)),x=>B62[x%62]).join(''),chunks=mkChunks(IMG,sid,F),n=chunks.length;if(n>2500)throw Error(`Gambar butuh ${fmt(n)} potongan, melebihi batas 2500. Perkecil ukuran.`);
 let raw;const fee=Math.round(+$('fee').value),lim=Math.min(300,Math.max(1,Math.round(+$('lim').value)));if(!(fee>=1))throw Error('Fee minimal 1.');
 say('Mengambil UTXO...');const all=await probeFilter(await getUtxos(),(d,n)=>say(`Memeriksa UTXO di mempool ${d} dari ${n}...`)),sel=all.filter(u=>SEL.has(ukey(u))),pool=(sel.length?sel:all.filter(u=>u.c)).sort((a,b)=>b.v-a.v);raw=$('mode').value==='raw';if(raw&&n>lim)throw Error(`Mode satu block hanya muat ${lim} potongan, gambar ini ${n}. Perkecil ukuran gambar atau naikkan maks byte OP_RETURN.`);const pl=raw?(pool.length&&pool[0].v>=n*fee+546?[{u:pool[0],cnt:n}]:null):plan(n,lim,fee,pool);
 if(!pl)throw Error(`UTXO ${sel.length?'terpilih':'terkonfirmasi'} tidak cukup untuk ${fmt(n)} potongan. Butuh minimal ${Math.ceil(n/lim)} UTXO (maks ${lim} transaksi per UTXO), tersedia ${pool.length}, dan tiap UTXO harus cukup untuk fee jatahnya. Perkecil gambar atau pecah saldo ke lebih banyak UTXO.`);
 const seg=W.type==='bech32',spk=W.spk,k=pl.length,chains=pl.map(()=>[]);let idx=0;
 log(`ID ${sid}, ${n} potongan dari ${k} UTXO`);
-for(let c=0;c<k;c++){let cur={txid:pl[c].u.txid,vout:pl[c].u.vout,v:pl[c].u.v};for(let m=0;m<pl[c].cnt;m++){const i=c+m*k,t=await signTx([cur],[{v:0,s:opret(enc.encode(chunks[i]))},{v:cur.v-fee,s:spk}],idx,n);chains[c].push({id:t.txid,hex:hex(t.raw),i});cur={txid:t.txid,vout:1,v:cur.v-fee};if(++idx%20===0||W.ext){say(`Menandatangani ${idx} dari ${n}`);bar(idx/n*50);await sleep(0)}}}
+for(let c=0;c<k;c++){let cur={txid:pl[c].u.txid,vout:pl[c].u.vout,v:pl[c].u.v};for(let m=0;m<pl[c].cnt;m++){const i=c+m*k,t=await buildTx2([cur],[{v:0,s:opret(enc.encode(chunks[i]))},{v:cur.v-fee,s:spk}],W.d,spk,seg);chains[c].push({id:t.txid,hex:hex(t.raw),i});cur={txid:t.txid,vout:1,v:cur.v-fee};if(++idx%20===0){say(`Menandatangani ${idx} dari ${n}`);bar(idx/n*50);await sleep(0)}}}
 const j={sid,n,addr:W.addr,phase:'send',chains};save(j);await runJob(j)}catch(e){const m=(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m);ready()}};
 $('rs').onclick=()=>{const j=load();if(j)runJob(j)};
 $('chk').onclick=async()=>{const j=load();if(!j||!j.chains)return;const b=$('chk');b.disabled=true;try{const ids=j.chains.flat().map(t=>t.id),n=ids.length,g={};let k=0,unk=0,pend=0;
