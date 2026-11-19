@@ -25,7 +25,7 @@ pre{max-height:180px;overflow:auto;font-size:12px;background:var(--bg);padding:8
 <div id="utl" hidden><label>Pilih UTXO (opsional)</label><button id="usel" class="g" type="button">Pilih semua terkonfirmasi</button><button id="uclr" class="g" type="button">Kosongkan</button><div id="ulist"></div><p class="mut" id="usum"></p></div></section>
 <section class="card"><h2>2. Pilih PDF</h2>
 <input id="file" type="file" accept="application/pdf,.pdf">
-<label for="kb">Ukuran maks (KB)</label><input id="kb" type="number" value="100" min="5" max="100">
+<label for="kb">Ukuran maks (KB). Batas efektif juga mengikuti kapasitas blok (lihat Pengaturan)</label><input id="kb" type="number" value="100" min="5" max="1000">
 <p class="mut" id="fi"></p><p class="mut" id="est"></p>
 <p class="mut">PDF tidak dikompres atau diubah, diinject apa adanya. Kompres dulu PDF yang besar (mis. lewat compress PDF) agar jumlah potongan dan fee kecil.</p></section>
 <section class="card"><h2>3. Inject</h2>
@@ -37,6 +37,8 @@ pre{max-height:180px;overflow:auto;font-size:12px;background:var(--bg);padding:8
 <div class="row"><div><label for="idl">Panjang ID sesi</label><input id="idl" type="number" value="7" min="0" max="20"></div><div><label for="nw">Lebar angka</label><input id="nw" type="number" value="3" min="1" max="8"></div></div>
 <div class="row"><div><label for="nen">Pengkodean angka</label><select id="nen"><option value="b62">Base62 (0-9A-Za-z)</option><option value="hex">Heksadesimal</option><option value="dec">Desimal</option></select></div><div><label for="mxb">Maks. byte OP_RETURN</label><input id="mxb" type="number" value="80" min="20" max="200"></div></div>
 <p class="mut">Sisa ruang tiap OP_RETURN diisi data PDF base64 (kelipatan 4 karakter). Tanpa {i} urutan potongan tidak bisa dipulihkan.</p>
+<div class="row"><div><label for="blk">Kapasitas blok (KB)</label><input id="blk" type="number" value="1000" min="100" max="10000"></div><div><label for="pct">Pakai maks. (% blok)</label><input id="pct" type="number" value="70" min="10" max="100"></div></div>
+<p class="mut">Semua potongan sebaiknya muat dalam satu blok. Isi kapasitas sesuai batas ukuran blok node Nusacoin (1000 KB = asumsi blok 1 MB). Sisa persen disisakan untuk coinbase dan transaksi lain. Ukuran per potongan dihitung otomatis menurut tipe alamat dan Maks. byte OP_RETURN (P2PKH sekitar 284 byte, Bech32 sekitar 202 vByte).</p>
 <label for="lim">Maks. transaksi per UTXO (batas node untuk rantai belum terkonfirmasi: 25)</label><input id="lim" type="number" value="24" min="1" max="25"></details>
 </main>
 <script>
@@ -149,7 +151,7 @@ if(dc<4)throw Error('Header terlalu panjang untuk batas byte OP_RETURN.');return
 function mkChunks(bytes,sid,F){let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));const b=btoa(bin),n=Math.ceil(b.length/F.dc),o=[];
 if(/\{(i|n)\}/.test(F.tpl)&&n>=Math.pow(F.alpha.length,F.w))throw Error('Lebar angka terlalu kecil untuk jumlah potongan.');
 for(let k=0;k<n;k++)o.push(F.tpl.replace(/\{id\}/g,sid).replace(/\{i\}/g,ne(k,F.w,F.alpha)).replace(/\{n\}/g,ne(n,F.w,F.alpha))+b.slice(k*F.dc,(k+1)*F.dc));return o}
-const KEY='nxp_job',save=j=>{try{localStorage.setItem(KEY,JSON.stringify(j))}catch{}},load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
+const KEY='nxp_job',save=j=>{try{localStorage.setItem(KEY,JSON.stringify(j));return true}catch{return false}},load=()=>{try{return JSON.parse(localStorage.getItem(KEY))}catch{return null}};
 async function txInfo(id){try{const r=await fetch(`${EXPL}/api/getrawtransaction?txid=${id}&decrypt=1`);if(!r.ok)return null;const j=await r.json(),t=j.result||j;return{c:t.confirmations||0,bh:t.blockhash||null}}catch{return null}}
 function showJob(){const j=load();$('js').textContent=j?`Proses tersimpan: ${j.n} potongan, ID ${j.sid}, ${j.phase==='done'?'selesai dikirim':'pengiriman belum selesai'}.`:'';$('rs').hidden=!j||j.phase==='done';$('chk').hidden=!j;$('del').hidden=!j}
 /* login */
@@ -163,12 +165,16 @@ $('rb').onclick=()=>{if(W)showAcct()};
 $('logout').onclick=()=>{W=null;UT=[];SEL.clear();renderUtxos();$('acct').textContent='';$('logout').hidden=true;$('rb').hidden=true;ready()};
 /* gambar */
 const ready=()=>{$('go').disabled=!(W&&DOC)};
-function est(){if(!DOC)return;let F;try{F=cfgFmt()}catch(e){$('est').textContent=e.message;return}const n=Math.ceil(Math.ceil(DOC.length/3)*4/F.dc),lim=+$('lim').value||24;$('est').textContent=`${DOC.length} byte, ${fmt(n)} potongan (${F.dc} karakter data tiap potongan), butuh minimal ${Math.ceil(n/lim)} UTXO terkonfirmasi (${lim} transaksi per UTXO), fee sekitar ${fmt(n*+$('fee').value)} nusan.`+(n>2500?' Terlalu besar (maks 2500 potongan), perkecil ukuran PDF.':'')}
-async function prep(){const f=$('file').files[0];if(!f)return;try{const maxB=Math.round(+$('kb').value*1024);const b=new Uint8Array(await f.arrayBuffer());
+function txSize(F){const seg=(W?W.type:$('atype').value)==='bech32',op=8+1+1+(F.maxb<76?1:2)+F.maxb;return seg?Math.ceil(10.5+68+op+31):10+148+op+34}
+function capChunks(F){const b=Math.max(100,+$('blk').value||1000),p=Math.min(100,Math.max(10,+$('pct').value||70));return Math.floor(b*1024*p/100/txSize(F))}
+const capBytes=F=>Math.floor(capChunks(F)*F.dc*3/4);
+function usage(n,F){const sz=txSize(F),cap=capChunks(F),pc=n*sz/(Math.max(100,+$('blk').value||1000)*1024)*100;return` Perkiraan ${sz} byte per potongan, memakai sekitar ${pc.toFixed(0)}% kapasitas blok.`+(n>cap?` Melebihi batas aman ${fmt(cap)} potongan (${fmt(Math.floor(capBytes(F)/1024))} KB PDF); perkecil PDF atau ubah Pengaturan.`:'')}
+function est(){if(!DOC)return;let F;try{F=cfgFmt()}catch(e){$('est').textContent=e.message;return}const n=Math.ceil(Math.ceil(DOC.length/3)*4/F.dc),lim=+$('lim').value||24;$('est').textContent=`${DOC.length} byte, ${fmt(n)} potongan (${F.dc} karakter data tiap potongan), butuh minimal ${Math.ceil(n/lim)} UTXO terkonfirmasi (${lim} transaksi per UTXO), fee sekitar ${fmt(n*+$('fee').value)} nusan.`+usage(n,F)}
+async function prep(){const f=$('file').files[0];if(!f)return;try{const maxB=Math.min(Math.round(+$('kb').value*1024),capBytes(cfgFmt()));const b=new Uint8Array(await f.arrayBuffer());
 if(!b.length)throw Error('File kosong.');if(!(b[0]===0x25&&b[1]===0x50&&b[2]===0x44&&b[3]===0x46))throw Error('Ini bukan file PDF yang valid (header %PDF tidak ditemukan).');
-if(b.length>maxB){DOC=null;$('fi').textContent=f.name+' ('+fmt(b.length)+' byte)';$('est').textContent=`PDF terlalu besar: ${fmt(b.length)} byte, batas ${fmt(maxB)} byte. Kompres PDF dulu atau naikkan batas ukuran (maks 100 KB).`;ready();return}
+if(b.length>maxB){DOC=null;$('fi').textContent=f.name+' ('+fmt(b.length)+' byte)';$('est').textContent=`PDF terlalu besar: ${fmt(b.length)} byte, batas ${fmt(maxB)} byte. Kompres PDF dulu, atau naikkan Ukuran maks / kapasitas blok di Pengaturan jika node Anda mengizinkan.`;ready();return}
 DOC=b;$('fi').textContent=f.name+' ('+fmt(b.length)+' byte)';est();ready()}catch(e){DOC=null;$('fi').textContent='';$('est').textContent='Gagal membaca PDF: '+e.message;ready()}}
-$('file').onchange=$('kb').onchange=prep;$('fee').oninput=$('lim').oninput=$('tpl').oninput=$('idl').oninput=$('nw').oninput=$('mxb').oninput=$('nen').onchange=est;
+$('file').onchange=$('kb').onchange=prep;$('blk').oninput=$('pct').oninput=$('atype').onchange=prep;$('fee').oninput=$('lim').oninput=$('tpl').oninput=$('idl').oninput=$('nw').oninput=$('mxb').oninput=$('nen').onchange=prep;
 /* pilihan UTXO */
 let UT=[],SEL=new Set();const ukey=u=>u.txid+':'+u.vout;
 function renderUtxos(){const box=$('ulist');box.textContent='';if(!W||!UT.length){$('utl').hidden=true;return}$('utl').hidden=false;
@@ -186,14 +192,14 @@ j.phase='done';save(j);say(`Semua ${j.n} potongan terkirim. Tunggu 1 blok, lalu 
 async function runJob(j){$('go').disabled=true;$('rs').hidden=true;try{await sendAll(j)}catch(e){const m=(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m)}finally{showJob();ready()}}
 $('go').onclick=async()=>{const old=load();if(old&&old.phase!=='done'&&!confirm('Ada proses tersimpan yang belum selesai. Memulai yang baru akan melupakannya. Lanjut?'))return;$('log').textContent='';$('go').disabled=true;
 try{if(!W)throw Error('Masuk dulu.');if(!DOC)throw Error('Pilih PDF dulu.');
-const F=cfgFmt(),sid=Array.from(crypto.getRandomValues(new Uint8Array(F.idl)),x=>B62[x%62]).join(''),chunks=mkChunks(DOC,sid,F),n=chunks.length;if(n>2500)throw Error(`PDF butuh ${fmt(n)} potongan, melebihi batas 2500. Perkecil ukuran PDF.`);
+const F=cfgFmt(),sid=Array.from(crypto.getRandomValues(new Uint8Array(F.idl)),x=>B62[x%62]).join(''),chunks=mkChunks(DOC,sid,F),n=chunks.length;if(n>capChunks(F))throw Error(`PDF butuh ${fmt(n)} potongan, melebihi batas aman satu blok (${fmt(capChunks(F))} potongan). Perkecil PDF atau ubah kapasitas blok di Pengaturan.`);
 const fee=Math.round(+$('fee').value),lim=Math.min(25,Math.max(1,Math.round(+$('lim').value)));if(!(fee>=1))throw Error('Fee minimal 1.');
 say('Mengambil UTXO...');const all=await getUtxos(),sel=all.filter(u=>SEL.has(ukey(u))),pool=(sel.length?sel:all.filter(u=>u.c)).sort((a,b)=>b.v-a.v),pl=plan(n,lim,fee,pool);
 if(!pl)throw Error(`UTXO ${sel.length?'terpilih':'terkonfirmasi'} tidak cukup untuk ${fmt(n)} potongan. Butuh minimal ${Math.ceil(n/lim)} UTXO (maks ${lim} transaksi per UTXO), tersedia ${pool.length}, dan tiap UTXO harus cukup untuk fee jatahnya. Perkecil PDF atau pecah saldo ke lebih banyak UTXO.`);
 const seg=W.type==='bech32',spk=W.spk,k=pl.length,chains=pl.map(()=>[]);let idx=0;
 log(`ID ${sid}, ${n} potongan dari ${k} UTXO`);
 for(let c=0;c<k;c++){let cur={txid:pl[c].u.txid,vout:pl[c].u.vout,v:pl[c].u.v};for(let m=0;m<pl[c].cnt;m++){const i=c+m*k,t=await buildTx2([cur],[{v:0,s:opret(enc.encode(chunks[i]))},{v:cur.v-fee,s:spk}],W.d,spk,seg);chains[c].push({id:t.txid,hex:hex(t.raw),i});cur={txid:t.txid,vout:1,v:cur.v-fee};if(++idx%20===0){say(`Menandatangani ${idx} dari ${n}`);bar(idx/n*50);await sleep(0)}}}
-const j={sid,n,addr:W.addr,phase:'send',chains};save(j);await runJob(j)}catch(e){const m=(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m);ready()}};
+const j={sid,n,addr:W.addr,phase:'send',chains};if(!save(j))log('Peringatan: penyimpanan browser penuh, proses ini tidak bisa dilanjutkan otomatis jika terputus. Jangan tutup halaman sampai selesai.');await runJob(j)}catch(e){const m=(e&&e.message)||String(e);say(m,'er');log('GAGAL: '+m);ready()}};
 $('rs').onclick=()=>{const j=load();if(j)runJob(j)};
 $('chk').onclick=async()=>{const j=load();if(!j||!j.chains)return;const b=$('chk');b.disabled=true;try{const ids=j.chains.flat().map(t=>t.id),n=ids.length,g={};let k=0,unk=0,pend=0;
 await Promise.all(Array.from({length:8},async()=>{while(k<n){const i=k++,r=await txInfo(ids[i]);if(!r)unk++;else if(r.c<1||!r.bh)pend++;else g[r.bh]=(g[r.bh]||0)+1;say(`Memeriksa ${k} dari ${n}...`)}}));
