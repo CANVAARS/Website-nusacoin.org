@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baca Gambar dari Blockchain NUX</title>
+<style>
+:root{color-scheme:light dark;--bg:#f4f9ff;--c:#fff;--t:#10243e;--m:#5b6f8a;--l:#d5e3f5;--g:#007bff;--ok:#0f7a43;--er:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1623;--c:#122236;--t:#e6eefa;--m:#93a6bf;--l:#25384f;--g:#3d94ff;--ok:#4cd08a;--er:#ff7b6b}}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,sans-serif}main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:0 0 8px}.card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:14px;margin:12px 0}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}input,select{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--l);border-radius:8px;background:var(--bg);color:var(--t);font:inherit}
+button{padding:9px 14px;border:0;border-radius:8px;background:var(--g);color:#fff;font:inherit;font-weight:600;margin:8px 8px 0 0}button.g{background:#e8f1fd;color:#0056b3}@media(prefers-color-scheme:dark){button.g{background:#1b3350;color:#8ec3ff}}button:disabled{opacity:.5}
+.mut{color:var(--m);font-size:13px;white-space:pre-line;word-break:break-all}.ok{color:var(--ok)}.er{color:var(--er)}.row{display:flex;gap:10px}.row>div{flex:1}
+.bar{height:8px;background:var(--l);border-radius:4px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;width:0;background:var(--g)}
+.s{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--l);font-size:13px}.s b{font-family:monospace}.s button{margin:0 0 0 auto;padding:6px 10px}
+img{max-width:100%;border-radius:8px;margin-top:8px;background:#fff}
+</style></head><body><main>
+<h1>Baca Gambar dari Blockchain NUX</h1>
+<p class="mut">Membaca potongan OP_RETURN (format GB1) dari alamat yang dipakai saat Inject, lalu merakitnya menjadi gambar utuh.</p>
+<section class="card"><h2>1. Cari potongan</h2>
+<label for="addr">Alamat pengirim (yang dipakai di Inject Gambar)</label><input id="addr" placeholder="nu1q... atau N..." autocomplete="off" spellcheck="false">
+<label for="sid">ID sesi (opsional, untuk menyaring)</label><input id="sid" autocomplete="off" spellcheck="false">
+<button id="go">Baca blockchain</button>
+<div class="bar"><i id="bar"></i></div><p class="mut" id="st"></p></section>
+<section class="card" id="rc" hidden><h2>2. Gambar ditemukan</h2><div id="list"></div></section>
+<section class="card" id="vc" hidden><h2>3. Gambar utuh</h2><p class="mut" id="info"></p><img id="img" alt="Gambar hasil rakitan"><div id="act"></div></section>
+<details class="card"><summary><b>Pengaturan format</b> (samakan dengan Inject)</summary>
+<label for="tpl">Templat header</label><input id="tpl" value="GB1{id}{i}{n}">
+<div class="row"><div><label for="idl">Panjang ID sesi</label><input id="idl" type="number" value="7" min="0" max="20"></div><div><label for="nw">Lebar angka</label><input id="nw" type="number" value="3" min="1" max="8"></div></div>
+<label for="nen">Pengkodean angka</label><select id="nen"><option value="b62">Base62</option><option value="hex">Heksadesimal</option><option value="dec">Desimal</option></select></details>
+</main>
+<script>
+const EXPL='https://explorer.nusacoin.org',$=id=>document.getElementById(id);
+const AL={b62:'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',hex:'0123456789ABCDEF',dec:'0123456789'};
+const say=(m,c)=>{$('st').className='mut '+(c||'');$('st').textContent=m},bar=p=>$('bar').style.width=Math.min(100,p)+'%';
+let SES={},URLS=[];
+const dn=(s,a)=>{let v=0;for(const ch of s){const k=a.indexOf(ch);if(k<0)return NaN;v=v*a.length+k}return v};
+function mkRe(){const tpl=$('tpl').value,idl=+$('idl').value,w=+$('nw').value,order=[];
+ const src=tpl.split(/(\{id\}|\{i\}|\{n\})/).map(p=>{if(p==='{id}'){order.push('id');return`(.{${idl}})`}if(p==='{i}'){order.push('i');return`(.{${$('nw').value}})`}if(p==='{n}'){order.push('n');return`(.{${w}})`}return p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}).join('');
+ return{re:new RegExp('^'+src+'([A-Za-z0-9+/=]+)$'),order}}
+function opret(hex){const s=hex.match(/../g)?.map(x=>parseInt(x,16));if(!s||s[0]!==0x6a)return null;let o=1,l=s[o];if(l===0x4c)l=s[++o];o++;return String.fromCharCode(...s.slice(o,o+l))}
+async function getTx(id){const r=await fetch(`${EXPL}/api/getrawtransaction?txid=${id}&decrypt=1`);if(!r.ok)throw Error('explorer tx HTTP '+r.status);const j=await r.json();return j.result||j}
+$('go').onclick=async()=>{const b=$('go'),addr=$('addr').value.trim(),only=$('sid').value.trim();if(!addr)return say('Isi alamat dulu.','er');
+ b.disabled=true;SES={};$('rc').hidden=$('vc').hidden=true;
+ try{const{re,order}=mkRe(),al=AL[$('nen').value],ids=new Set();say('Mengambil daftar transaksi...');
+  for(let s=0;s<5000;s+=500){const r=await fetch(`${EXPL}/ext/getaddresstxs/${addr}/${s}/500`);if(!r.ok)throw Error('explorer HTTP '+r.status);const raw=await r.json(),arr=Array.isArray(raw)?raw:(raw.data||raw.records||[]);arr.forEach(i=>{const t=i.txid||(typeof i==='string'?i:null);if(t)ids.add(t)});if(arr.length<500)break}
+  const list=[...ids];if(!list.length)throw Error('Tidak ada transaksi untuk alamat ini.');let k=0,done=0;
+  await Promise.all(Array.from({length:8},async()=>{while(k<list.length){const id=list[k++];try{const t=await getTx(id);for(const o of t.vout||[]){const h=o.scriptPubKey&&(o.scriptPubKey.hex||(/^OP_RETURN (\w+)/.exec(o.scriptPubKey.asm||'')||[])[1]);if(!h)continue;const txt=h.startsWith('6a')?opret(h):null;if(!txt)continue;const m=re.exec(txt);if(!m)continue;const g={};order.forEach((n,x)=>g[n]=m[x+1]);const sid=g.id||'-';if(only&&sid!==only)continue;const S=SES[sid]||(SES[sid]={n:dn(g.n||'',al),p:{},h:t.blockhash||null,blocks:new Set()});S.p[dn(g.i||'',al)]=m[order.length+1];if(t.blockhash)S.blocks.add(t.blockhash)}}catch(e){}
+   done++;bar(done/list.length*100);say(`Memeriksa transaksi ${done} dari ${list.length}...`)}}));
+  const ks=Object.keys(SES);if(!ks.length)throw Error('Tidak ada potongan gambar (format GB1) yang cocok. Periksa alamat dan Pengaturan format.');
+  show(ks);say(`Ditemukan ${ks.length} gambar.`,'ok')}catch(e){say(e.message,'er')}finally{b.disabled=false}};
+function show(ks){const box=$('list');box.textContent='';ks.forEach(id=>{const S=SES[id],have=Object.keys(S.p).length,full=have===S.n,d=document.createElement('div');d.className='s';
+ d.innerHTML=`<b></b><span class="${full?'ok':'er'}"></span>`;d.firstChild.textContent=id;d.children[1].textContent=full?`lengkap (${have} potongan)`:`${have} dari ${S.n} potongan`;
+ const bt=document.createElement('button');bt.className='g';bt.textContent='Lihat';bt.onclick=()=>view(id);d.appendChild(bt);box.appendChild(d)});$('rc').hidden=false;
+ const f=ks.find(i=>Object.keys(SES[i].p).length===SES[i].n);if(f)view(f)}
+function view(id){const S=SES[id],miss=[];let b64='';for(let i=0;i<S.n;i++){if(S.p[i]===undefined)miss.push(i);else b64+=S.p[i]}
+ $('vc').hidden=false;URLS.forEach(URL.revokeObjectURL);URLS=[];$('act').textContent='';
+ if(miss.length){$('img').removeAttribute('src');$('img').hidden=true;$('info').className='mut er';$('info').textContent=`Gambar ${id} belum utuh. Potongan hilang: ${miss.slice(0,20).join(', ')}${miss.length>20?'...':''}. Mungkin belum terkonfirmasi atau terlewat; coba Baca blockchain lagi nanti.`;return}
+ try{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);const type=u[0]===0xff?'image/jpeg':u[0]===0x89?'image/png':'image/jpeg',url=URL.createObjectURL(new Blob([u],{type}));URLS.push(url);
+  $('img').hidden=false;$('img').src=url;$('info').className='mut ok';$('info').textContent=`Sesi ${id}: ${S.n} potongan, ${u.length} byte${S.blocks.size>1?`, tersebar di ${S.blocks.size} blok`:''}.`;
+  const a=document.createElement('a');a.href=url;a.download=`nux-${id}.${type==='image/png'?'png':'jpg'}`;a.innerHTML='<button class="g" type="button">Unduh gambar</button>';$('act').appendChild(a);
+  const o=document.createElement('a');o.href=url;o.target='_blank';o.innerHTML='<button class="g" type="button">Buka ukuran penuh</button>';$('act').appendChild(o)}
+ catch(e){$('info').className='mut er';$('info').textContent='Data gambar rusak: '+e.message}}
+</script></body></html>
