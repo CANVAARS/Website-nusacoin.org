@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Baca PDF dari Blockchain NUX</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{color-scheme:light dark;--bg:#f4f9ff;--c:#fff;--t:#10243e;--m:#5b6f8a;--l:#d5e3f5;--g:#007bff;--ok:#0f7a43;--er:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1623;--c:#122236;--t:#e6eefa;--m:#93a6bf;--l:#25384f;--g:#3d94ff;--ok:#4cd08a;--er:#ff7b6b}}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,sans-serif}main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:0 0 8px}.card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:14px;margin:12px 0}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}input,select{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--l);border-radius:8px;background:var(--bg);color:var(--t);font:inherit}
+button{padding:9px 14px;border:0;border-radius:8px;background:var(--g);color:#fff;font:inherit;font-weight:600;margin:8px 8px 0 0}button.g{background:#e8f1fd;color:#0056b3}@media(prefers-color-scheme:dark){button.g{background:#1b3350;color:#8ec3ff}}button:disabled{opacity:.5}
+.mut{color:var(--m);font-size:13px;white-space:pre-line;word-break:break-all}.ok{color:var(--ok)}.er{color:var(--er)}.row{display:flex;gap:10px}.row>div{flex:1}
+.bar{height:8px;background:var(--l);border-radius:4px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;width:0;background:var(--g)}
+.s{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--l);font-size:13px}.s b{font-family:monospace}.s button{margin:0 0 0 auto;padding:6px 10px}
+a.dl{display:inline-block;padding:9px 14px;border-radius:8px;background:#e8f1fd;color:#0056b3;font-weight:600;text-decoration:none;margin:8px 8px 0 0}@media(prefers-color-scheme:dark){a.dl{background:#1b3350;color:#8ec3ff}}
+#pv canvas{display:block;max-width:100%;height:auto;margin:10px auto 0;border:1px solid var(--l);border-radius:6px;background:#fff}
+</style></head><body><main>
+<h1>Baca PDF dari Blockchain NUX</h1>
+<p class="mut">Membaca potongan OP_RETURN (format PDF1) dari alamat atau blok yang dipakai saat Inject PDF, lalu merakitnya menjadi dokumen PDF utuh.</p>
+<section class="card"><h2>1. Cari potongan</h2>
+<label for="addr">Alamat pengirim (opsional jika tinggi blok atau TXID diisi)</label><input id="addr" placeholder="nu1q... atau N..." autocomplete="off" spellcheck="false">
+<label for="txid">TXID salah satu potongan (opsional, memindai blok tempat TXID itu berada)</label><input id="txid" placeholder="64 karakter heksadesimal" autocomplete="off" spellcheck="false">
+<div class="row"><div><label for="h1">Tinggi blok (awal)</label><input id="h1" type="number" min="0" step="1" inputmode="numeric" placeholder="mis. 12345"></div><div><label for="h2">Sampai tinggi (opsional)</label><input id="h2" type="number" min="0" step="1" inputmode="numeric" placeholder="kosong = blok awal saja"></div></div>
+<label for="sid">ID sesi (opsional, untuk menyaring)</label><input id="sid" autocomplete="off" spellcheck="false">
+<button id="go">Baca blockchain</button>
+<div class="bar"><i id="bar"></i></div><p class="mut" id="st"></p></section>
+<section class="card" id="rc" hidden><h2>2. PDF ditemukan</h2><div id="list"></div></section>
+<section class="card" id="vc" hidden><h2>3. Dokumen PDF utuh</h2><p class="mut" id="info"></p><div id="act"></div><div id="pv"></div></section>
+<details class="card"><summary><b>Pengaturan format</b> (samakan dengan Inject PDF)</summary>
+<label for="tpl">Templat header</label><input id="tpl" value="PDF1{id}{i}{n}">
+<div class="row"><div><label for="idl">Panjang ID sesi</label><input id="idl" type="number" value="7" min="0" max="20"></div><div><label for="nw">Lebar angka</label><input id="nw" type="number" value="3" min="1" max="8"></div></div>
+<label for="nen">Pengkodean angka</label><select id="nen"><option value="b62">Base62</option><option value="hex">Heksadesimal</option><option value="dec">Desimal</option></select></details>
+</main>
+<script>
+const EXPL='https://explorer.nusacoin.org',$=id=>document.getElementById(id);
+const AL={b62:'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',hex:'0123456789ABCDEF',dec:'0123456789'};
+const say=(m,c)=>{$('st').className='mut '+(c||'');$('st').textContent=m},bar=p=>$('bar').style.width=Math.min(100,p)+'%';
+let SES={},URLS=[],CFG={},SCANNED=new Set(),PREV=0;
+const dn=(s,a)=>{let v=0;for(const ch of s){const k=a.indexOf(ch);if(k<0)return NaN;v=v*a.length+k}return v};
+function mkRe(){const tpl=$('tpl').value,idl=+$('idl').value,w=+$('nw').value,order=[];
+ const src=tpl.split(/(\{id\}|\{i\}|\{n\})/).map(p=>{if(p==='{id}'){order.push('id');return`(.{${idl}})`}if(p==='{i}'){order.push('i');return`(.{${w}})`}if(p==='{n}'){order.push('n');return`(.{${w}})`}return p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}).join('');
+ return{re:new RegExp('^'+src+'([A-Za-z0-9+/=]+)$'),order}}
+function opret(hex){const s=hex.match(/../g)?.map(x=>parseInt(x,16));if(!s||s[0]!==0x6a)return null;let o=1,l=s[o];if(l===0x4c)l=s[++o];o++;return String.fromCharCode(...s.slice(o,o+l))}
+let FAIL=0,LAST='';
+async function blockHash(h){const r=await fetch(`${EXPL}/api/getblockhash?index=${h}`);if(!r.ok)throw Error(`getblockhash HTTP ${r.status} (tinggi ${h})`);const t=(await r.text()).trim();let v=t;try{const j=JSON.parse(t);v=typeof j==='string'?j:(j.result||j.hash||t)}catch(e){}v=String(v).replace(/"/g,'');if(!/^[0-9a-f]{64}$/i.test(v))throw Error(`Blok tinggi ${h} tidak ditemukan.`);return v}
+async function blockTxs(bh){const r=await fetch(`${EXPL}/api/getblock?hash=${bh}`);if(!r.ok)throw Error('getblock HTTP '+r.status);const j=await r.json(),B=j.result||j;return(B.tx||[]).map(x=>typeof x==='string'?x:x.txid).filter(Boolean)}
+async function getTx(id){let e;for(let t=0;t<3;t++){try{const r=await fetch(`${EXPL}/api/getrawtransaction?txid=${id}&decrypt=1`);if(!r.ok)throw Error('explorer tx HTTP '+r.status);const j=await r.json();return j.result||j}catch(x){e=x;await new Promise(r=>setTimeout(r,600*(t+1)))}}throw e}
+$('go').onclick=async()=>{const b=$('go'),addr=$('addr').value.trim(),only=$('sid').value.trim(),h1=$('h1').value.trim(),h2=$('h2').value.trim(),tx=$('txid').value.trim();
+ if(!addr&&h1===''&&!tx)return say('Isi alamat, TXID, atau tinggi blok dulu.','er');
+ if(tx&&!/^[0-9a-fA-F]{64}$/.test(tx))return say('TXID harus 64 karakter heksadesimal.','er');
+ b.disabled=true;SES={};FAIL=0;LAST='';$('rc').hidden=$('vc').hidden=true;
+ try{const{re,order}=mkRe(),al=AL[$('nen').value],ids=new Set();
+  if(tx){say('Mencari blok dari TXID...');const t=await getTx(tx);if(!t.blockhash)throw Error('TXID itu belum terkonfirmasi di blok. Tunggu 1 blok lalu coba lagi.');for(const x of await blockTxs(t.blockhash))ids.add(x)}
+  if(addr){say('Mengambil daftar transaksi...');for(let s=0;s<5000;s+=500){const r=await fetch(`${EXPL}/ext/getaddresstxs/${addr}/${s}/500`);if(!r.ok)throw Error('explorer HTTP '+r.status);const raw=await r.json(),arr=Array.isArray(raw)?raw:(raw.data||raw.records||[]);arr.forEach(i=>{const t=i.txid||(typeof i==='string'?i:null);if(t)ids.add(t)});if(arr.length<500)break}}
+  if(h1!==''){const a=Number(h1),z=h2===''?a:Number(h2);if(!Number.isInteger(a)||!Number.isInteger(z)||a<0||z<a)throw Error('Tinggi blok tidak valid (tinggi akhir harus ≥ tinggi awal).');if(z-a>=300)throw Error('Rentang maksimal 300 blok sekali baca.');
+   for(let h=a;h<=z;h++){say(`Mengambil blok ${h} (${h-a+1} dari ${z-a+1})...`);bar((h-a+1)/(z-a+1)*100);for(const t of await blockTxs(await blockHash(h)))ids.add(t)}}
+  CFG={re,order,al,only};const list=[...ids];SCANNED=new Set(list);if(!list.length)throw Error('Tidak ada transaksi untuk alamat/blok ini.');let k=0,done=0;
+  await Promise.all(Array.from({length:8},async()=>{while(k<list.length){const id=list[k++];try{proc(await getTx(id))}catch(e){FAIL++;LAST=e.message}
+   done++;bar(done/list.length*100);say(`Memeriksa transaksi ${done} dari ${list.length}...`)}}));
+  const ks=Object.keys(SES);if(!ks.length)throw Error(FAIL?`${FAIL} transaksi gagal dibaca dari explorer (${LAST}). Periksa koneksi lalu coba lagi.`:'Tidak ada potongan PDF (format PDF1) yang cocok. Periksa alamat/TXID/tinggi blok dan Pengaturan format.');
+  show(ks);say(`Ditemukan ${ks.length} dokumen.`+(FAIL?` Peringatan: ${FAIL} transaksi gagal dibaca (${LAST}); tekan Baca blockchain lagi jika dokumen belum utuh.`:''),FAIL?'er':'ok')}catch(e){say(e.message,'er')}finally{b.disabled=false}};
+function show(ks){const box=$('list');box.textContent='';ks.forEach(id=>{const S=SES[id],have=Object.keys(S.p).length,full=have===S.n,d=document.createElement('div');d.className='s';
+ const b=document.createElement('b'),sp=document.createElement('span');b.textContent=id;sp.className=full?'ok':'er';sp.textContent=full?`lengkap (${have} potongan)`:`${have} dari ${S.n} potongan`;d.append(b,sp);
+ const bt=document.createElement('button');bt.className='g';bt.textContent='Lihat';bt.onclick=()=>view(id);d.appendChild(bt);box.appendChild(d)});$('rc').hidden=false;
+ const f=ks.find(i=>Object.keys(SES[i].p).length===SES[i].n);if(f)view(f)}
+function proc(t){const{re,order,al,only}=CFG;for(const o of t.vout||[]){const h=o.scriptPubKey&&(o.scriptPubKey.hex||(/^OP_RETURN (\w+)/.exec(o.scriptPubKey.asm||'')||[])[1]);if(!h)continue;const txt=h.startsWith('6a')?opret(h):null;if(!txt)continue;const m=re.exec(txt);if(!m)continue;const g={};order.forEach((n,x)=>g[n]=m[x+1]);const sid=g.id||'-';if(only&&sid!==only)continue;const S=SES[sid]||(SES[sid]={n:dn(g.n||'',al),p:{},blocks:new Set()});S.p[dn(g.i||'',al)]=m[order.length+1];if(t.blockhash)S.blocks.add(t.blockhash)}}
+async function fill(id,btn){btn.disabled=true;try{const S=SES[id],ids=[];for(const bh of S.blocks){say('Mengambil isi blok '+bh.slice(0,12)+'...');const r=await fetch(`${EXPL}/api/getblock?hash=${bh}`);if(!r.ok)throw Error('getblock HTTP '+r.status);const j=await r.json(),B=j.result||j;(B.tx||[]).forEach(x=>{const t=typeof x==='string'?x:x.txid;if(t&&!SCANNED.has(t))ids.push(t)})}
+ if(!ids.length)throw Error('Tidak ada transaksi baru di blok itu.');let k=0,d=0,bad=0;
+ await Promise.all(Array.from({length:8},async()=>{while(k<ids.length){const t=ids[k++];try{proc(await getTx(t));SCANNED.add(t)}catch(e){bad++}d++;bar(d/ids.length*100);say(`Memindai blok: ${d} dari ${ids.length} transaksi...`)}}));
+ say(bad?`${bad} transaksi gagal dibaca, coba lagi.`:'Pemindaian blok selesai.',bad?'er':'ok');show(Object.keys(SES));view(id)}catch(e){say(e.message,'er');btn.disabled=false}}
+async function preview(u8,my){const box=$('pv');box.textContent='';
+ if(!window.pdfjsLib){const p=document.createElement('p');p.className='mut';p.textContent='Pratinjau tidak tersedia (PDF.js gagal dimuat). Gunakan tombol Unduh atau Buka di tab baru.';box.appendChild(p);return 0}
+ try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const doc=await pdfjsLib.getDocument({data:u8.slice()}).promise,max=Math.min(doc.numPages,30),w=Math.min(box.clientWidth||600,900);
+  for(let i=1;i<=max;i++){if(my!==PREV)return doc.numPages;const pg=await doc.getPage(i),v0=pg.getViewport({scale:1}),sc=w/v0.width*(window.devicePixelRatio||1),v=pg.getViewport({scale:sc}),c=document.createElement('canvas');c.width=Math.floor(v.width);c.height=Math.floor(v.height);box.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise}
+  if(doc.numPages>max){const p=document.createElement('p');p.className='mut';p.textContent=`Pratinjau menampilkan ${max} halaman pertama dari ${doc.numPages}. Unduh PDF untuk membaca semuanya.`;box.appendChild(p)}
+  return doc.numPages}catch(e){const p=document.createElement('p');p.className='mut er';p.textContent='Pratinjau gagal: '+e.message+'. PDF tetap bisa diunduh.';box.appendChild(p);return 0}}
+function view(id){const S=SES[id],miss=[];let b64='';PREV++;const my=PREV;for(let i=0;i<S.n;i++){if(S.p[i]===undefined)miss.push(i);else b64+=S.p[i]}
+ $('vc').hidden=false;URLS.forEach(u=>URL.revokeObjectURL(u));URLS=[];$('act').textContent='';$('pv').textContent='';
+ if(miss.length){if(S.blocks.size){const f=document.createElement('button');f.type='button';f.textContent='Lengkapi dari blok';f.onclick=()=>fill(id,f);$('act').appendChild(f)}$('info').className='mut er';$('info').textContent=`Dokumen ${id} belum utuh. Potongan hilang: ${miss.slice(0,20).join(', ')}${miss.length>20?'...':''}. Mungkin belum terkonfirmasi atau terlewat; coba Baca blockchain lagi nanti.`;return}
+ try{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  if(!(u[0]===0x25&&u[1]===0x50&&u[2]===0x44&&u[3]===0x46))throw Error('data bukan PDF (header %PDF tidak ditemukan). Periksa Pengaturan format.');
+  const tail=bin.slice(-1024),eof=tail.includes('%%EOF'),url=URL.createObjectURL(new Blob([u],{type:'application/pdf'}));URLS.push(url);
+  $('info').className='mut '+(eof?'ok':'er');$('info').textContent=`Sesi ${id}: ${S.n} potongan, ${u.length} byte${S.blocks.size>1?`, tersebar di ${S.blocks.size} blok`:''}.`+(eof?'':' Peringatan: penanda akhir PDF (%%EOF) tidak ditemukan, file mungkin terpotong.');
+  const a=document.createElement('a');a.href=url;a.download=`nux-${id}.pdf`;a.textContent='Unduh PDF';a.className='dl';$('act').appendChild(a);
+  const o=document.createElement('a');o.href=url;o.target='_blank';o.rel='noopener';o.textContent='Buka di tab baru';o.className='dl';$('act').appendChild(o);
+  preview(u,my).then(n=>{if(n&&my===PREV)$('info').textContent+=` ${n} halaman.`})}
+ catch(e){$('info').className='mut er';$('info').textContent='Data PDF rusak: '+e.message}}
+</script></body></html>
