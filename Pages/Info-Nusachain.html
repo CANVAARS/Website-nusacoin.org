@@ -436,10 +436,6 @@ function cuacaPage(){
         <select id="sd" aria-label="Kecamatan" disabled><option value="">Kecamatan</option></select>
         <select id="sv" aria-label="Desa/Kelurahan" disabled><option value="">Desa/Kelurahan</option></select>
       </div>
-      <div class="picker" style="margin-top:8px">
-        <input id="adm4in" placeholder="Atau isi kode BMKG (adm4), mis. 31.71.03.1001" inputmode="numeric" aria-label="Kode adm4 BMKG" style="grid-column:1/-1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit">
-        <button class="btn ghost" style="grid-column:1/-1" onclick="setAdm4Manual()">Pakai kode ini</button>
-      </div>
       <p class="note" id="pkmsg" style="margin:0 0 12px"></p>
     </details>
     <div id="wx"></div>`;
@@ -562,15 +558,6 @@ async function wxFallback(){
   }
   return null;
 }
-function setAdm4Manual(){
-  const v = String(($('#adm4in') || {}).value || '').trim();
-  if(!/^\d{2}\.\d{2}\.\d{2}\.\d{4}$/.test(v)){ toast('Format kode: 31.71.03.1001'); return; }
-  loc = {adm4: v, label: ''}; store.set('loc', loc);
-  const wl = $('#wxloc'); if(wl) wl.textContent = v;
-  const pk = $('#pk'); if(pk) pk.open = false;
-  loadWeather();
-}
-
 async function loadWeather(){
   const my = RT; if(!$('#wx')) return;
   $('#wx').innerHTML = '<div class="state"><div class="spin"></div>Memuat prakiraan…</div>';
@@ -606,7 +593,7 @@ async function loadWeather(){
   if(!j){
     if(my !== RT || !$('#wx')) return;
     const nf = /HTTP (404|400)/.test(lastErr);
-    $('#wx').innerHTML = `<div class="state"><b>Prakiraan cuaca tidak bisa dimuat</b><br>${esc(lastErr)}<br>${nf ? 'Kode ' + esc(loc.adm4) + ' tidak dikenali BMKG (daftar wilayah bisa berbeda dari data BMKG). Coba kelurahan lain, atau isi kode adm4 BMKG secara manual di "Ubah lokasi".<br>' : ''}
+    $('#wx').innerHTML = `<div class="state"><b>Prakiraan cuaca tidak bisa dimuat</b><br>${esc(lastErr)}<br>${nf ? 'Kode ' + esc(loc.adm4) + ' tidak dikenali BMKG (daftar wilayah bisa berbeda dari data BMKG). Coba kelurahan lain.<br>' : ''}
       <button class="btn" onclick="loadWeather()">Coba lagi</button><br>
       <a href="${esc(url)}" target="_blank" rel="noopener" class="link" style="display:inline-block;margin-top:12px">Tes alamat API di browser</a></div>`;
     return;
