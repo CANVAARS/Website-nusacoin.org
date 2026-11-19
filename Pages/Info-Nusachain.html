@@ -434,6 +434,10 @@ function cuacaPage(){
         <select id="sd" aria-label="Kecamatan" disabled><option value="">Kecamatan</option></select>
         <select id="sv" aria-label="Desa/Kelurahan" disabled><option value="">Desa/Kelurahan</option></select>
       </div>
+      <div class="picker" style="margin-top:8px">
+        <input id="adm4in" placeholder="Atau isi kode BMKG (adm4), mis. 31.71.03.1001" inputmode="numeric" aria-label="Kode adm4 BMKG" style="grid-column:1/-1;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit">
+        <button class="btn ghost" style="grid-column:1/-1" onclick="setAdm4Manual()">Pakai kode ini</button>
+      </div>
       <p class="note" id="pkmsg" style="margin:0 0 12px"></p>
     </details>
     <div id="wx"></div>`;
@@ -487,7 +491,7 @@ async function detectLocation(silent){
     let vil = bestWil(vils, [a.village, a.suburb, a.neighbourhood, a.quarter, a.hamlet]);
     const approx = !vil; if(!vil) vil = vils[0];
     if(!vil) throw new Error('Desa/Kelurahan tidak ditemukan');
-    loc = {adm4: adm4Of(vil.id), label: [vil.name, dis.name, reg.name, prov.name].map(title).join(', ')};
+    loc = {adm4: adm4Of(vil.id), dis: dis.id, label: [vil.name, dis.name, reg.name, prov.name].map(title).join(', ')};
     store.set('loc', loc);
     if(my === RT && $('#wxloc')){ $('#wxloc').textContent = loc.label; const pk = $('#pk'); if(pk) pk.open = false; loadWeather(); }
     if(approx) say('Kelurahan persis tidak terdeteksi, memakai kelurahan lain di kecamatan yang sama');
@@ -520,7 +524,7 @@ function initPicker(){
   link(sd, 'villages', sv, 'Desa/Kelurahan', [], 'd');
   sv.addEventListener('change', () => {
     if(!sv.value) return;
-    loc = {adm4:adm4Of(sv.value), label:[sv.options[sv.selectedIndex].text, names.d, names.r, names.p].join(', ')};
+    loc = {adm4:adm4Of(sv.value), dis: sd.value, label:[sv.options[sv.selectedIndex].text, names.d, names.r, names.p].join(', ')};
     store.set('loc', loc);
     $('#wxloc').textContent = loc.label; $('#pk').open = false;
     loadWeather();
@@ -541,15 +545,54 @@ function initPicker(){
   loadProvinces();
 }
 
+async function wxFallback(){
+  if(!loc.dis) return null;
+  let vils; try{ vils = await wilList('villages', loc.dis); }catch(e){ return null; }
+  const cands = vils.map(v => adm4Of(v.id)).filter(a => a !== loc.adm4).slice(0, 8);
+  for(const a of cands){
+    try{
+      const j = await getJson(BMKG_WX + encodeURIComponent(a), 900000, 1, 10000);
+      if(j && j.data && j.data[0] && Array.isArray(j.data[0].cuaca) && j.data[0].cuaca.length) return {a, j};
+    }catch(e){}
+  }
+  return null;
+}
+function setAdm4Manual(){
+  const v = String(($('#adm4in') || {}).value || '').trim();
+  if(!/^\d{2}\.\d{2}\.\d{2}\.\d{4}$/.test(v)){ toast('Format kode: 31.71.03.1001'); return; }
+  loc = {adm4: v, label: ''}; store.set('loc', loc);
+  const wl = $('#wxloc'); if(wl) wl.textContent = v;
+  const pk = $('#pk'); if(pk) pk.open = false;
+  loadWeather();
+}
+
 async function loadWeather(){
   const my = RT; if(!$('#wx')) return;
   $('#wx').innerHTML = '<div class="state"><div class="spin"></div>Memuat prakiraan…</div>';
   const url = BMKG_WX + encodeURIComponent(loc.adm4);
   let j;
-  try{ j = await getJson(url, 900000); }
+  const hasWx = x => !!(x && x.data && x.data[0] && Array.isArray(x.data[0].cuaca) && x.data[0].cuaca.length);
+  try{
+    j = await getJson(url, 900000);
+    if(!hasWx(j)){ lastErr = 'Server membalas HTTP 404 (data kosong)'; throw new Error(lastErr); }
+  }
   catch(e){
+    // Kode dari daftar wilayah (Emsifa) bisa berbeda dengan kode BMKG (Kepmendagri terbaru) -> coba kelurahan lain di kecamatan yang sama
+    if(/HTTP (404|400)/.test(String(e.message))){
+      const alt = await wxFallback();
+      if(my !== RT || !$('#wx')) return;
+      if(alt){
+        j = alt.j; const l2 = (j.lokasi || (j.data && j.data[0] && j.data[0].lokasi) || {});
+        loc = {adm4: alt.a, dis: loc.dis, label: [l2.desa, l2.kecamatan, l2.kotkab, l2.provinsi].filter(Boolean).map(title).join(', ')};
+        store.set('loc', loc); const wl = $('#wxloc'); if(wl) wl.textContent = loc.label;
+        toast('Kelurahan pilihan belum dikenali BMKG, memakai kelurahan lain di kecamatan yang sama');
+      }
+    }
+  }
+  if(!j){
     if(my !== RT || !$('#wx')) return;
-    $('#wx').innerHTML = `<div class="state"><b>Prakiraan cuaca tidak bisa dimuat</b><br>${esc(lastErr)}<br>
+    const nf = /HTTP (404|400)/.test(lastErr);
+    $('#wx').innerHTML = `<div class="state"><b>Prakiraan cuaca tidak bisa dimuat</b><br>${esc(lastErr)}<br>${nf ? 'Kode ' + esc(loc.adm4) + ' tidak dikenali BMKG (daftar wilayah bisa berbeda dari data BMKG). Coba kelurahan lain, atau isi kode adm4 BMKG secara manual di "Ubah lokasi".<br>' : ''}
       <button class="btn" onclick="loadWeather()">Coba lagi</button><br>
       <a href="${esc(url)}" target="_blank" rel="noopener" class="link" style="display:inline-block;margin-top:12px">Tes alamat API di browser</a></div>`;
     return;
