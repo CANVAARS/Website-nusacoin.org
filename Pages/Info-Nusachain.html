@@ -403,6 +403,8 @@ async function wilList(kind, id){
   lastErr = 'Daftar wilayah tidak dapat dimuat. ' + fails.join(' | ');
   throw err;
 }
+// Emsifa: 3 digit urut desa (+ digit ekstra kecamatan); BMKG/Kemendagri: 1 digit jenis (1=kelurahan, 2=desa) + 3 digit urut
+const altsOf = a => { const m = String(a).match(/^(\d{2}\.\d{2}\.\d{2})\.(\d)(\d{3})$/); return m ? ['2','1','0'].filter(d => d !== m[2]).map(d => `${m[1]}.${d}${m[3]}`).filter(x => !/\.0\d{3}$/.test(x)) : []; };
 const adm4Of = id => `${id.slice(0,2)}.${id.slice(2,4)}.${id.slice(4,6)}.${id.slice(6)}`;
 let loc = store.get('loc', {adm4:'31.71.03.1001', label:''});
 
@@ -548,7 +550,10 @@ function initPicker(){
 async function wxFallback(){
   if(!loc.dis) return null;
   let vils; try{ vils = await wilList('villages', loc.dis); }catch(e){ return null; }
-  const cands = vils.map(v => adm4Of(v.id)).filter(a => a !== loc.adm4).slice(0, 8);
+  const skip = new Set([loc.adm4, ...altsOf(loc.adm4)]);
+  const cands = [];
+  vils.slice(0, 6).forEach(v => { const o = adm4Of(v.id); [o, ...altsOf(o)].forEach(a => { if(!skip.has(a) && !cands.includes(a)) cands.push(a); }); });
+  cands.length = Math.min(cands.length, 14);
   for(const a of cands){
     try{
       const j = await getJson(BMKG_WX + encodeURIComponent(a), 900000, 1, 10000);
@@ -579,6 +584,15 @@ async function loadWeather(){
   catch(e){
     // Kode dari daftar wilayah (Emsifa) bisa berbeda dengan kode BMKG (Kepmendagri terbaru) -> coba kelurahan lain di kecamatan yang sama
     if(/HTTP (404|400)/.test(String(e.message))){
+      for(const a of altsOf(loc.adm4)){
+        try{
+          const jj = await getJson(BMKG_WX + encodeURIComponent(a), 900000, 1, 10000);
+          if(hasWx(jj)){ j = jj; loc = Object.assign({}, loc, {adm4: a}); store.set('loc', loc); break; }
+        }catch(e2){}
+      }
+      if(my !== RT || !$('#wx')) return;
+    }
+    if(!j && /HTTP (404|400)/.test(String(e.message))){
       const alt = await wxFallback();
       if(my !== RT || !$('#wx')) return;
       if(alt){
