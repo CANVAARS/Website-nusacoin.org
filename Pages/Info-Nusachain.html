@@ -167,6 +167,7 @@ details.pick .picker{padding-bottom:14px}
 
 <script>
 const BMKG_EQ = 'https://data.bmkg.go.id/DataMKG/TEWS/';
+const BMKG_QL = 'https://bmkg-content-inatews.storage.googleapis.com/';
 const BMKG_WX = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=';
 const WIL_SRC = [
   'https://emsifa.github.io/api-wilayah-indonesia/api/',
@@ -254,6 +255,7 @@ window.addEventListener('hashchange', route);
 /* ================= GEMPA ================= */
 const EQ_TABS = [
   {id:'terbaru', label:'Terbaru', file:'autogempa.json'},
+  {id:'m2', label:'M 2.0+', ql:true},
   {id:'m5', label:'M 5.0+', file:'gempaterkini.json'},
   {id:'dirasakan', label:'Dirasakan', file:'gempadirasakan.json'}
 ];
@@ -269,27 +271,82 @@ function ago(iso){
 const osm = g => { const [la, lo] = String(g.Coordinates || '').split(',').map(x => x.trim()); return la && lo ? `https://www.openstreetmap.org/?mlat=${la}&mlon=${lo}#map=7/${la}/${lo}` : ''; };
 
 // Parameter menit mencegah data lama dari cache browser/CDN
+
+// ---- Feed realtime inaTEWS (GeoJSON, memuat gempa kecil) untuk tab M 2.0+ ----
+const MIN_MAG = 2.0;
+const qlUrl = f => BMKG_QL + f + '?t=' + Math.floor(Date.now() / 60000);
+function qlTime(t){
+  let v = String(t || '').trim().replace(' UTC','Z').replace(' ','T');
+  if(!/(Z|[+-]\d\d:?\d\d)$/.test(v)) v += 'Z';
+  return Date.parse(v);
+}
+const BLN_EQ = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function qlRows(d){
+  const f = d && Array.isArray(d.features) ? d.features : [];
+  return f.map(x => {
+    const p = x.properties || {}, c = (x.geometry && x.geometry.coordinates) || [];
+    const t = qlTime(p.time), dt = new Date(t), mag = parseFloat(p.mag);
+    const dep = String(p.depth ?? '').trim();
+    return {
+      id: p.id, _t: t, _m: mag,
+      Magnitude: isNaN(mag) ? String(p.mag || '-') : mag.toFixed(1),
+      Wilayah: p.place || '-',
+      Tanggal: isNaN(t) ? '-' : dt.getDate() + ' ' + BLN_EQ[dt.getMonth()] + ' ' + dt.getFullYear(),
+      Jam: isNaN(t) ? '-' : pad(dt.getHours()) + ':' + pad(dt.getMinutes()) + ':' + pad(dt.getSeconds()) + ' WIB',
+      Kedalaman: dep ? (/km/i.test(dep) ? dep : dep + ' km') : '-',
+      Coordinates: c.length >= 2 ? parseFloat(c[1]) + ',' + parseFloat(c[0]) : '',
+      Lintang: c.length >= 2 ? String(parseFloat(c[1])) : '-', Bujur: c.length >= 2 ? String(parseFloat(c[0])) : '-', _ql: true,
+      DateTime: isNaN(t) ? '' : new Date(t).toISOString()
+    };
+  }).filter(g => g._m >= MIN_MAG).sort((a, b) => b._t - a._t);
+}
+async function getQL(){
+  // gempaQL.json = riwayat; lastQL.json = kejadian terakhir. Gabungkan agar paling baru ikut tampil
+  const out = new Map(); let ok = false, last;
+  for(const f of ['gempaQL.json', 'lastQL.json']){
+    try{ qlRows(await getJson(qlUrl(f), 50000)).forEach(g => out.set(g.id || g.DateTime + g.Wilayah, g)); ok = true; }
+    catch(e){ last = e; }
+  }
+  if(!ok) throw last;
+  return [...out.values()].sort((a, b) => b._t - a._t);
+}
 const eqUrl = f => BMKG_EQ + f + '?t=' + Math.floor(Date.now() / 60000);
 const eqRows = d => { const r = d && d.Infogempa && d.Infogempa.gempa; return Array.isArray(r) ? r : (r ? [r] : []); };
-function refreshEq(){ Object.keys(cache).forEach(k => { if(k.startsWith(BMKG_EQ)) delete cache[k]; }); gempaPage(true); }
+function refreshEq(){ Object.keys(cache).forEach(k => { if(k.startsWith(BMKG_EQ) || k.startsWith(BMKG_QL)) delete cache[k]; }); gempaPage(true); }
 async function gempaPage(silent){
   const my = RT; if(silent !== true) loading();
   const tab = EQ_TABS.find(t => t.id === eqTab);
-  let data;
-  try{ data = await getJson(eqUrl(tab.file), 50000); }catch(e){ if(my === RT && silent !== true) failed('gempaPage()', BMKG_EQ + tab.file); return; }
+  let data, qlList = null;
+  if(tab.ql){
+    try{ qlList = await getQL(); }catch(e){ if(my === RT && silent !== true) failed('gempaPage()', BMKG_QL + 'gempaQL.json'); return; }
+  }else if(eqTab === 'terbaru'){
+    // Terbaru = kejadian paling baru dari autogempa (M5+, ada shakemap) ATAU feed M 2.0+
+    let e1, e2;
+    try{ data = await getJson(eqUrl(tab.file), 50000); }catch(e){ e1 = e; }
+    try{ qlList = await getQL(); }catch(e){ e2 = e; }
+    if(e1 && e2){ if(my === RT && silent !== true) failed('gempaPage()', BMKG_EQ + tab.file); return; }
+  }else{
+    try{ data = await getJson(eqUrl(tab.file), 50000); }catch(e){ if(my === RT && silent !== true) failed('gempaPage()', BMKG_EQ + tab.file); return; }
+  }
   if(my !== RT) return;
   // Feed "Terbaru" hanya memuat gempa M5+; cek apakah ada gempa dirasakan yang lebih baru
-  let newer = null;
+  let newer = null, rows;
   if(eqTab === 'terbaru'){
+    const a = eqRows(data)[0], q = qlList && qlList[0];
+    const ta = a ? Date.parse(a.DateTime) : NaN, tq = q ? q._t : NaN;
+    // pakai feed M2.0+ hanya bila lebih baru dari autogempa (beda event > 2 menit); selain itu autogempa (punya shakemap)
+    const hero = (q && (!a || (tq - ta) > 120000)) ? q : (a || null);
+    rows = hero ? [hero] : [];
     try{
-      const f = eqRows(await getJson(eqUrl('gempadirasakan.json'), 50000))[0], t0 = eqRows(data)[0];
-      if(f && t0 && Date.parse(f.DateTime) > Date.parse(t0.DateTime)) newer = f;
-      else if(f && !t0) newer = f;
+      const f = eqRows(await getJson(eqUrl('gempadirasakan.json'), 50000))[0];
+      const th = hero ? (hero._t || Date.parse(hero.DateTime)) : NaN;
+      if(f && (!hero || Date.parse(f.DateTime) > th + 120000)) newer = f;
     }catch(e){}
     if(my !== RT) return;
+  }else{
+    const raw = data && data.Infogempa && data.Infogempa.gempa;
+    rows = qlList || (Array.isArray(raw) ? raw : (raw ? [raw] : []));
   }
-  const raw = data && data.Infogempa && data.Infogempa.gempa;
-  const rows = Array.isArray(raw) ? raw : (raw ? [raw] : []);
   const tabs = `<div class="chips">${EQ_TABS.map(t => `<button class="chip ${t.id===eqTab?'on':''}" onclick="eqTab='${t.id}';gempaPage()">${t.label}</button>`).join('')}
     <button class="icon-btn" style="width:34px;height:34px;margin-left:auto" aria-label="Muat ulang" onclick="refreshEq()">&#8635;</button></div>`;
   const listHTML = list => `<div class="list w">${list.map(g => {
@@ -301,12 +358,12 @@ async function gempaPage(silent){
   }).join('')}</div>`;
 
   let body;
-  if(!rows.length) body = '<div class="state">Belum ada data gempa.</div>';
+  if(!rows.length) body = `<div class="state">${qlList ? 'Belum ada gempa M ' + MIN_MAG.toFixed(1) + '+ di data terbaru.' : 'Belum ada data gempa.'}</div>`;
   else if(eqTab === 'terbaru'){
     const g = rows[0], m = parseFloat(g.Magnitude), link = osm(g);
     const shake = g.Shakemap ? `${BMKG_EQ}${encodeURIComponent(g.Shakemap)}` : '';
     body = `<div class="two"><div>
-      <div class="hero"><small>Gempa terbaru · ${esc(ago(g.DateTime))}</small>
+      <div class="hero"><small>Gempa terbaru · ${esc(ago(g.DateTime))}${g._ql ? ' · data otomatis InaTEWS' : ''}</small>
         <div class="eq-hero" style="margin-top:8px"><div class="bigm">${esc(g.Magnitude)}</div><div class="wil">${esc(g.Wilayah)}</div></div>
         <div class="dt"><span>${esc(g.Tanggal)}</span><span>${esc(g.Jam)}</span></div></div>
       <div class="kv">
@@ -322,7 +379,7 @@ async function gempaPage(silent){
   const nw = new Date();
   const newerHTML = newer ? `<h3 class="sec">Gempa dirasakan yang lebih baru · ${esc(ago(newer.DateTime))}</h3>${listHTML([newer])}` : '';
   $('#app').innerHTML = `<div class="bar"><h2>Informasi Gempa Bumi<small>Data resmi BMKG · diperbarui ${pad(nw.getHours())}:${pad(nw.getMinutes())}</small></h2></div>${tabs}${newerHTML}${body}
-    <p class="note">Sumber: BMKG. "Terbaru" dan "M 5.0+" hanya memuat gempa magnitudo 5 ke atas; gempa lebih kecil yang dirasakan ada di tab "Dirasakan". Halaman memeriksa data baru tiap 1 menit. Untuk peringatan dini resmi, ikuti kanal BMKG.</p>`;
+    <p class="note">Sumber: BMKG. "Terbaru" menampilkan kejadian paling baru dari feed M 2.0+ atau gempa M5+ (dengan peta guncangan); "M 5.0+" hanya memuat gempa magnitudo 5 ke atas; tab "M 2.0+" memuat gempa magnitudo 2,0 ke atas dari feed realtime InaTEWS (data otomatis, parameter bisa berubah setelah direview); gempa yang dirasakan ada di tab "Dirasakan". Halaman memeriksa data baru tiap 1 menit. Untuk peringatan dini resmi, ikuti kanal BMKG.</p>`;
 }
 // Muat ulang otomatis saat halaman gempa terbuka
 const onGempa = () => (location.hash.replace('#','') || 'gempa').split('/')[0] === 'gempa';
