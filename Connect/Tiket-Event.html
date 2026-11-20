@@ -446,7 +446,6 @@ async function fetchUtxosTersedia(address, bal) {
 }
 const ringkasUtxo = i => 'UTXO ditemukan: ' + i.total + ', belum terkonfirmasi: ' + i.belum + ', terpakai di mempool: ' + i.mempool + (i.gagal ? ', gagal diperiksa: ' + i.gagal : '') + '.';
 const CONFLICT_RE = /conflict|missing-?inputs|missingorspent|already spent|double.?spend|txn-mempool/i;
-const OPAQUE_RE = /broadcast failed|HTTP 400|HTTP 409|HTTP 500/i;   // server/ekstensi menyembunyikan alasan asli penolakan node
 async function broadcastRawTx(apiBase, rawHex, expectedTxid) {
   const url = `${apiBase}/broadcast`, enc = encodeURIComponent(rawHex);
   const attempts = [
@@ -681,30 +680,13 @@ async function kirimTiket() {
           if (k > 1) throw new Error(e.message + '\nKembalian transaksi sebelumnya masih di mempool dan tidak dipakai. Tunggu 1 blok terkonfirmasi, lalu klik langkah 2 lagi.');
           throw new Error(e.message + '\n' + ringkasUtxo(ut.info));
         }
-        let sg = null;
         try {
-          sg = await NXsign(b.sel, b.outputs, liveWalletData.pkey, own);
+          const sg = await NXsign(b.sel, b.outputs, liveWalletData.pkey, own);
           sent = sg.sent ? sg.txid : await broadcastRawTx(NODE_API, sg.raw, sg.txid);   // Nux Connect sudah menyiarkan sendiri
         } catch (e) {
-          if (CONFLICT_RE.test(e.message)) {
-            b.sel.forEach(u => blocked.add(kunciUtxo(u)));   // UTXO ini sudah ada di mempool: jangan dipakai lagi, coba UTXO lain
-            note('msgA', '', "Transaksi " + k + ": " + b.sel.length + " UTXO ternyata sudah ada di mempool, mencoba UTXO lain...");
-            continue;
-          }
-          if (!OPAQUE_RE.test(e.message)) throw e;
-          // Alasan asli penolakan tidak dikirim server/ekstensi. Cek ulang UTXO: kalau ada yang sudah tidak tersedia, itu penyebabnya.
-          note('msgA', '', "Transaksi " + k + " ditolak node. Memeriksa ulang UTXO...");
-          let fresh = null;
-          try { txCache.clear(); fresh = await fetchUtxosTersedia(liveWalletData.address, await getBalance(liveWalletData.address)); } catch (e2) {}
-          const stale = fresh ? b.sel.filter(u => !fresh.list.some(f => kunciUtxo(f) === kunciUtxo(u))) : [];
-          if (!stale.length) {
-            const rawInfo = b.outputs.length + " output, " + b.sel.length + " input, fee " + fmtNux(b.fee) + " NUX, nilai/tiket " + fmtNux(rc[0].sats) + " NUX";
-            console.log('Transaksi ditolak:', rawInfo, '\nTXID:', sg && sg.txid, '\nRAW:', sg && sg.raw);
-            throw new Error(e.message + "\nUTXO yang dipakai masih tersedia (bukan konflik mempool), jadi node menolak karena aturan lain. Detail: " + rawInfo + ".\nCoba: naikkan Fee per kB, naikkan nilai per tiket, atau kurangi jumlah tiket. Pastikan juga ekstensi berada di Mainnet dan node sudah sinkron.");
-          }
-          stale.forEach(u => blocked.add(kunciUtxo(u)));
-          pl = fresh.list;
-          note('msgA', '', "Transaksi " + k + ": " + stale.length + " UTXO sudah tidak tersedia (terpakai atau belum terkonfirmasi), mencoba UTXO lain...");
+          if (!CONFLICT_RE.test(e.message)) throw e;
+          b.sel.forEach(u => blocked.add(kunciUtxo(u)));   // UTXO ini sudah ada di mempool: jangan dipakai lagi, coba UTXO lain
+          note('msgA', '', "Transaksi " + k + ": " + b.sel.length + " UTXO ternyata sudah ada di mempool, mencoba UTXO lain...");
         }
       }
       if (!sent) throw new Error('UTXO terus ditolak karena sudah ada di mempool. Tunggu sampai terkonfirmasi, lalu klik langkah 2 lagi.');
