@@ -51,7 +51,7 @@ input[type=checkbox]{width:auto;margin-right:6px}
 .tk-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:#5b6b80;margin-top:6px}
 .tk-lbl:first-child{margin-top:0}
 .tk .no{font:700 1.15rem ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
-.tk-val{font-size:.85rem;font-weight:600}
+.tk-val{font-size:.85rem;font-weight:600;overflow-wrap:anywhere}
 .tk small{display:block;margin-top:8px;font-size:.62rem;line-height:1.3;color:#5b6b80}
 .tk-stub{flex:none;width:var(--stub);display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:10px 4px;border-left:2px dashed #8fa9c8;background:rgba(0,86,179,.07)}
 .tk-v{writing-mode:vertical-rl;transform:rotate(180deg);font:700 .85rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;white-space:nowrap}
@@ -86,6 +86,8 @@ input[type=checkbox]{width:auto;margin-right:6px}
 <b>Data event</b>
 <div class="row"><div><label>Nama event</label><input id="evNama" placeholder="mis. Konser Amal Nusa"></div>
 <div><label>Kode tiket (singkat)</label><input id="kode" value="NUSA26"></div></div>
+<div class="row"><div><label>Tanggal event</label><input id="evTgl" type="date"></div>
+<div><label>Tempat event</label><input id="evTempat" placeholder="mis. Gedung Serbaguna Nusa, Semarang" maxlength="80"></div></div>
 <div class="row"><div><label>Jumlah tiket (maks 300)</label><input id="nTix" type="number" min="1" max="300" value="50"></div>
 <div><label>Nilai UTXO per tiket (NUX, min 0.00015)</label><input id="nilai" type="number" step="0.00000001" value="0.0003"></div></div>
 <label>Fee per kB (NUX)</label><input id="feeRate" type="number" step="0.00000001" value="0.001">
@@ -633,7 +635,7 @@ function pakai(pl, b) {   // buang UTXO yang sudah dipakai; kembalian ada di mem
 }
 function buatTiket() {
   const n = parseInt($('nTix').value, 10), v = Math.round(parseFloat($('nilai').value) * 1e8);
-  const kode = bersih($('kode').value).replace(/\s+/g, ''), ev = bersih($('evNama').value);
+  const kode = bersih($('kode').value).replace(/\s+/g, ''), ev = bersih($('evNama').value), tgl = $('evTgl').value, tempat = bersih($('evTempat').value);
   if (!kode) return note('msgA', 'bad', 'Isi kode tiket.');
   if (!ev) return note('msgA', 'bad', 'Isi nama event.');
   if (!(n >= 1) || n > 300) return note('msgA', 'bad', 'Jumlah tiket harus 1 sampai 300.');
@@ -644,7 +646,7 @@ function buatTiket() {
     const kp = ec.genKeyPair({ entropy: Array.from(crypto.getRandomValues(new Uint8Array(32))) });
     const priv = kp.getPrivate('hex').padStart(64, '0');
     const wif = toBase58Check(Uint8Array.from([NUSACOIN_PARAMS.wif, ...hexToBytes(priv), 1]));
-    tix.push({ label: kode + '-' + String(i + 1).padStart(3, '0'), ev, wif, addr: addrFromPub(kp.getPublic(true, 'hex'), 'bech32'), sats: v, txid: '' });
+    tix.push({ label: kode + '-' + String(i + 1).padStart(3, '0'), ev, wif, addr: addrFromPub(kp.getPublic(true, 'hex'), 'bech32'), sats: v, txid: '', tgl, tempat });
   }
   unduhCsv(); render();
   note('msgA', 'ok', n + " tiket dibuat dan cadangan diunduh. Simpan berkas cadangannya, lalu lanjut ke langkah 2 untuk mendanai tiket.\nTotal nilai tiket: " + fmtNux(n * v) + " NUX (di luar fee jaringan).");
@@ -699,14 +701,20 @@ async function kirimTiket() {
 
 // ===== Daftar, cetak, cadangan =====
 function el(tag, cls, txt) { const d = document.createElement(tag); if (cls) d.className = cls; if (txt !== undefined) d.textContent = txt; return d; }
+function fmtTgl(v) {
+  const d = new Date(v + 'T00:00:00');
+  return isNaN(d) ? v : d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
 function render() {
   const sh = $('sheet'); sh.innerHTML = '';
   tix.forEach(t => {
     const c = el('div', 'tk'), main = el('div', 'tk-main');
     const top = el('div', 'tk-top'); top.append(el('span', '', 'TIKET MASUK'), el('span', '', 'ADMIT ONE'));
     const body = el('div', 'tk-body'), q = el('div', 'qrb'), info = el('div', 'tk-info');
-    info.append(el('div', 'tk-lbl', 'No. Tiket'), el('div', 'no', t.label),
-      el('div', 'tk-lbl', 'Berlaku'), el('div', 'tk-val', '1 orang, 1 kali masuk'),
+    info.append(el('div', 'tk-lbl', 'No. Tiket'), el('div', 'no', t.label));
+    if (t.tgl) info.append(el('div', 'tk-lbl', 'Tanggal'), el('div', 'tk-val', fmtTgl(t.tgl)));
+    if (t.tempat) info.append(el('div', 'tk-lbl', 'Tempat'), el('div', 'tk-val', t.tempat));
+    info.append(el('div', 'tk-lbl', 'Berlaku'), el('div', 'tk-val', '1 orang, 1 kali masuk'),
       el('small', '', 'Satu kali pakai. Jangan dibagikan atau difoto.'));
     body.append(q, info);
     main.append(top, el('div', 'tk-ev', t.ev), body);
@@ -719,7 +727,7 @@ function render() {
 }
 function unduhCsv() {
   if (!tix.length) return note('msgB', 'bad', 'Belum ada tiket.');
-  const csv = "label,event,alamat,wif,txid\n" + tix.map(t => [t.label, t.ev, t.addr, t.wif, t.txid].join(",")).join("\n");
+  const csv = "label,event,alamat,wif,txid,tanggal,tempat\n" + tix.map(t => [t.label, t.ev, t.addr, t.wif, t.txid, t.tgl || "", t.tempat || ""].join(",")).join("\n");
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "cadangan-tiket-" + tix[0].label.split('-')[0] + ".csv"; a.click();
 }
@@ -731,7 +739,7 @@ function impor() {
     r.result.split(/\r?\n/).forEach((ln, i) => {
       const p = ln.trim().split(','); if (p.length < 4 || (i === 0 && p[0] === 'label')) return;
       if (!isValidWif(p[3])) { bad++; return; }
-      out.push({ label: p[0], ev: p[1], wif: p[3], addr: addrFromPub(keyFromWif(p[3]).getPublic(true, 'hex'), 'bech32'), sats: 0, txid: p[4] || '' });
+      out.push({ label: p[0], ev: p[1], wif: p[3], addr: addrFromPub(keyFromWif(p[3]).getPublic(true, 'hex'), 'bech32'), sats: 0, txid: p[4] || '', tgl: p[5] || '', tempat: p[6] || '' });
     });
     tix = out; render();
     note('msgB', bad ? 'bad' : 'ok', out.length + " tiket dimuat." + (bad ? " " + bad + " baris dengan kunci tidak valid dilewati." : ""));
