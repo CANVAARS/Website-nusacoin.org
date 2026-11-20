@@ -99,11 +99,10 @@ function upd(){$('cnt').textContent=txt.value.length;$('vr').textContent=(+$('rt
 function loadVoices(){
  if(!window.speechSynthesis){say('Browser ini tidak mendukung Web Speech API.');return}
  var all=speechSynthesis.getVoices();
- var id=all.filter(function(v){return /^id/i.test(v.lang)||/indones/i.test(v.name)});
- voices=id.length?id:all;
+ voices=all.filter(function(v){return /^(id|in)[-_]/i.test(v.lang)||/indones/i.test(v.name)});
  vc.innerHTML='';
  voices.forEach(function(v,i){var o=document.createElement('option');o.value=i;o.textContent=v.name+' ('+v.lang+')';vc.appendChild(o)});
- if(!id.length&&all.length)say('Suara Indonesia tidak ditemukan di perangkat; memakai suara lain. Pasang paket suara Indonesia di pengaturan sistem.');
+ if(!voices.length){var o0=document.createElement('option');o0.value='';o0.textContent='Otomatis (id-ID)';vc.appendChild(o0);if(all.length)say('Suara Bahasa Indonesia belum terpasang di perangkat ini, jadi suara Inggris tidak dipakai. Pasang dulu suara Indonesia (Android: Pengaturan > Text-to-speech > Google > Bahasa Indonesia; Windows: Bahasa > Ucapan), lalu muat ulang halaman.')}
 }
 if(window.speechSynthesis){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
 
