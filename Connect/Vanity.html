@@ -36,12 +36,12 @@ button.s{background:transparent;color:var(--tx);border:1px solid var(--bd);paddi
 <div class="r3">
 <div><label>Bech32 HRP</label><input id="hrp" value="nu"></div>
 <div><label>Versi P2PKH (desimal)</label><input id="pv" type="number" value="53"></div>
-<div><label>Versi WIF (desimal)</label><input id="wv" type="number" value="128"></div>
+<div><label>Versi WIF (desimal)</label><input id="wv" type="number" value="87"></div>
 </div>
-<div class="st">Pola Nusachain: HRP <b>nu</b>, P2PKH 0x35 (53), P2SH 0x4b. Awalan Bech32 selalu <b>nu1q</b>, jadi pola dicocokkan setelah itu. Alamat Base58 diawali <b>N</b>, pola dicocokkan setelah huruf itu.</div>
+<div class="st">Pola Nusachain: HRP <b>nu</b>, P2PKH 0x35 (53), P2SH 0x4b, WIF 0x57 (87, kunci terkompresi, berawalan <b>D</b>, 52 karakter). Awalan Bech32 selalu <b>nu1q</b>, jadi pola dicocokkan setelah itu. Alamat Base58 diawali <b>N</b>, pola dicocokkan setelah huruf itu.</div>
 <label>Tempel 1 WIF Nusacoin yang sudah ada (opsional, untuk deteksi byte versi WIF)</label>
-<input id="wsample" placeholder="WIF dari wallet Nusa Anda" autocomplete="off">
-<div class="wn" id="wmsg">Byte WIF Nusacoin belum terkonfirmasi (default 128). Tempel satu WIF lama agar terdeteksi otomatis, lalu impor WIF hasil ke Nusa Wallet untuk memastikan alamatnya sama sebelum dipakai.</div>
+<input id="wsample" placeholder="mis. DwYZgjBik5j9uS7x…" autocomplete="off">
+<div class="wn" id="wmsg">Byte versi WIF Nusacoin: 87 (0x57), kunci terkompresi, sesuai contoh WIF berawalan D. Opsional: tempel satu WIF lama untuk mendeteksi ulang. Tetap impor WIF hasil ke Nusa Wallet untuk memastikan alamatnya sama sebelum dipakai.</div>
 
 <label>Pola (pisahkan koma untuk beberapa pola)</label>
 <input id="pat" placeholder="mis. nusa, 888, kmks" autocapitalize="off" autocomplete="off">
@@ -77,6 +77,13 @@ $('wsample').oninput=()=>{const s=$('wsample').value.trim();if(!s)return;const b
  if(chk!==Array.from(b.slice(-4)).map(x=>x.toString(16).padStart(2,'0')).join('')){$('wmsg').textContent='Checksum WIF salah.';return}
  $('wv').value=b[0];$('wmsg').textContent='Byte versi WIF terdeteksi: '+b[0]+(b.length===38?' (kunci terkompresi)':' (tidak terkompresi, tool ini menghasilkan yang terkompresi)')};
 const hash160=hex=>CryptoJS.RIPEMD160(CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hex))).toString();
+function verifyWif(wif,addr,c){try{const b=dec58(wif);if(!b||b.length!==38||b[0]!==c.wv||b[33]!==1)return false;
+ const chk=CryptoJS.SHA256(CryptoJS.SHA256(CryptoJS.lib.WordArray.create(b.slice(0,-4)))).toString().slice(0,8);
+ if(chk!==Array.from(b.slice(-4)).map(x=>x.toString(16).padStart(2,'0')).join(''))return false;
+ const k=Array.from(b.slice(1,33)).map(x=>x.toString(16).padStart(2,'0')).join('');
+ const h=hash160(ec.keyFromPrivate(k,'hex').getPublic(true,'hex'));
+ const a=c.t==='bech32'?bech(c.hrp,hx(h)):b58c(Uint8Array.from([c.pv,...hx(h)]));
+ return a===addr}catch(e){return false}}
 let run=false,found=[];
 function cfg(){const t=$('type').value,hrp=$('hrp').value.trim().toLowerCase(),pv=+$('pv').value,wv=+$('wv').value;
  const ci=$('ci').value==='1',pos=$('pos').value;
@@ -95,7 +102,7 @@ function match(a,c){const s=c.t==='bech32'?a.slice(c.hrp.length+2):a.slice(1);co
   if(c.pos==='pre'&&x.startsWith(q))return p;if(c.pos==='suf'&&x.endsWith(q))return p;if(c.pos==='any'&&x.includes(q))return p}return null}
 function esc(s){return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}
 function show(){$('out').innerHTML=found.map((f,i)=>`<div class="res"><div class="k">Alamat</div><div class="v">${f.addr}</div>
-<div class="k">WIF (private key)</div><div class="v">${f.wif}</div><div class="k">Private key (hex)</div><div class="v">${f.hex}</div>
+<div class="k">WIF (private key) ${f.ok?"✓ terverifikasi (decode → alamat sama)":"⚠ gagal verifikasi, jangan dipakai"}</div><div class="v">${f.wif}</div><div class="k">Private key (hex)</div><div class="v">${f.hex}</div>
 <button class="s" data-c="${f.addr}">Salin alamat</button> <button class="s" data-c="${f.wif}">Salin WIF</button></div>`).join('')||'Belum ada hasil.'}
 $('out').onclick=e=>{const t=e.target.dataset.c;if(t)navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>{e.target.textContent='Tersalin'})};
 $('go').onclick=()=>{const c=cfg(),er=check(c);if(er){$('st').textContent=er;return}
@@ -109,7 +116,7 @@ $('go').onclick=()=>{const c=cfg(),er=check(c);if(er){$('st').textContent=er;ret
    const addr=c.t==='bech32'?bech(c.hrp,hx(h)):b58c(Uint8Array.from([c.pv,...hx(h)]));
    n++;const m=match(addr,c);
    if(m){const hex=kb.toString(16,64);const wif=b58c(Uint8Array.from([c.wv,...hx(hex),1]));
-    found.unshift({addr,hex,wif});show();}
+    found.unshift({addr,hex,wif,ok:verifyWif(wif,addr,c)});show();}
    P=P.add(ec.g);kb=kb.addn(1);}
   const el=(performance.now()-t0)/1000,sp=n/el;
   $('st').textContent=`${n.toLocaleString('id-ID')} alamat dicek · ${Math.round(sp).toLocaleString('id-ID')}/detik · ditemukan ${found.length} · perkiraan ±${Math.round(exp).toLocaleString('id-ID')} percobaan ≈ ${fmt(exp/sp)}`;
