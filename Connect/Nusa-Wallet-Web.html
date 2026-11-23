@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nusa Wallet Web</title>
+<link rel="icon" href="https://i.ibb.co.com/k23qP4kD/NUSA-5.png">
+<style>
+:root{--bg:#050d1f;--pn:#0b1a38;--ln:#1d3566;--gd:#3b82f6;--gr:#7db4ff;--tx:#e8eefc;--mu:#8da2c8;--rd:#ff6b6b;--wn:#f5b942}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:460px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+header{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+header img{width:44px;height:44px}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 8px}
+.sub{color:var(--mu);font-size:13px}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:14px;padding:16px;margin-bottom:14px}
+.addr{font:13px/1.4 ui-monospace,Menlo,monospace;word-break:break-all;color:var(--gr);margin:6px 0 10px}
+.bal{font-size:30px;font-weight:700;color:var(--gd)}
+input,textarea{width:100%;background:#07142b;border:1px solid var(--ln);border-radius:10px;color:var(--tx);padding:11px 12px;font:inherit;margin:6px 0}
+textarea{font:12px ui-monospace,Menlo,monospace;min-height:90px;resize:vertical}
+button{background:var(--gd);color:#fff;border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.ghost{background:transparent;color:var(--tx);border:1px solid var(--ln)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--gr);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+.site{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--ln);word-break:break-all;font-size:13px}
+.site button{flex:none;padding:6px 10px;font-size:13px}
+.warn{border-color:var(--wn)}.warn b{color:var(--wn)}
+.bar{background:#0f2a5c;border:1px solid var(--gr);border-radius:10px;padding:8px 12px;margin-bottom:14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.err{color:var(--rd);font-size:13px;min-height:18px}
+.modal{position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--pn);border:1px solid var(--ln);border-radius:18px 18px 0 0;width:100%;max-width:460px;padding:20px 16px max(20px,env(safe-area-inset-bottom))}
+.sheet .o{color:var(--gr);font:13px ui-monospace,monospace;word-break:break-all;margin:0 0 8px}
+.sheet pre{white-space:pre-wrap;word-break:break-word;background:#07142b;border-radius:10px;padding:10px;margin:0 0 14px;font:13px ui-monospace,monospace;max-height:30vh;overflow:auto}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+<script type="module">
+
+/* ====== KONFIG ====== */
+const API='https://api.nusacoin.org';            // UTXO, mempool, broadcast
+const EXPLORER='https://explorer.nusacoin.org';  // saldo dan detail transaksi
+const DEFAULT_FEE=0.0001, DUST_SATS=546;
+const LOGO='https://i.ibb.co.com/k23qP4kD/NUSA-5.png';
+
+/* ====== DIPORT DARI Nusa-Card.html ====== */
+  const NUSACOIN_PARAMS = {
+    bech32: 'nu',
+    pubKeyHash: 0x35, // Awalan 'N'
+    scriptHash: 0x4b, // Awalan 'X'
+    wif: 0x57         // Prefix WIF Nusacoin
+  };
+
+  const BECH32_CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+  function polymod(values) {
+    let chk = 1;
+    for (let p = 0; p < values.length; ++p) {
+      let top = chk >> 25;
+      chk = ((chk & 0x1ffffff) << 5) ^ values[p];
+      if ((top >> 0) & 1) chk ^= 0x3b6a57b2;
+      if ((top >> 1) & 1) chk ^= 0x26508e6d;
+      if ((top >> 2) & 1) chk ^= 0x1ea119fa;
+      if ((top >> 3) & 1) chk ^= 0x3d4233dd;
+      if ((top >> 4) & 1) chk ^= 0x2a1462b3;
+    }
+    return chk;
+  }
+
+  function hrpExpand(hrp) {
+    let ret = [];
+    for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) >> 5);
+    ret.push(0);
+    for (let i = 0; i < hrp.length; ++i) ret.push(hrp.charCodeAt(i) & 31);
+    return ret;
+  }
+
+  function convertBits(data, frombits, tobits, pad = true) {
+    let acc = 0, bits = 0, ret = [], maxv = (1 << tobits) - 1;
+    for (let i = 0; i < data.length; ++i) {
+      let value = data[i];
+      if (value < 0 || value >> frombits !== 0) return null;
+      acc = (acc << frombits) | value;
+      bits += frombits;
+      while (bits >= tobits) {
+        bits -= tobits;
+        ret.push((acc >> bits) & maxv);
+      }
+    }
+    if (pad) {
+      if (bits > 0) ret.push((acc << (tobits - bits)) & maxv);
+    } else if (bits >= frombits || ((acc << (tobits - bits)) & maxv)) {
+      return null;
+    }
+    return ret;
+  }
+
+  function toBech32(hrp, version, program) {
+    let data = [version].concat(convertBits(program, 8, 5, true));
+    let checksumData = hrpExpand(hrp).concat(data).concat([0, 0, 0, 0, 0, 0]);
+    let mod = polymod(checksumData) ^ 1;
+    let ret = hrp + '1';
+    for (let p = 0; p < data.length; ++p) ret += BECH32_CHARSET.charAt(data[p]);
+    for (let p = 0; p < 6; ++p) ret += BECH32_CHARSET.charAt((mod >> (5 * (5 - p))) & 31);
+    return ret;
+  }
+
+  function toBase58(buffer) {
+    let digits = [0];
+    for (let i = 0; i < buffer.length; i++) {
+      for (let j = 0; j < digits.length; j++) digits[j] <<= 8;
+      digits[0] += buffer[i];
+      let carry = 0;
+      for (let j = 0; j < digits.length; ++j) {
+        digits[j] += carry;
+        carry = (digits[j] / 58) | 0;
+        digits[j] %= 58;
+      }
+      while (carry) {
+        digits.push(carry % 58);
+        carry = (carry / 58) | 0;
+      }
+    }
+    for (let i = 0; buffer[i] === 0 && i < buffer.length - 1; i++) digits.push(0);
+    return digits.reverse().map(d => ALPHABET[d]).join('');
+  }
+
+  function fromBase58(string) {
+    let bytes = [0];
+    for (let i = 0; i < string.length; i++) {
+      let c = string[i];
+      let value = ALPHABET.indexOf(c);
+      if (value === -1) throw new Error("Karakter Base58 tidak valid");
+      for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
+      bytes[0] += value;
+      let carry = 0;
+      for (let j = 0; j < bytes.length; ++j) {
+        bytes[j] += carry;
+        carry = bytes[j] >> 8;
+        bytes[j] &= 0xff;
+      }
+      while (carry) {
+        bytes.push(carry & 0xff);
+        carry >>= 8;
+      }
+    }
+    for (let i = 0; string[i] === '1' && i < string.length - 1; i++) bytes.push(0);
+    return new Uint8Array(bytes.reverse());
+  }
+
+  function toBase58Check(payload) {
+    const sha1 = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(payload));
+    const sha2 = CryptoJS.SHA256(sha1);
+    
+    const checksum = sha2.words.slice(0, 1);
+    const checksumBytes = [
+      (checksum[0] >>> 24) & 0xff,
+      (checksum[0] >>> 16) & 0xff,
+      (checksum[0] >>> 8) & 0xff,
+      checksum[0] & 0xff
+    ];
+
+    const fullPayload = new Uint8Array(payload.length + 4);
+    fullPayload.set(payload);
+    fullPayload.set(checksumBytes, payload.length);
+
+    return toBase58(fullPayload);
+  }
+
+  function numToLEHex(val, bytes) {
+    let hex = Number(val).toString(16);
+    if (hex.length % 2 !== 0) hex = '0' + hex;
+    while (hex.length < bytes * 2) hex = '0' + hex;
+    return hex.match(/../g).reverse().join('');
+  }
+
+  function numTo64BitLEHex(val) {
+    let hex = BigInt(val).toString(16);
+    while (hex.length < 16) hex = '0' + hex;
+    return hex.match(/../g).reverse().join('');
+  }
+
+  function varIntHex(n) {
+    if (n < 0xfd) return numToLEHex(n, 1);
+    if (n <= 0xffff) return 'fd' + numToLEHex(n, 2);
+    return 'fe' + numToLEHex(n, 4);
+  }
+
+  function bytesToHex(bytes) {
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function reverseHex(hex) { return hex.match(/../g).reverse().join(''); }
+
+  function sha256dHex(hex) {
+    return CryptoJS.SHA256(CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hex))).toString();
+  }
+
+  function hash160Hex(hex) {
+    return CryptoJS.RIPEMD160(CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hex))).toString();
+  }
+
+  // Alamat Nusacoin -> scriptPubKey (hex). Mendukung P2PKH (N...), P2SH (X...), Bech32 (nu1q...)
+  function addressToScriptHex(address) {
+    const addr = (address || '').trim();
+    if (!addr) throw new Error("Alamat kosong.");
+    const lower = addr.toLowerCase();
+
+    if (lower.startsWith(NUSACOIN_PARAMS.bech32 + '1')) {
+      if (addr !== lower && addr !== addr.toUpperCase()) throw new Error("Alamat bech32 tidak valid (huruf campuran).");
+      const pos = lower.lastIndexOf('1');
+      const hrp = lower.slice(0, pos);
+      if (hrp !== NUSACOIN_PARAMS.bech32) throw new Error("Prefix alamat bech32 bukan Nusacoin.");
+      const data = [];
+      for (const c of lower.slice(pos + 1)) {
+        const v = BECH32_CHARSET.indexOf(c);
+        if (v < 0) throw new Error("Karakter alamat bech32 tidak valid.");
+        data.push(v);
+      }
+      if (data.length < 7) throw new Error("Alamat bech32 terlalu pendek.");
+      if (polymod(hrpExpand(hrp).concat(data)) !== 1) throw new Error("Checksum alamat bech32 salah. Periksa kembali alamat tujuan.");
+      if (data[0] !== 0) throw new Error("Hanya SegWit v0 (nu1q...) yang didukung.");
+      const prog = convertBits(data.slice(1, -6), 5, 8, false);
+      if (!prog) throw new Error("Program alamat bech32 tidak valid.");
+      if (prog.length === 20) return '0014' + bytesToHex(prog);
+      if (prog.length === 32) return '0020' + bytesToHex(prog);
+      throw new Error("Panjang program alamat bech32 tidak valid.");
+    }
+
+    let raw;
+    try { raw = fromBase58(addr); } catch (e) { throw new Error("Alamat tidak valid (bukan Base58/Bech32)."); }
+    if (raw.length !== 25) throw new Error("Panjang alamat tidak valid.");
+    const payload = raw.slice(0, 21);
+    if (sha256dHex(bytesToHex(payload)).slice(0, 8) !== bytesToHex(raw.slice(21))) {
+      throw new Error("Checksum alamat salah. Periksa kembali alamat tujuan.");
+    }
+    const h = bytesToHex(raw.slice(1, 21));
+    if (payload[0] === NUSACOIN_PARAMS.pubKeyHash) return '76a914' + h + '88ac';
+    if (payload[0] === NUSACOIN_PARAMS.scriptHash) return 'a914' + h + '87';
+    throw new Error("Prefix alamat bukan alamat Nusacoin.");
+  }
+
+  // Susun + tanda tangani transaksi. Mendukung input P2PKH (legacy) & P2WPKH (SegWit, BIP143)
+  function buildSignedTransaction(utxos, outputs, privateKeyWif, ownScript) {
+    const decoded = fromBase58(privateKeyWif);
+    const ec = new elliptic.ec('secp256k1');
+    const keyPair = ec.keyFromPrivate(decoded.slice(1, 33));
+    const pubHex = keyPair.getPublic(true, 'hex');
+    const pkh = hash160Hex(pubHex);
+
+    const isSegwit = ownScript === '0014' + pkh;
+    const isLegacy = ownScript === '76a914' + pkh + '88ac';
+    if (!isSegwit && !isLegacy) {
+      throw new Error("Private key tidak cocok dengan alamat wallet, atau tipe alamat (P2SH) tidak bisa dibelanjakan dari kartu ini. Pilih format Bech32 atau P2PKH saat membuka wallet.");
+    }
+
+    const VERSION = '01000000', LOCKTIME = '00000000', SEQ = 'ffffffff', SIGHASH_ALL = '01000000';
+    const outsHex = outputs.map(o => numTo64BitLEHex(o.value) + varIntHex(o.script.length / 2) + o.script).join('');
+    const outsSer = varIntHex(outputs.length) + outsHex;
+    const ins = utxos.map(u => ({ prev: reverseHex(u.txid) + numToLEHex(u.vout, 4), value: u.value }));
+    const signDigest = (digestHex) => keyPair.sign(digestHex, { canonical: true }).toDER('hex') + '01';
+
+    let inputsSer = varIntHex(ins.length);
+    let witness = '';
+
+    if (isLegacy) {
+      ins.forEach((inp, i) => {
+        let pre = VERSION + varIntHex(ins.length);
+        ins.forEach((o, j) => {
+          pre += o.prev + (i === j ? varIntHex(ownScript.length / 2) + ownScript : '00') + SEQ;
+        });
+        pre += outsSer + LOCKTIME + SIGHASH_ALL;
+        const sig = signDigest(sha256dHex(pre));
+        const scriptSig = varIntHex(sig.length / 2) + sig + varIntHex(pubHex.length / 2) + pubHex;
+        inputsSer += inp.prev + varIntHex(scriptSig.length / 2) + scriptSig + SEQ;
+      });
+    } else {
+      const hashPrevouts = sha256dHex(ins.map(x => x.prev).join(''));
+      const hashSequence = sha256dHex(ins.map(() => SEQ).join(''));
+      const hashOutputs = sha256dHex(outsHex);
+      const scriptCode = '1976a914' + pkh + '88ac';
+      ins.forEach(inp => {
+        const pre = VERSION + hashPrevouts + hashSequence + inp.prev + scriptCode +
+                    numTo64BitLEHex(inp.value) + SEQ + hashOutputs + LOCKTIME + SIGHASH_ALL;
+        const sig = signDigest(sha256dHex(pre));
+        witness += '02' + varIntHex(sig.length / 2) + sig + varIntHex(pubHex.length / 2) + pubHex;
+        inputsSer += inp.prev + '00' + SEQ;
+      });
+    }
+
+    const legacySer = VERSION + inputsSer + outsSer + LOCKTIME;
+    const raw = isSegwit ? VERSION + '0001' + inputsSer + outsSer + witness + LOCKTIME : legacySer;
+    const txid = reverseHex(sha256dHex(legacySer));
+    return { raw, txid };
+  }
+
+  function normalizeUtxos(data, ownAddr) {
+    let arr = data;
+    if (data && !Array.isArray(data)) {
+      arr = data.result ?? data.utxos ?? data.unspent ?? data.unspents ?? data.data ?? data.unspent_outputs ?? null;
+      if (arr && !Array.isArray(arr)) arr = arr.utxos ?? arr.unspents ?? arr.unspent ?? null;
+    }
+    if (!Array.isArray(arr)) return null;
+    return arr.map(u => {
+      if (ownAddr && typeof u.address === 'string' && u.address !== ownAddr) return { txid: null };
+      const txid = u.txid || u.tx_hash || u.hash || u.txHash;
+      const vout = [u.vout, u.n, u.tx_output_n, u.tx_pos, u.index, u.outputIndex].find(v => v !== undefined);
+      let value;
+      if (u.satoshis !== undefined) value = Number(u.satoshis);
+      else if (u.amount !== undefined) value = Math.round(Number(u.amount) * 1e8);
+      else if (u.value !== undefined) value = Number.isInteger(Number(u.value)) ? Number(u.value) : Math.round(Number(u.value) * 1e8);
+      let confirmed = true;
+      if (u.confirmations !== undefined) confirmed = Number(u.confirmations) > 0;
+      else if (u.confirmed !== undefined) confirmed = !!u.confirmed;
+      else if (u.status && u.status.confirmed !== undefined) confirmed = !!u.status.confirmed;
+      return { txid, vout: Number(vout), value, confirmed };
+    }).filter(u => typeof u.txid === 'string' && /^[0-9a-fA-F]{64}$/.test(u.txid) &&
+                   Number.isInteger(u.vout) && Number.isFinite(u.value) && u.value > 0);
+  }
+
+  function decodeRawTxHex(hex) {
+    let p = 0;
+    const rd = n => { const h = hex.substr(p, n * 2); p += n * 2; return h; };
+    const rdVar = () => {
+      const b = parseInt(rd(1), 16);
+      if (b < 0xfd) return b;
+      if (b === 0xfd) return parseInt(reverseHex(rd(2)), 16);
+      if (b === 0xfe) return parseInt(reverseHex(rd(4)), 16);
+      return Number(BigInt('0x' + reverseHex(rd(8))));
+    };
+    rd(4); // version
+    if (hex.substr(p, 4) === '0001') p += 4; // marker+flag segwit
+    const nIn = rdVar(), ins = [];
+    for (let i = 0; i < nIn; i++) {
+      const prev = reverseHex(rd(32));
+      const vout = parseInt(reverseHex(rd(4)), 16);
+      rd(rdVar());
+      const seq = parseInt(reverseHex(rd(4)), 16);
+      ins.push({ txid: prev, vout, seq });
+    }
+    const nOut = rdVar(), outs = [];
+    for (let i = 0; i < nOut; i++) {
+      const value = Number(BigInt('0x' + reverseHex(rd(8))));
+      const script = rd(rdVar());
+      outs.push({ n: i, value, script });
+    }
+    if (!ins.length || !outs.length) throw new Error('raw TX tidak valid');
+    return { ins, outs, size: hex.length / 2 };
+  }
+
+  const CONFLICT_RE = /conflict|missing-?inputs|missingorspent|already spent|double.?spend|txn-mempool/i;
+
+  // --- Broadcast via POST /broadcast (parameter: raw) ---
+  async function broadcastRawTx(apiBase, rawHex, expectedTxid) {
+    const url = `${apiBase}/broadcast`;
+    const enc = encodeURIComponent(rawHex);
+    const attempts = [
+      ['form', () => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'raw=' + enc })],
+      ['json', () => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw: rawHex }) })],
+      ['multipart', () => { const fd = new FormData(); fd.append('raw', rawHex); return fetch(url, { method: 'POST', body: fd }); }],
+      ['query-post', () => fetch(`${url}?raw=${enc}`, { method: 'POST' })],
+      ['query-get', () => fetch(`${url}?raw=${enc}`)]
+    ];
+    // Error yang menandakan server tidak membaca parameter (format request salah), bukan penolakan node
+    const formatErr = /expected type|got null|got undefined|param|argument|no raw/i;
+    const notes = [];
+    for (const [name, attempt] of attempts) {
+      let res;
+      try { res = await attempt(); } catch (e) { notes.push(name + ': ' + e.message); continue; }
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch (e) {}
+      if (json && typeof json === 'object' && ('result' in json || 'error' in json)) {
+        if (json.error) {
+          const msg = typeof json.error === 'object' ? (json.error.message || JSON.stringify(json.error)) : String(json.error);
+          if (formatErr.test(msg)) { notes.push(name + ': ' + msg); continue; }
+          // TX yang sama sudah ada di mempool/blok = sukses (bukan konflik)
+          if (expectedTxid && !CONFLICT_RE.test(msg) && /already|known|duplicate/i.test(msg)) return expectedTxid;
+          const err = new Error(msg);
+          err.conflict = CONFLICT_RE.test(msg);
+          throw err;
+        }
+        if (json.result) return String(json.result);
+      }
+      notes.push(`${name}: HTTP ${res.status} ${text.slice(0, 100)}`);
+    }
+    const cors = notes.some(n => /failed to fetch|networkerror|load failed/i.test(n))
+      ? "\nKemungkinan diblokir CORS oleh browser: centang 'Hanya tanda tangani', lalu tempel raw TX ke halaman /broadcast di api.nusacoin.org."
+      : "";
+    const finalErr = new Error("Broadcast gagal.\n- " + notes.join("\n- ") + cors);
+    finalErr.conflict = notes.some(n => CONFLICT_RE.test(n));
+    throw finalErr;
+  }
+
+/* ====== BRIDGE: skrip ini disalin ke DApp (mengganti window.nusa extension) ====== */
+function SHIM(W){
+  if(window.nusa)return;
+  var O=new URL(W).origin,win=null,ready=false,n=0,pend={},acc=null;
+  function target(){
+    if(window.name==='nusa-dapp'&&window.opener&&!window.opener.closed)return window.opener;
+    if(win&&!win.closed)return win;
+    ready=false;win=window.open(W+'#dapp','nusa-wallet','width=420,height=700');return win;
+  }
+  addEventListener('message',function(e){
+    var d=e.data;if(!d||d.nusa!==1||e.origin!==O)return;
+    if(d.ready){ready=true;return}
+    var p=pend[d.id];if(!p)return;delete pend[d.id];
+    if(d.error){var x=new Error(d.error);x.code=d.code||4001;p.rej(x)}else p.res(d.result);
+  });
+  function req(method,params){
+    return new Promise(function(res,rej){
+      var t=target(),id=++n,tries=0;pend[id]={res:res,rej:rej};
+      if(!t){delete pend[id];return rej(new Error('Popup diblokir browser'))}
+      (function go(){
+        if(ready){t.postMessage({nusa:1,id:id,method:method,params:params||{}},O);return}
+        if(++tries>200){delete pend[id];return rej(new Error('Wallet tidak merespons'))}
+        try{t.postMessage({nusa:1,ping:1},O)}catch(_){}
+        setTimeout(go,300);
+      })();
+    });
+  }
+  var api={
+    isNusaWeb:true,
+    connect:function(){return req('connect').then(function(r){acc=r.address;return r})},
+    disconnect:function(){acc=null;return req('disconnect')},
+    getAddress:function(){return req('getAddress')},
+    getBalance:function(){return req('getBalance')},
+    signMessage:function(m){return req('signMessage',{message:m})},
+    sendNUX:function(to,amount){return req('sendNUX',{to:to,amount:amount})},
+    request:function(o){return req(o.method,o.params)},
+    isConnected:function(){return !!acc}
+  };
+  window.nusa=api;if(!window.nux)window.nux=api;
+}
+const shimText=url=>'('+SHIM.toString()+')("'+url+'");';
+
+/* ====== STATE ====== */
+const $=s=>document.querySelector(s), LS=localStorage, enc=new TextEncoder();
+const b64=u=>btoa(String.fromCharCode(...u)), ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let S={}, waiters=[], perms=JSON.parse(LS.nusa_perm||'[]'), err='', fresh=null, bal='…';
+const dapp=location.hash==='#dapp'&&!!window.opener;
+const savePerm=()=>LS.nusa_perm=JSON.stringify(perms);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ====== KRIPTO ====== */
+async function kdf(pin,salt){
+  const k=await crypto.subtle.importKey('raw',enc.encode(pin),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:200000,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function seal(wif,pin){
+  const s=crypto.getRandomValues(new Uint8Array(16)),i=crypto.getRandomValues(new Uint8Array(12));
+  const c=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:i},await kdf(pin,s),enc.encode(wif)));
+  return JSON.stringify({s:b64(s),i:b64(i),c:b64(c)});
+}
+async function open(pin){
+  const o=JSON.parse(LS.nusa_ks);
+  const p=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(o.i)},await kdf(pin,ub(o.s)),ub(o.c));
+  return new TextDecoder().decode(p);
+}
+const hexToBytes=h=>Uint8Array.from(h.match(/../g)||[],x=>parseInt(x,16));
+const EC=new elliptic.ec('secp256k1');
+function fromWIF(wif){
+  const d=fromBase58(wif.trim());
+  if(d.length<37||d[0]!==NUSACOIN_PARAMS.wif)throw new Error('WIF tidak valid untuk Nusacoin');
+  if(sha256dHex(bytesToHex(d.slice(0,-4))).slice(0,8)!==bytesToHex(d.slice(-4)))throw new Error('Checksum WIF salah');
+  return d.slice(1,33);
+}
+function addrOf(key){
+  const pub=EC.keyFromPrivate(key).getPublic(true,'hex');
+  return toBech32(NUSACOIN_PARAMS.bech32,0,hexToBytes(hash160Hex(pub)));
+}
+function newWIF(){
+  const k=crypto.getRandomValues(new Uint8Array(32));
+  return toBase58Check(new Uint8Array([NUSACOIN_PARAMS.wif,...k,1]));
+}
+function setKey(wif){
+  const key=fromWIF(wif);
+  S={wif,key,addr:addrOf(key)};
+  waiters.splice(0).forEach(r=>r());
+  refreshBal();
+}
+
+/* ====== JARINGAN ====== */
+async function balance(a){
+  const r=await fetch(`${EXPLORER}/ext/getbalance/${encodeURIComponent(a)}`);
+  if(!r.ok)throw new Error('Gagal mengambil saldo');
+  const v=parseFloat(await r.text());return isNaN(v)?0:v;
+}
+async function refreshBal(){try{bal=await balance(S.addr)}catch(_){bal='—'}render()}
+async function signMsg(m){
+  const h=CryptoJS.SHA256(CryptoJS.enc.Utf8.parse('Nusa Signed Message:\n'+m)).toString();
+  const s=EC.keyFromPrivate(S.key).sign(h,{canonical:true});
+  return {address:S.addr,message:m,signature:s.r.toString(16,64)+s.s.toString(16,64)};
+}
+const HEXRE=/^[0-9a-fA-F]{20,}$/;
+async function getHex(txid){
+  for(const u of [`${EXPLORER}/api/getrawtransaction?txid=${txid}&decrypt=0`,`${EXPLORER}/api/getrawtransaction?txid=${txid}`,`${API}/rawtransaction/${txid}`]){
+    try{
+      const r=await fetch(u);if(!r.ok)continue;let t=(await r.text()).trim();
+      if(!HEXRE.test(t)){try{const j=JSON.parse(t);t=typeof j==='string'?j:(j.result??j.hex??'')}catch(_){continue}}
+      if(typeof t==='string'&&HEXRE.test(t))return t;
+    }catch(_){}
+  }
+  return null;
+}
+async function mempoolSpent(addr){
+  const spent=new Set();
+  try{
+    const j=await (await fetch(`${API}/mempool/${encodeURIComponent(addr)}`)).json();
+    const res=j&&j.result!==undefined?j.result:j;
+    const list=Array.isArray(res)?res:((res&&(res.tx||res.txs||res.transactions))||[]);
+    await Promise.all(list.map(async it=>{
+      const id=typeof it==='string'?it:it&&(it.txid||it.hash);
+      const hex=(it&&(it.hex||it.raw))||(id&&await getHex(id));if(!hex)return;
+      try{decodeRawTxHex(hex).ins.forEach(i=>spent.add(i.txid+':'+i.vout))}catch(_){}
+    }));
+  }catch(_){}
+  return spent;
+}
+async function explorerUtxos(addr){
+  const lr=await fetch(`${EXPLORER}/ext/getaddresstxs/${addr}/0/200`);
+  if(!lr.ok)throw new Error('explorer: daftar transaksi gagal');
+  const raw=await lr.json(),arr=Array.isArray(raw)?raw:(raw.data||raw.records||[]);
+  const ids=[...new Set(arr.map(i=>i.txid||(typeof i==='string'?i:null)).filter(Boolean))];
+  const dec=await Promise.all(ids.map(async id=>{
+    const r=await fetch(`${EXPLORER}/api/getrawtransaction?txid=${id}&decrypt=1`);
+    if(!r.ok)throw new Error('explorer: getrawtransaction gagal');
+    const j=await r.json();if(!j||!Array.isArray(j.vout))throw new Error('explorer: detail tidak lengkap');return j;
+  }));
+  const sp=new Set();dec.forEach(t=>(t.vin||[]).forEach(v=>{if(v.txid!==undefined)sp.add(v.txid+':'+v.vout)}));
+  const out=[];
+  dec.forEach(t=>(t.vout||[]).forEach(o=>{
+    const k=o.scriptPubKey||{},ad=k.addresses||(k.address?[k.address]:[]);
+    if(ad.includes(addr)&&!sp.has(t.txid+':'+o.n))out.push({txid:t.txid,vout:o.n,value:Math.round(Number(o.value)*1e8),confirmed:true});
+  }));
+  return out.filter(u=>u.value>0);
+}
+async function fetchUtxos(addr,bal){
+  const enc=encodeURIComponent(addr);
+  const match=l=>{const t=l.filter(u=>u.confirmed!==false).reduce((s,u)=>s+u.value,0)/1e8;return Math.abs(t-bal)<=Math.max(1e-5,bal*.001)};
+  const srcs=['utxos','unspent','utxo','getutxo'].map(p=>async()=>{
+    const r=await fetch(`${API}/${p}/${enc}`);if(!r.ok)throw new Error('HTTP '+r.status);return normalizeUtxos(await r.json(),addr);
+  });
+  srcs.push(()=>explorerUtxos(addr));
+  for(const f of srcs){try{const l=await f();if(l&&match(l))return l}catch(_){}}
+  throw new Error('Tidak ada sumber UTXO yang cocok dengan saldo explorer');
+}
+/* UTXO yang baru dipakai / kembalian lokal, supaya tidak bentrok di mempool */
+const PS='nusaweb_pending_v1';let pend={spent:[],utxos:[]};
+function lp(){
+  try{
+    const d=JSON.parse(LS[PS]||'null'),now=Date.now();
+    pend=d&&d.a===S.addr?{spent:(d.spent||[]).filter(x=>now-x[1]<=900000),utxos:(d.utxos||[]).filter(u=>now-u.t<=3600000)}:{spent:[],utxos:[]};
+  }catch(_){pend={spent:[],utxos:[]}}
+}
+const sp=()=>{try{LS[PS]=JSON.stringify({a:S.addr,...pend})}catch(_){}};
+const locked=k=>pend.spent.some(x=>x[0]===k);
+const lock=u=>pend.spent.push([u.txid+':'+u.vout,Date.now()]);
+async function sendNUX(to,amount){
+  const toScript=addressToScriptHex(to),ownScript=addressToScriptHex(S.addr);
+  const amt=Math.round(amount*1e8),fee=Math.round(DEFAULT_FEE*1e8);
+  if(amt<DUST_SATS)throw new Error('Jumlah di bawah batas dust');
+  lp();const b=await balance(S.addr);
+  for(let at=0;at<3;at++){
+    const utxos=await fetchUtxos(S.addr,b),spent=await mempoolSpent(S.addr);
+    const pool=utxos.filter(u=>!spent.has(u.txid+':'+u.vout)&&!locked(u.txid+':'+u.vout));
+    pend.utxos.forEach(p=>{
+      const k=p.txid+':'+p.vout;
+      if(!pool.some(u=>u.txid===p.txid&&u.vout===p.vout)&&!spent.has(k)&&!locked(k))pool.push({txid:p.txid,vout:p.vout,value:p.value,confirmed:false});
+    });
+    pool.sort((a,c)=>((a.confirmed===false)-(c.confirmed===false))||(c.value-a.value));
+    const sel=[];let acc=0;
+    for(const u of pool){sel.push(u);acc+=u.value;if(acc>=amt+fee)break}
+    if(acc<amt+fee)throw new Error('Saldo tersedia tidak cukup. Sebagian UTXO mungkin terkunci menunggu konfirmasi.');
+    const outs=[{value:amt,script:toScript}];let change=acc-amt-fee;
+    if(change>=DUST_SATS)outs.push({value:change,script:ownScript});else change=0;
+    const {raw,txid}=buildSignedTransaction(sel,outs,S.wif,ownScript);
+    try{
+      const sent=await broadcastRawTx(API,raw,txid);
+      sel.forEach(lock);pend.utxos=pend.utxos.filter(p=>!locked(p.txid+':'+p.vout));
+      if(change>0)pend.utxos.push({txid,vout:1,value:change,t:Date.now()});
+      sp();return sent;
+    }catch(e){
+      if(e.conflict&&at<2){sel.forEach(lock);sp();continue}
+      throw e;
+    }
+  }
+}
+
+/* ====== PERSETUJUAN ====== */
+function ask(title,origin,detail){
+  return new Promise(res=>{
+    const m=document.createElement('div');m.className='modal';
+    m.innerHTML='<div class="sheet"><h2></h2><p class="o"></p><pre></pre><div class="row"><button class="ghost">Tolak</button><button>Setujui</button></div></div>';
+    m.querySelector('h2').textContent=title;m.querySelector('.o').textContent=origin;m.querySelector('pre').textContent=detail;
+    const [a,b]=m.querySelectorAll('button');
+    a.onclick=()=>{m.remove();res(false)};b.onclick=()=>{m.remove();res(true)};
+    document.body.append(m);
+  });
+}
+
+/* ====== PENERIMA PESAN DARI DAPP ====== */
+addEventListener('message',async e=>{
+  const d=e.data;if(!d||d.nusa!==1||!e.source||e.source===window)return;
+  const to=e.origin==='null'?'*':e.origin, send=o=>e.source.postMessage({nusa:1,...o},to);
+  if(d.ping)return send({ready:1});
+  const ok=r=>send({id:d.id,result:r}), fail=(m,c=4001)=>send({id:d.id,error:m,code:c});
+  try{
+    if(!S.key)await new Promise(r=>waiters.push(r));
+    const al={nusa_requestAccounts:'connect',requestAccounts:'connect',getAccounts:'getAddress',accounts:'getAddress'};
+    const m=al[d.method]||d.method, p=d.params||{}, o=e.origin;
+    if(m==='connect'){
+      if(!perms.includes(o)){
+        if(!await ask('Hubungkan situs',o,'Situs ini boleh melihat alamat dan saldo Anda.'))return fail('Ditolak pengguna');
+        perms.push(o);savePerm();render();
+      }
+      return ok({address:S.addr,network:'nusacoin'});
+    }
+    if(!perms.includes(o))return fail('Situs belum terhubung',4100);
+    if(m==='getAddress')return ok(S.addr);
+    if(m==='getBalance')return ok(await balance(S.addr));
+    if(m==='disconnect'){perms=perms.filter(x=>x!==o);savePerm();render();return ok(true)}
+    if(m==='signMessage'){
+      if(!await ask('Tanda tangani pesan',o,String(p.message??'')))return fail('Ditolak pengguna');
+      return ok(await signMsg(String(p.message??'')));
+    }
+    if(m==='sendNUX'){
+      const amt=Number(p.amount);
+      if(!(amt>0)||!p.to)return fail('Tujuan atau jumlah tidak valid',-32602);
+      if(!await ask('Kirim NUX',o,`${amt} NUX\nke ${p.to}\nFee jaringan: ${DEFAULT_FEE} NUX`))return fail('Ditolak pengguna');
+      const txid=await sendNUX(p.to,amt);refreshBal();
+      return ok({txid});
+    }
+    fail('Metode tidak dikenal',4200);
+  }catch(x){fail(x.message||String(x),-32000)}
+});
+
+/* ====== TAMPILAN ====== */
+const head=`<header><img src="${LOGO}" alt=""><div><h1>Nusa Wallet</h1><div class="sub">Versi web</div></div></header>`;
+function render(){
+  const app=$('#app');
+  if(!LS.nusa_ks){
+    app.innerHTML=head+`<div class="card"><h2>Siapkan wallet</h2>
+      <div class="sub">Tempel WIF untuk mengimpor, atau kosongkan untuk membuat wallet baru. Kunci disimpan terenkripsi PIN di browser ini.</div>
+      <input id="wif" placeholder="WIF (opsional)" autocomplete="off">
+      <input id="pin" type="password" placeholder="PIN (min. 6 karakter)" autocomplete="new-password">
+      <input id="pin2" type="password" placeholder="Ulangi PIN" autocomplete="new-password">
+      <div class="err">${esc(err)}</div><button data-a="setup" style="width:100%">Simpan wallet</button></div>`;
+    return;
+  }
+  if(!S.key){
+    app.innerHTML=head+(dapp?`<div class="bar">Ada situs meminta akses. Buka kunci untuk lanjut.</div>`:'')+`<div class="card"><h2>Buka kunci</h2>
+      <input id="pin" type="password" placeholder="PIN" autocomplete="current-password">
+      <div class="err">${esc(err)}</div><button data-a="unlock" style="width:100%">Buka</button></div>`;
+    return;
+  }
+  app.innerHTML=head+(dapp?`<div class="bar"><span>Mode koneksi DApp aktif</span><button class="ghost" data-a="close">Tutup</button></div>`:'')
+  +(fresh?`<div class="card warn"><b>Cadangkan WIF Anda sekarang</b><pre style="white-space:pre-wrap;word-break:break-all;margin:8px 0;font-size:12px">${esc(fresh)}</pre><button data-a="ack">Sudah saya simpan</button></div>`:'')
+  +`<div class="card"><div class="sub">Saldo</div><div class="bal">${esc(bal)} NUX</div><div class="addr">${esc(S.addr)}</div>
+    <div class="row"><button class="ghost" data-a="copy">Salin alamat</button><button class="ghost" data-a="lock">Kunci</button></div></div>
+   <div class="card"><h2>Buka DApp</h2><div class="sub">DApp yang dibuka dari sini langsung terhubung ke wallet ini.</div>
+    <input id="url" placeholder="https://..." inputmode="url"><button data-a="go" style="width:100%">Buka</button></div>
+   <div class="card"><h2>Situs terhubung</h2>${perms.length?perms.map((o,i)=>`<div class="site"><span>${esc(o)}</span><button class="ghost" data-a="rev" data-i="${i}">Putuskan</button></div>`).join(''):'<div class="sub">Belum ada.</div>'}</div>
+   <div class="card"><h2>Pasang di tool HTML Anda</h2>
+    <div class="sub">Tempel skrip ini sebelum kode tool. Panggilan <code>window.nusa.connect()</code> tetap sama seperti extension.</div>
+    <input id="wurl" value="${esc(location.origin+location.pathname)}">
+    <textarea id="shim" readonly></textarea>
+    <div class="row"><button data-a="cs">Salin skrip</button><button class="ghost" data-a="ds">Unduh nusa-bridge.js</button></div></div>`;
+  const t=$('#shim');if(t)t.value=shimText($('#wurl').value);
+  const w=$('#wurl');if(w)w.oninput=()=>t.value=shimText(w.value);
+}
+document.addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;err='';
+  try{
+    if(a==='setup'){
+      const pin=$('#pin').value;
+      if(pin.length<6)throw new Error('PIN minimal 6 karakter');
+      if(pin!==$('#pin2').value)throw new Error('PIN tidak sama');
+      let wif=$('#wif').value.trim();if(!wif){wif=newWIF();fresh=wif}
+      fromWIF(wif);LS.nusa_ks=await seal(wif,pin);setKey(wif);
+    }
+    else if(a==='unlock'){
+      let wif;try{wif=await open($('#pin').value)}catch(_){throw new Error('PIN salah')}
+      setKey(wif);
+    }
+    else if(a==='lock'){S={};render()}
+    else if(a==='ack'){fresh=null;render()}
+    else if(a==='copy'){await navigator.clipboard.writeText(S.addr);b.textContent='Tersalin'}
+    else if(a==='go'){
+      let u=$('#url').value.trim();if(!u)return;if(!/^https?:/i.test(u))u='https://'+u;
+      window.open(u,'nusa-dapp');
+    }
+    else if(a==='rev'){perms.splice(+b.dataset.i,1);savePerm();render()}
+    else if(a==='cs'){await navigator.clipboard.writeText($('#shim').value);b.textContent='Tersalin'}
+    else if(a==='ds'){
+      const l=document.createElement('a');
+      l.href=URL.createObjectURL(new Blob([$('#shim').value],{type:'text/javascript'}));
+      l.download='nusa-bridge.js';l.click();
+    }
+    else if(a==='close')window.close();
+  }catch(x){err=x.message;render()}
+});
+render();
+</script>
+</body>
+</html>
