@@ -1680,6 +1680,7 @@
     pendingSpent.clear();
     try { localStorage.removeItem('nusacard_pending_v1'); } catch (e) {}
     clearWalletSession();
+    try { localStorage.removeItem('nusacard_balance_v1'); } catch (e) {}
     document.getElementById("walletPkeyInput").value = "";
     document.getElementById("walletPinInput").value = "";
     setWalletScanStatus("");
@@ -1706,18 +1707,37 @@
     if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
     if (baseUrl.endsWith('/api')) baseUrl = baseUrl.replace(/\/api$/, '');
 
+    if (!baseUrl) baseUrl = "https://explorer.nusacoin.org";
+
     const addr = liveWalletData.address;
+    const balEl = document.getElementById("walletBalance");
+
+    // Tampilkan saldo terakhir yang tersimpan sambil menunggu data online
+    const cached = readCachedBalance(addr);
+    if (cached) balEl.textContent = `${cached.v} NUX (memuat...)`;
+    else balEl.textContent = "Memuat saldo...";
 
     try {
-      // 1. Ambil Saldo via /ext/getbalance/
-      const res = await fetch(`${baseUrl}/ext/getbalance/${addr}`);
-      if (!res.ok) throw new Error("Gagal mengambil data saldo.");
-      
+      // 1. Ambil Saldo via /ext/getbalance/ (timeout 10 detik, coba ulang 1x)
+      let res = null;
+      for (let i = 0; i < 2; i++) {
+        try {
+          res = await fetchWithTimeout(`${baseUrl}/ext/getbalance/${addr}`, 10000);
+          if (res.ok) break;
+        } catch (e) {
+          if (i === 1) throw e;
+        }
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      if (!res || !res.ok) throw new Error("Gagal mengambil data saldo.");
+
       const balanceText = await res.text();
       const balanceVal = parseFloat(balanceText);
+      if (isNaN(balanceVal)) throw new Error("Respons saldo tidak valid.");
 
-      liveWalletData.balance = isNaN(balanceVal) ? 0 : balanceVal;
-      document.getElementById("walletBalance").textContent = `${liveWalletData.balance} NUX`;
+      liveWalletData.balance = balanceVal;
+      balEl.textContent = `${liveWalletData.balance} NUX`;
+      cacheBalance(addr, liveWalletData.balance);
 
       // 2. Ambil Ringkasan Transaksi via /ext/getaddresstxs/
       const txRes = await fetch(`${baseUrl}/ext/getaddresstxs/${addr}/0/20`);
@@ -1756,9 +1776,37 @@
       }
     } catch (err) {
       console.warn("API Node Offline / Error Fetching:", err);
-      document.getElementById("walletBalance").textContent = "0.0000 NUX (Offline)";
+      const c = readCachedBalance(addr);
+      if (c) {
+        const tgl = new Date(c.t).toLocaleString();
+        balEl.textContent = `${c.v} NUX (offline · data terakhir ${tgl})`;
+      } else {
+        balEl.textContent = "Saldo belum bisa dimuat (offline) — tekan Refresh";
+      }
     }
   }
+
+  // ---- Cache saldo terakhir & utilitas jaringan ----
+  const BALANCE_CACHE_KEY = 'nusacard_balance_v1';
+  function cacheBalance(addr, v) {
+    try { localStorage.setItem(BALANCE_CACHE_KEY, JSON.stringify({ a: addr, v: v, t: Date.now() })); } catch (e) {}
+  }
+  function readCachedBalance(addr) {
+    try {
+      const d = JSON.parse(localStorage.getItem(BALANCE_CACHE_KEY) || 'null');
+      return d && d.a === addr ? d : null;
+    } catch (e) { return null; }
+  }
+  async function fetchWithTimeout(url, ms) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try { return await fetch(url, { signal: ctrl.signal, cache: 'no-store' }); }
+    finally { clearTimeout(timer); }
+  }
+  // Muat ulang otomatis saat koneksi kembali
+  window.addEventListener('online', () => {
+    if (liveWalletData && liveWalletData.address) fetchWalletData();
+  });
 
   function renderTxHistory(txs) {
     const container = document.getElementById("txHistoryContainer");
