@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallet</title>
+  <title>Nusa Card</title>
+
+  <!-- PWA: agar bisa dipasang sebagai aplikasi -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f3d26">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Nusa Card">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   
   <!-- CDN QRCode.js & html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -2918,6 +2928,14 @@
     sc.style.transform='scale('+k+')'; fit.style.width=(480*k)+'px'; fit.style.height=(303*k)+'px';
   }
   window.addEventListener('resize',fitCard); window.addEventListener('load',fitCard); setTimeout(fitCard,50);
+</script>
+<script>
+  // PWA: daftarkan service worker
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('SW gagal:', e); });
+    });
+  }
 </script>
 </body>
 </html>
