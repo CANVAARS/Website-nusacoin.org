@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nusa Wallet</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007BFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nusa Wallet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header><img class="logo" src="icons/logo.png" alt="Nusa"><div><b>Nusa Wallet</b><small>Nusacoin (NUX)</small></div><button id="btnLock" class="ghost" hidden>Kunci</button></header>
+<main>
+  <p id="msg" class="msg" hidden></p>
+
+  <!-- SETUP -->
+  <section id="vSetup" hidden>
+    <h2>Mulai</h2>
+    <div class="tabs"><button id="tabCreate" class="tab on">Buat baru</button><button id="tabImport" class="tab">Impor WIF</button><button id="tabSeed" class="tab">Seed phrase</button></div>
+    <div id="seedBox" hidden><label>Seed phrase (12 / 24 kata)</label><textarea id="inSeed" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="kata1 kata2 kata3 …"></textarea><small id="seedCount" class="hint">0 kata</small></div>
+    <div id="importBox" hidden><label>Private Key (WIF, prefix 0x57)</label><input id="inWif" type="password" autocomplete="off" placeholder="Tempel WIF"></div>
+    <label>Format alamat</label>
+    <select id="inType"><option value="bech32">Bech32 SegWit (nu1q…) — disarankan</option><option value="p2pkh">P2PKH (N…)</option></select>
+    <label>Password (min. 8 karakter)</label><input id="inPass" type="password" autocomplete="new-password">
+    <label>Ulangi password</label><input id="inPass2" type="password" autocomplete="new-password">
+    <button id="btnSetup" class="primary">Lanjut</button>
+    <p id="seedHint" class="hint" hidden>Alamat diturunkan dengan path yang sama dengan web wallet Nusacoin (Bech32: m/84'/662'/0'/0/0, P2PKH: m/44'/662'/0'/0/0). Seed phrase tidak disimpan; hanya private key hasil turunannya yang dienkripsi.</p>
+    <p class="hint">Private key dienkripsi dengan password (PBKDF2 + AES-GCM) dan hanya tersimpan di perangkat ini. Password tidak bisa dipulihkan.</p>
+  </section>
+
+  <!-- BACKUP -->
+  <section id="vBackup" hidden>
+    <h2>Cadangkan Private Key</h2>
+    <p class="warn">Tulis WIF ini dan simpan offline. Siapa pun yang memilikinya bisa mengambil dana. Tidak akan ditampilkan lagi kecuali lewat Pengaturan.</p>
+    <textarea id="bkWif" readonly rows="3"></textarea>
+    <label class="check"><input type="checkbox" id="bkOk"> Saya sudah mencadangkan private key</label>
+    <button id="btnBackupDone" class="primary" disabled>Selesai</button>
+  </section>
+
+  <!-- UNLOCK -->
+  <section id="vUnlock" hidden>
+    <h2>Buka Wallet</h2>
+    <label>Password</label><input id="unPass" type="password" autocomplete="current-password">
+    <button id="btnUnlock" class="primary">Buka</button>
+    <button id="btnForgot" class="ghost">Lupa password? Pulihkan dengan seed phrase / WIF</button>
+  </section>
+
+  <!-- HOME -->
+  <section id="vHome" hidden>
+    <div class="card">
+      <small>Saldo</small>
+      <div id="hBalance" class="bal">—</div>
+      <small>Alamat</small>
+      <div id="hAddr" class="addr"></div>
+      <div class="row"><button id="btnCopy" class="ghost">Salin alamat</button><button id="btnRefresh" class="ghost">Muat ulang</button></div>
+    </div>
+    <div class="row"><button id="btnToSend" class="primary">Kirim</button><button id="btnToBrowse" class="secondary">Jelajah tools</button></div>
+    <h3>Transaksi terakhir</h3>
+    <div id="hHistory" class="list"><small>Memuat…</small></div>
+  </section>
+
+  <!-- SEND -->
+  <section id="vSend" hidden>
+    <h2>Kirim NUX</h2>
+    <label>Alamat tujuan</label><input id="sTo" placeholder="nu1q… atau N…" autocomplete="off">
+    <label>Jumlah (NUX)</label><input id="sAmt" type="number" inputmode="decimal" step="0.00000001" min="0">
+    <label>Fee (NUX)</label><input id="sFee" type="number" inputmode="decimal" step="0.00000001" min="0">
+    <div id="sReview" class="card" hidden></div>
+    <div class="row"><button id="btnSendBack" class="ghost">Kembali</button><button id="btnSendGo" class="primary">Tinjau</button></div>
+  </section>
+
+  <!-- JELAJAH (pencarian & tools) -->
+  <section id="vBrowse" hidden>
+    <h2>Jelajah tools</h2>
+    <div class="searchbar"><input id="bQ" type="search" placeholder="Cari tools, ketik alamat https://… atau kata kunci" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="bGo" class="primary">Cari</button></div>
+    <p class="hint">Alamat <b>https://…</b> dibuka di dalam aplikasi dan bisa terhubung ke wallet ini. Kata kunci mencari di daftar tools Anda; jika tidak ada, pencarian web dibuka di tab baru.</p>
+    <div id="bTools">
+      <div id="bList" class="list"></div>
+    </div>
+    <div id="frameWrap" hidden>
+      <div class="framebar"><button id="bClose" class="ghost">✕ Tutup</button><span id="bCur" class="cur"></span><button id="bSave" class="ghost">Simpan</button><button id="bExt" class="ghost">Tab baru</button></div>
+      <div id="frameBox" class="framebox"></div>
+      <p class="hint">Jika halaman kosong, situs itu melarang dibuka di dalam aplikasi. Pakai “Tab baru”. Agar tombol Hubungkan wallet berfungsi, halaman tools harus memuat <code>nux-bridge.js</code> (lihat README).</p>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="vSettings" hidden>
+    <h2>Pengaturan</h2>
+    <button id="btnInstall" class="primary" hidden>Pasang aplikasi di layar utama</button>
+    <label>Explorer API (saldo & riwayat)</label><input id="cExplorer">
+    <label>API (UTXO & broadcast)</label><input id="cApi">
+    <label>Template URL UTXO (opsional, pakai {address})</label><input id="cUtxo">
+    <label>Fee default (NUX)</label><input id="cFee" type="number" inputmode="decimal" step="0.00000001">
+    <label>Kunci otomatis (menit)</label><input id="cLock" type="number" min="1">
+    <button id="btnSaveCfg" class="primary">Simpan</button>
+    <h3>Situs terhubung</h3><div id="cSites" class="list"></div>
+    <h3>Keamanan</h3>
+    <button id="btnExport" class="secondary">Tampilkan private key</button>
+    <textarea id="cWif" readonly rows="3" hidden></textarea>
+    <button id="btnReset" class="danger">Hapus wallet dari perangkat ini</button>
+    <button id="btnSetBack" class="ghost">Kembali</button>
+  </section>
+
+  <!-- APPROVE (permintaan dari halaman tools) -->
+  <section id="vApprove" hidden>
+    <h2 id="aTitle">Permintaan</h2>
+    <div class="card"><small>Situs</small><div id="aOrigin" class="addr"></div></div>
+    <div id="aBody"></div>
+    <div class="row"><button id="btnReject" class="secondary">Tolak</button><button id="btnApprove" class="primary">Setujui</button></div>
+  </section>
+</main>
+
+<nav id="nav" hidden>
+  <button data-go="vHome">Dompet</button>
+  <button data-go="vBrowse">Jelajah</button>
+  <button data-go="vSettings">Pengaturan</button>
+</nav>
+
+<div id="modal" class="modal" hidden><div class="box"><p id="mText"></p><input id="mInput" type="password" autocomplete="off" hidden><div class="row"><button id="mNo" class="secondary">Batal</button><button id="mYes" class="primary">OK</button></div></div></div>
+<script src="lib/nusa-core.js"></script>
+<script src="lib/nusa-seed.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
