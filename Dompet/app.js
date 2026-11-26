@@ -25,8 +25,9 @@
     const nav = !!wallet && NAV_VIEWS.includes(v);
     $('btnLock').hidden = !nav; $('nav').hidden = !nav;
     document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === v || (v === 'vSend' && b.dataset.go === 'vHome')));
-    window.scrollTo(0, 0);
+    syncFraming(); window.scrollTo(0, 0);
   };
+  const syncFraming = () => document.body.classList.toggle('framing', currentView === 'vBrowse' && !!frame);
   const note = (t, ok) => { const m = $('msg'); m.hidden = !t; m.textContent = t || ''; m.className = 'msg' + (ok ? ' ok' : ''); };
   const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, props); kids.forEach(k => e.append(k)); return e; };
   const kv = (k, v) => el('div', { className: 'kv' }, el('span', { textContent: k }), el('b', { textContent: v }));
@@ -217,10 +218,12 @@
     frame.addEventListener('load', () => injectSameOrigin(frame));
     frame.src = frameUrl; $('frameBox').append(frame);
     $('bCur').textContent = url.host + url.pathname; $('bTools').hidden = true; $('frameWrap').hidden = false;
+    syncFraming();
   }
   function closeFrame() {
     if (frame) { try { frame.src = 'about:blank'; } catch (_) {} frame.remove(); frame = null; }
     frameUrl = ''; $('frameWrap').hidden = true; $('bTools').hidden = false;
+    syncFraming();
   }
   // Halaman tools di origin yang sama dengan wallet: jembatan dipasang otomatis (best-effort).
   function injectSameOrigin(f) {
