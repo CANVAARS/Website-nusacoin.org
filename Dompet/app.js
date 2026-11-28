@@ -60,7 +60,7 @@
     'Tidak ada UTXO terkonfirmasi yang bisa dibelanjakan.':'No confirmed UTXO available to spend.','Checksum Base58 salah.':'Base58 checksum is wrong.','Checksum alamat bech32 salah.':'Bech32 address checksum is wrong.','Prefix alamat bukan Nusacoin.':'Address prefix is not Nusacoin.',
     'Prefix bech32 bukan Nusacoin.':'Bech32 prefix is not Nusacoin.','Prefix WIF bukan Nusacoin (0x57).':'WIF prefix is not Nusacoin (0x57).','Total output melebihi total input.':'Total outputs exceed total inputs.','Private key di luar rentang.':'Private key is out of range.'
   };
-  const EN_HTML = { browseHint: 'Addresses starting with <b>https://…</b> open full-screen inside the app and can connect to this wallet. Keywords search your tools list; if none match, a web search opens in a new tab. If a page shows blank, that site forbids being opened inside the app; use the “New tab” button. For the Connect wallet button to work, the tools page must load <code>nux-bridge.js</code>.' };
+  const EN_HTML = { browseHint: 'Addresses starting with <b>https://…</b> the tools page must load <code>nux-bridge.js</code>.' };
   let lang = store.get('lang') === 'en' ? 'en' : 'id', theme = store.get('theme') === 'dark' ? 'dark' : 'light';
   const t = s => {
     if (lang !== 'en' || typeof s !== 'string') return s;
