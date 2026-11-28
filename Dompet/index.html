@@ -31,7 +31,7 @@
     <label data-i>Password (min. 8 karakter)</label><input id="inPass" type="password" autocomplete="new-password">
     <label data-i>Ulangi password</label><input id="inPass2" type="password" autocomplete="new-password">
     <button id="btnSetup" class="primary" data-i>Lanjut</button>
-    <p id="seedHint" class="hint" hidden data-i>Alamat diturunkan dengan path yang sama dengan web wallet Nusacoin (Bech32: m/84'/662'/0'/0/0, P2PKH: m/44'/662'/0'/0/0). Seed phrase tidak disimpan; hanya private key hasil turunannya yang dienkripsi.</p>
+    <p id="seedHint" class="hint" hidden data-i>Seed phrase tidak disimpan; hanya private key hasil turunannya yang dienkripsi.</p>
     <p class="hint" data-i>Private key dienkripsi dengan password (PBKDF2 + AES-GCM) dan hanya tersimpan di perangkat ini. Password tidak bisa dipulihkan.</p>
   </section>
 
@@ -112,7 +112,7 @@
   <section id="vBrowse" hidden>
     <h2 data-i>Jelajah tools</h2>
     <div class="searchbar"><input id="bQ" type="search" data-ip placeholder="Cari tools, ketik alamat https://… atau kata kunci" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="bGo" class="primary" data-i>Cari</button></div>
-    <p class="hint" data-ih="browseHint">Alamat <b>https://…</b> dibuka satu layar penuh di dalam aplikasi dan bisa terhubung ke wallet ini. Kata kunci mencari di daftar tools Anda; jika tidak ada, pencarian web dibuka di tab baru. Jika halaman tampil kosong, situs itu melarang dibuka di dalam aplikasi; pakai tombol “Tab baru”. Agar tombol Hubungkan wallet berfungsi, halaman tools harus memuat <code>nux-bridge.js</code>.</p>
+    <p class="hint" data-ih="browseHint">Alamat <b>https://…</b> halaman tools harus memuat <code>nux-bridge.js</code>.</p>
     <div id="bTools">
       <div id="bList" class="list"></div>
     </div>
